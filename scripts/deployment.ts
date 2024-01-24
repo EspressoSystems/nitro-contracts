@@ -76,7 +76,8 @@ async function deployUpgradeExecutor(): Promise<Contract> {
 
 // Function to handle all deployments of core contracts using deployContract function
 async function deployAllContracts(
-  signer: any
+  signer: any,
+  hotshotAddr?: string
 ): Promise<Record<string, Contract>> {
   const ethBridge = await deployContract('Bridge', signer, [])
   const ethSequencerInbox = await deployContract('SequencerInbox', signer, [
@@ -119,7 +120,12 @@ async function deployAllContracts(
   const prover0 = await deployContract('OneStepProver0', signer)
   const proverMem = await deployContract('OneStepProverMemory', signer)
   const proverMath = await deployContract('OneStepProverMath', signer)
-  const proverHostIo = await deployContract('OneStepProverHostIo', signer)
+  const hostIoArg = hotshotAddr ? [hotshotAddr] : []
+  const proverHostIo = await deployContract(
+    'OneStepProverHostIo',
+    signer,
+    hostIoArg
+  )
   const osp: Contract = await deployContract('OneStepProofEntry', signer, [
     prover0.address,
     proverMem.address,
