@@ -20,6 +20,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
 
+contract MockHotShot {
+    mapping(uint256 => uint256) public commitments;
+
+    function setCommitment(uint256 height, uint256 commitment) external {
+        commitments[height] = commitment;
+    }
+}
+
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
     address public rollupOwner = makeAddr("rollupOwner");
@@ -27,6 +35,7 @@ contract RollupCreatorTest is Test {
     IRollupAdmin public rollupAdmin;
     IRollupUser public rollupUser;
     DeployHelper public deployHelper;
+    MockHotShot public hotshot = new MockHotShot();
 
     // 1 gwei
     uint256 public constant MAX_FEE_PER_GAS = 1_000_000_000;
@@ -53,6 +62,10 @@ contract RollupCreatorTest is Test {
         vm.startPrank(deployer);
         rollupCreator = new RollupCreator();
         deployHelper = new DeployHelper();
+
+        for (uint i = 1; i < 10; i++) {
+            hotshot.setCommitment(uint256(i), uint256(i));
+        }
 
         // deploy BridgeCreators
         BridgeCreator bridgeCreator = new BridgeCreator(ethBasedTemplates, erc20BasedTemplates);
@@ -434,7 +447,7 @@ contract RollupCreatorTest is Test {
             new OneStepProver0(),
             new OneStepProverMemory(),
             new OneStepProverMath(),
-            new OneStepProverHostIo()
+            new OneStepProverHostIo(address(hotshot))
         );
         challengeManager = new ChallengeManager();
 
