@@ -12,4 +12,17 @@ interface ArbInfo {
 
     /// @notice Retrieves a contract's deployed code
     function getCode(address account) external view returns (bytes memory);
+
+    // fixed, shares, debt
+    function getBalanceValues(address account) external returns (uint256, uint256, uint256);
+
+    // flags
+    function getYieldConfiguration(address account) external returns (uint8);
+
+    // delegate
+    function getDelegate(address account) external returns (address);
+
+    function configureAutomaticYield() external;
+    function configureVoidYield() external;
+    function configureDelegateYield(address account) external;
 }

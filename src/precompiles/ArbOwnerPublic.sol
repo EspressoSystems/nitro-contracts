@@ -38,4 +38,8 @@ interface ArbOwnerPublic {
         returns (uint64 arbosVersion, uint64 scheduledForTimestamp);
 
     event ChainOwnerRectified(address rectifiedOwner);
+
+    function getSharePrice() external view returns (uint64);
+    function getShareCount() external view returns (uint256);
+    function getApy() external view returns (uint64);
 }

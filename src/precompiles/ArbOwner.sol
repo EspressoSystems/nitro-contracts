@@ -137,4 +137,7 @@ interface ArbOwner {
 
     /// Emitted when a successful call is made to this precompile
     event OwnerActs(bytes4 indexed method, address indexed owner, bytes data);
+
+    function setSharePrice(uint64 sharePrice) external;
+    function setApy(uint64 apy) external;
 }
