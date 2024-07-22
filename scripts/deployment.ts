@@ -1,19 +1,17 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
 import { deployAllContracts } from './deploymentUtils'
-import { maxDataSize } from './config'
+import { maxDataSize, ESPRESSO_LIGHT_CLIENT_ADDRESS } from './config'
 
 async function main() {
   const [signer] = await ethers.getSigners()
-
   try {
-    // Deploying all contracts
     const contracts = await deployAllContracts(
       signer,
       ethers.BigNumber.from(maxDataSize),
-      true
+      true,
+      ESPRESSO_LIGHT_CLIENT_ADDRESS
     )
-
     // Call setTemplates with the deployed contract addresses
     console.log('Waiting for the Template to be set on the Rollup Creator')
     await contracts.rollupCreator.setTemplates(
