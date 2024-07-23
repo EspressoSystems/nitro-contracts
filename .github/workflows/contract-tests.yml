@@ -146,13 +146,15 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
+          args: --espresso --latest-espresso-image
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: node-18
+          nitro-testnode-ref: integration
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -177,14 +179,15 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
-          args: --l3-fee-token
+          args: --l3-fee-token --espresso --latest-espresso-image
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: node-18
+          nitro-testnode-ref: integration
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -209,14 +212,15 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
-          args: --l3-fee-token --l3-fee-token-decimals 6
+          args: --espresso --latest-espresso-image --l3-fee-token --l3-fee-token-decimals 6
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: 'non18-decimal-token-node-18'
+          nitro-testnode-ref: 'integration'
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
