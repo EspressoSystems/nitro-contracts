@@ -33,7 +33,7 @@ async function main() {
 
   const deployerWallet = new ethers.Wallet(
     deployerPrivKey,
-    new ethers.providers.JsonRpcProvider(parentChainRpc)
+    new ethers.providers.JsonRpcProvider({url: parentChainRpc, timeout: 240* 1000})
   )
 
   const maxDataSize =
