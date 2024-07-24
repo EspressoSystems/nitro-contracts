@@ -19,7 +19,12 @@ yarn build:forge
 
 ### 2. Setup environment variables and config files
 
-Copy `.env.sample.goerli` to `.env` and fill in the values. Add an [Etherscan api key](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics), [Infura api key](https://docs.infura.io/dashboard/create-api) and a private key which has some funds on sepolia. This private key will be used to deploy the rollup. We have already deployed a `ROLLUP_CREATOR_ADDRESS` which has all the associated espresso contracts initialized on `0xb89a5fE9C7AdF69E809dE385225e985eE7D8DDB2`. If you want to deploy your own rollup creator, you can leave the `ROLLUP_CREATOR_ADDRESS` empty and follow the steps on step 3. If you want to use the already deployed `RollupCreator`, you can update the `ROLLUP_CREATOR_ADDRESS` with the address of the already deployed rollup creator (0x93c735d1D36b4fDfcD1aebe7B54c7fd0DE553898) and follow the steps on step 4 to create the rollup.
+Copy `.env.sample.goerli` to `.env` and fill in the values. Add an [Etherscan api key](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics), [Infura api key](https://docs.infura.io/dashboard/create-api) and a private key which has some funds on sepolia.
+This private key will be used to deploy the rollup. We have already deployed a `ROLLUP_CREATOR_ADDRESS` which has all the associated espresso contracts initialized.
+
+If you want to deploy your own rollup creator, you can leave the `ROLLUP_CREATOR_ADDRESS` empty and follow the steps on step 3.
+
+If you want to use the already deployed `RollupCreator`, you can update the `ROLLUP_CREATOR_ADDRESS` with the address of the deployed rollup creator [here](espresso-deployments/sepolia.json) and follow the steps on step 4 to create the rollup.
 
 ### 3. Deploy Rollup Creator and initialize the espresso contracts
 
@@ -34,8 +39,6 @@ This will deploy the rollup creator and initialize the espresso contracts.
 Change the `config.ts.example` to `config.ts` and run the following command to create the rollup if you haven't already done so.
 
 `npx hardhat run scripts/createEthRollup.ts --network sepolia`
-
-This will create the rollup.
 
 ## Deployed contract addresses
 

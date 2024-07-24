@@ -7,10 +7,9 @@ import fs from 'fs'
 async function main() {
   const [signer] = await ethers.getSigners()
   try {
-    const espressoLisghtClientAddress =
-      process.env.ESPRESSO_LIGHT_CLIENT_ADDRESS
+    const espressoLightClientAddress = process.env.ESPRESSO_LIGHT_CLIENT_ADDRESS
 
-    if (!espressoLisghtClientAddress) {
+    if (!espressoLightClientAddress) {
       console.warn(
         'env var ESPRESSO_LIGHT_CLIENT_ADDRESS not set, it needs to be set to deploy the RollupCreator for the espresso integration'
       )
@@ -20,7 +19,7 @@ async function main() {
       signer,
       ethers.BigNumber.from(maxDataSize),
       true,
-      espressoLisghtClientAddress
+      espressoLightClientAddress
     )
 
     const contractAddresses = {
