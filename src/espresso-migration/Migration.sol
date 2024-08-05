@@ -6,7 +6,7 @@ import "../rollup/IRollupAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-contract{
+contract Migration{
     address public immutable newOspEntry;
     bytes32 public immutable newWasmModuleRoot;
     address public immutable currentOspEntry;
