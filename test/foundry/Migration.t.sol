@@ -1,9 +1,8 @@
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/challenge/IChallengeManager.sol";
-import "../../src/osp/O";
 import "../../src/osp/OneStepProver0.sol";
 import "../../src/osp/OneStepProverMemory.sol";
 import "../../src/osp/OneStepProverMath.sol";
@@ -11,12 +10,21 @@ import "../../src/osp/OneStepProverHostIo.sol";
 import "../../src/osp/OneStepProofEntry.sol";
 import "../../src/mocks/UpgradeExecutorMock.sol";
 import "../../src/rollup/RollupCore.sol";
+import "../../src/rollup/RollupCreator.sol";
+import "../../test/foundry/RollupCreator.t.sol";
 import "../../src/espresso-migration/Migration.sol";
 
 contract MigrationTest is Test{
 
     IOneStepProofEntry originalOspEntry;
-    IOneStepProofEntry newOspEntry = IOneStepProofEntry(address(100))
+    IOneStepProofEntry newOspEntry = IOneStepProofEntry(
+        new OneStepProofEntry(
+            new OneStepProver0(),
+            new OneStepProverMemory(),
+            new OneStepProverMath(),
+            new OneStepProverHostIo(address(hotshot))
+        )
+    );  
 
     RollupCreator public rollupCreator;
     address public rollupAddress;
@@ -24,10 +32,10 @@ contract MigrationTest is Test{
     address public deployer = makeAddr("deployer");
     IRollupAdmin public rollupAdmin;
     IRollupUser public rollupUser;
-    DeployHelper public deployHelper;
+    DeployHelper public deployHelper;   
     IReader4844 dummyReader4844 = IReader4844(address(137));
     MockHotShot public hotshot = new MockHotShot();
-    UpgradeExecutorMock upgradeExecutor;
+    IUpgradeExecutor upgradeExecutor;
 
     // 1 gwei
     uint256 public constant MAX_FEE_PER_GAS = 1_000_000_000;
@@ -67,7 +75,7 @@ contract MigrationTest is Test{
         BridgeCreator bridgeCreator = new BridgeCreator(ethBasedTemplates, erc20BasedTemplates);
 
         IUpgradeExecutor upgradeExecutorLogic = new UpgradeExecutorMock();
-        upgradeExecutor = upgradeExecutorLogic
+        upgradeExecutor = upgradeExecutorLogic;
 
         (
             IOneStepProofEntry ospEntry,
@@ -76,7 +84,7 @@ contract MigrationTest is Test{
             IRollupUser _rollupUser
         ) = _prepareRollupDeployment();
 
-        originalOspEntry = ospEntry
+        originalOspEntry = ospEntry;
 
         rollupAdmin = _rollupAdmin;
         rollupUser = _rollupUser;
@@ -123,8 +131,12 @@ contract MigrationTest is Test{
         /// deploy rollup
         address[] memory batchPosters = new address[](1);
         batchPosters[0] = makeAddr("batch poster 1");
-        address batch
-There must be some other easier ways like storing the hash value of the hotshot transaction payloar.RollupDeploymentParams memory deployParams = RollupCreator
+        address batchPosterManager = makeAddr("batch poster manager");
+        address[] memory validators = new address[](2);
+        validators[0] = makeAddr("validator1");
+        validators[1] = makeAddr("validator2");
+
+        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
                 batchPosters: batchPosters,
@@ -173,12 +185,19 @@ There must be some other easier ways like storing the hash value of the hotshot 
     }
 
     function test_migrateToEspresso() public{
-        RollupCore rollup = RollupCore(rollupAddress)
-        Migration migration = address(new Migration())
-        IUpgradeExecutor upgradeExecutor = IUpgradeExecutor(
-            computeCreateAddress(address(rollupCreator), 4)
+        IRollupCore rollup = IRollupCore(rollupAddress);
+        address migration = address(new Migration());
+        address upgradeExecutorExpectedAddress = computeCreateAddress(address(rollupCreator), 4);
+        assertEq(
+            ProxyAdmin(_getProxyAdmin(address(rollup.sequencerInbox()))).owner(),
+            upgradeExecutorExpectedAddress,
+            "Invalid proxyAdmin's owner"
+        );
+        IUpgradeExecutor _upgradeExecutor = IUpgradeExecutor(
+            upgradeExecutorExpectedAddress
         );
 
+    
         bytes memory data = abi.encodeWithSelector(
             Migration.perform.selector,
             rollup,
@@ -187,12 +206,13 @@ There must be some other easier ways like storing the hash value of the hotshot 
             bytes32(uint256(keccak256("wasm"))), // current wasm module root as defined in the config
             newOspEntry,
             originalOspEntry
-        )
-        vm.prank(rollupOwner)
-        upgradeExecutor.execute(migration, data)
-        vm.stopPrank()
-        assertEq(rollup.challengeManager.getOsp(bytes32(uint256(keccak256("wasm")))), originalOspEntry)
-        assertEq(rollup.challengeManager.getOsp(bytes32(uint256(keccak256("newRoot")))),newOspEntry)
+        );
+
+        vm.prank(rollupOwner);
+        _upgradeExecutor.execute(migration, data);
+        vm.stopPrank();
+        assertEq(address(rollup.challengeManager().getOsp(bytes32(uint256(keccak256("wasm"))))), address(originalOspEntry), "CondOsp at original root is not what was expected.");
+        assertEq(address(rollup.challengeManager().getOsp(bytes32(uint256(keccak256("newRoot"))))), address(newOspEntry), "CondOsp at new root is not what was expected.");
     }
 
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 // Example action contract to upgrade chain config to turn on espresso mode
 
 import "../precompiles/ArbOwner.sol";
