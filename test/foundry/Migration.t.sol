@@ -12,7 +12,7 @@ import "../../src/mocks/UpgradeExecutorMock.sol";
 import "../../src/rollup/RollupCore.sol";
 import "../../src/rollup/RollupCreator.sol";
 import "../../test/foundry/RollupCreator.t.sol";
-import "../../src/espresso-migration/Migration.sol";
+import "../../src/espresso-migration/EspressoMigration.sol";
 
 contract MigrationTest is Test{
 
@@ -186,7 +186,8 @@ contract MigrationTest is Test{
 
     function test_migrateToEspresso() public{
         IRollupCore rollup = IRollupCore(rollupAddress);
-        address migration = address(new Migration());
+       // IRollupAdmin rollupAdministrator = IRollupAdmin(rollupAdmin);
+        address migration = address(new EspressoMigration());
         address upgradeExecutorExpectedAddress = computeCreateAddress(address(rollupCreator), 4);
         assertEq(
             ProxyAdmin(_getProxyAdmin(address(rollup.sequencerInbox()))).owner(),
@@ -199,7 +200,7 @@ contract MigrationTest is Test{
 
     
         bytes memory data = abi.encodeWithSelector(
-            Migration.perform.selector,
+            EspressoMigration.perform.selector,
             rollup,
             computeCreateAddress(address(rollupCreator), 1), // the address that the rollup creator would deploy based on the nonce. For the arbitrum rollup creator this will be the first deployment.
             bytes32(uint256(keccak256("newRoot"))), // create a new dummy root.
@@ -213,6 +214,7 @@ contract MigrationTest is Test{
         vm.stopPrank();
         assertEq(address(rollup.challengeManager().getOsp(bytes32(uint256(keccak256("wasm"))))), address(originalOspEntry), "CondOsp at original root is not what was expected.");
         assertEq(address(rollup.challengeManager().getOsp(bytes32(uint256(keccak256("newRoot"))))), address(newOspEntry), "CondOsp at new root is not what was expected.");
+        assertEq(rollup.wasmModuleRoot(), bytes32(uint256(keccak256("newRoot"))), "Rollup's wasmModuleRoot was not changed by migration");
     }
 
 }
