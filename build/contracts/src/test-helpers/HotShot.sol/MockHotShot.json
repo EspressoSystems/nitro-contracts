@@ -1,0 +1,140 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "MockHotShot",
+  "sourceName": "src/test-helpers/HotShot.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "commitments",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "hotShotBlockHeight",
+          "type": "uint256"
+        }
+      ],
+      "name": "getHotShotCommitment",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint64",
+              "name": "blockHeight",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint256",
+              "name": "blockCommRoot",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct HotShotCommitment",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "threshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "lagOverEscapeHatchThreshold",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "livenesses",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "height",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "commitment",
+          "type": "uint256"
+        }
+      ],
+      "name": "setCommitment",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "l1Height",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isLive",
+          "type": "bool"
+        }
+      ],
+      "name": "setLiveness",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50610248806100206000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806309d1b076146100675780632313331e1461008957806349ce8997146100b75780638584d23f146100ea578063e030330114610159578063f1161d1d1461017f575b600080fd5b6100876100753660046101a2565b60009182526020829052604090912055565b005b6100876100973660046101c4565b600091825260016020526040909120805460ff1916911515919091179055565b6100d76100c53660046101f9565b60006020819052908152604090205481565b6040519081526020015b60405180910390f35b6101346100f83660046101f9565b604080518082018252600080825260209182018190528251808401845267ffffffffffffffff8516815293815280825291909120549082015290565b60408051825167ffffffffffffffff16815260209283015192810192909252016100e1565b61016f6101673660046101a2565b600192915050565b60405190151581526020016100e1565b61016f61018d3660046101f9565b60016020526000908152604090205460ff1681565b600080604083850312156101b557600080fd5b50508035926020909101359150565b600080604083850312156101d757600080fd5b82359150602083013580151581146101ee57600080fd5b809150509250929050565b60006020828403121561020b57600080fd5b503591905056fea26469706673582212207d1dbf9a819e818ed0a00bdf39375760f8e9a14677aef232184f10e57803861c64736f6c63430008090033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100625760003560e01c806309d1b076146100675780632313331e1461008957806349ce8997146100b75780638584d23f146100ea578063e030330114610159578063f1161d1d1461017f575b600080fd5b6100876100753660046101a2565b60009182526020829052604090912055565b005b6100876100973660046101c4565b600091825260016020526040909120805460ff1916911515919091179055565b6100d76100c53660046101f9565b60006020819052908152604090205481565b6040519081526020015b60405180910390f35b6101346100f83660046101f9565b604080518082018252600080825260209182018190528251808401845267ffffffffffffffff8516815293815280825291909120549082015290565b60408051825167ffffffffffffffff16815260209283015192810192909252016100e1565b61016f6101673660046101a2565b600192915050565b60405190151581526020016100e1565b61016f61018d3660046101f9565b60016020526000908152604090205460ff1681565b600080604083850312156101b557600080fd5b50508035926020909101359150565b600080604083850312156101d757600080fd5b82359150602083013580151581146101ee57600080fd5b809150509250929050565b60006020828403121561020b57600080fd5b503591905056fea26469706673582212207d1dbf9a819e818ed0a00bdf39375760f8e9a14677aef232184f10e57803861c64736f6c63430008090033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
