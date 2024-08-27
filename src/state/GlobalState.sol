@@ -21,7 +21,7 @@ library GlobalStateLib {
                     state.bytes32Vals[0],
                     state.bytes32Vals[1],
                     state.u64Vals[0],
-                    state.u64Vals[1],
+                    state.u64Vals[1]
                 )
             );
     }
