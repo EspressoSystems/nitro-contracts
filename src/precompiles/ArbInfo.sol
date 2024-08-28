@@ -13,16 +13,21 @@ interface ArbInfo {
     /// @notice Retrieves a contract's deployed code
     function getCode(address account) external view returns (bytes memory);
 
-    // fixed, shares, debt
+    // @notice Retrieves an account's balance values (fixed, shares, debt)
     function getBalanceValues(address account) external view returns (uint256, uint256, uint256);
 
-    // flags
+    // @notice Retrieves an account's yield mode
     function getYieldConfiguration(address account) external view returns (uint8);
 
-    // delegate
+    // @notice Retrieves an account's delegate if in delegate yield mode and returns the zero address otherwise.
     function getDelegate(address account) external view returns (address);
 
+    // @notice Set the yield mode for msg.sender to automatic.
     function configureAutomaticYield() external;
+
+    // @notice Set the yield mode for msg.sender to void.
     function configureVoidYield() external;
+
+    // @notice Set the yield mode for msg.sender to delegate to an account. This function silently fails instead of reverting if attempting to delegate to self.
     function configureDelegateYield(address account) external;
 }
