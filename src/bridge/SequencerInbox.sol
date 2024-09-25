@@ -36,6 +36,7 @@ import {
     BadBufferConfig,
     ExtraGasNotUint64,
     KeysetTooLarge
+    InvalidCelestiaBatch
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -80,6 +81,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant DAS_MESSAGE_HEADER_FLAG = 0x80;
+
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant CELESTIA_MESSAGE_HEADER_FLAG = 0x63;
 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant TREE_DAS_MESSAGE_HEADER_FLAG = 0x08;
@@ -728,12 +732,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ///         therefore we restrict which flags can be provided as a header in this field
     ///         This also safe guards unused flags for future use, as we know they would have been disallowed up until this point
     /// @param  headerByte The first byte in the calldata
-    function isValidCallDataFlag(
-        bytes1 headerByte
-    ) internal pure returns (bool) {
-        return headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
-            || (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG))
-            || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG;
+    function isValidCallDataFlag(bytes1 headerByte) internal pure returns (bool) {
+        return
+            headerByte == BROTLI_MESSAGE_HEADER_FLAG ||
+            headerByte == DAS_MESSAGE_HEADER_FLAG ||
+            headerByte == CELESTIA_MESSAGE_HEADER_FLAG ||
+            (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG)) ||
+            headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG;
     }
 
     /// @dev    Form a hash of the data taken from the calldata
@@ -770,6 +775,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) {
                     revert NoSuchKeyset(dasKeysetHash);
                 }
+            }
+
+            if (data[0] & CELESTIA_MESSAGE_HEADER_FLAG != 0 && data.length != 89) {
+                revert InvalidCelestiaBatch();
             }
         }
         return (keccak256(bytes.concat(header, data)), timeBounds);

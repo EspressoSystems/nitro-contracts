@@ -15,13 +15,13 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.17',
+      version: '0.8.19',
       settings: {
         optimizer: {
           enabled: true,
-          runs: 2000,
+          runs: 1,
         },
-        viaIR: false,
+        viaIR: true
       },
     },
   ],
@@ -182,6 +182,12 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    baseSepolia: {
+      url: 'https://base-sepolia.g.alchemy.com/v2/XGpartgZXFCFedUcnvJP40usFO33wM1l',
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
     arb1: {
       url: 'https://arb1.arbitrum.io/rpc',
       accounts: process.env['MAINNET_PRIVKEY']
@@ -243,11 +249,19 @@ module.exports = {
         },
       },
       {
+<<<<<<< HEAD
         network: 'custom',
         chainId: process.env['CUSTOM_CHAINID'],
         urls: {
           apiURL: process.env['CUSTOM_ETHERSCAN_API_URL'],
           browserURL: process.env['CUSTOM_ETHERSCAN_BROWSER_URL'],
+=======
+        network: 'baseSepolia',
+        chainId: 84532,
+        urls: {
+          apiURL: 'https://api-sepolia.basescan.org/api',
+          browserURL: 'https://sepolia.basescan.org/',
+>>>>>>> 244f51ec (Celestia DA)
         },
       },
     ],
