@@ -24,6 +24,9 @@ export const config = {
       delaySeconds: ethers.BigNumber.from('86400'),
       futureSeconds: ethers.BigNumber.from('3600'),
     },
+    arbitrum: {
+      enableEspresso: true,
+    },
   },
   validators: [
     '0x1234123412341234123412341234123412341234',
