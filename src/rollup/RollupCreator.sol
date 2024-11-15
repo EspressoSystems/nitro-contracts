@@ -43,6 +43,7 @@ contract RollupCreator is Ownable {
         //// @dev The address of the batch poster, not used when set to zero address
         address[] batchPosters;
         address batchPosterManager;
+        address espressoTEEVerifier;
     }
 
     BridgeCreator public bridgeCreator;
@@ -107,11 +108,9 @@ contract RollupCreator is Ownable {
      *          - dataHashReader The address of the data hash reader used to read blob hashes
      * @return The address of the newly created rollup
      */
-    function createRollup(RollupDeploymentParams memory deployParams)
-        public
-        payable
-        returns (address)
-    {
+    function createRollup(
+        RollupDeploymentParams memory deployParams
+    ) public payable returns (address) {
         {
             // Make sure the immutable maxDataSize is as expected
             (, ISequencerInbox ethSequencerInbox, IInboxBase ethInbox, , ) = bridgeCreator
@@ -139,12 +138,12 @@ contract RollupCreator is Ownable {
 
         // Create the rollup proxy to figure out the address and initialize it later
         RollupProxy rollup = new RollupProxy{salt: keccak256(abi.encode(deployParams))}();
-
         BridgeCreator.BridgeContracts memory bridgeContracts = bridgeCreator.createBridge(
             address(proxyAdmin),
             address(rollup),
             deployParams.nativeToken,
-            deployParams.config.sequencerInboxMaxTimeVariation
+            deployParams.config.sequencerInboxMaxTimeVariation,
+            deployParams.espressoTEEVerifier
         );
 
         IChallengeManager challengeManager = IChallengeManager(
@@ -232,10 +231,10 @@ contract RollupCreator is Ownable {
         return address(rollup);
     }
 
-    function _deployUpgradeExecutor(address rollupOwner, ProxyAdmin proxyAdmin)
-        internal
-        returns (address)
-    {
+    function _deployUpgradeExecutor(
+        address rollupOwner,
+        ProxyAdmin proxyAdmin
+    ) internal returns (address) {
         IUpgradeExecutor upgradeExecutor = IUpgradeExecutor(
             address(
                 new TransparentUpgradeableProxy(
@@ -306,7 +305,7 @@ contract RollupCreator is Ownable {
                     zoltuCreate2Cost +
                     erc1820Cost;
             } else if (decimals > 18) {
-                totalFeeNativeDenominated = totalFee * (10**(decimals - 18));
+                totalFeeNativeDenominated = totalFee * (10 ** (decimals - 18));
             }
 
             IERC20(_nativeToken).safeTransferFrom(msg.sender, _inbox, totalFeeNativeDenominated);
@@ -316,16 +315,15 @@ contract RollupCreator is Ownable {
         }
     }
 
-    function _scaleDownToNativeDecimals(uint256 amount, uint8 decimals)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _scaleDownToNativeDecimals(
+        uint256 amount,
+        uint8 decimals
+    ) internal pure returns (uint256) {
         uint256 scaledAmount = amount;
         if (decimals < 18) {
-            scaledAmount = amount / (10**(18 - decimals));
+            scaledAmount = amount / (10 ** (18 - decimals));
             // round up if necessary
-            if (scaledAmount * (10**(18 - decimals)) < amount) {
+            if (scaledAmount * (10 ** (18 - decimals)) < amount) {
                 scaledAmount++;
             }
         }

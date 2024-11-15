@@ -51,10 +51,10 @@ contract BridgeCreator is Ownable {
         emit ERC20TemplatesUpdated();
     }
 
-    function _createBridge(address adminProxy, BridgeContracts storage templates)
-        internal
-        returns (BridgeContracts memory)
-    {
+    function _createBridge(
+        address adminProxy,
+        BridgeContracts storage templates
+    ) internal returns (BridgeContracts memory) {
         BridgeContracts memory frame;
         frame.bridge = IBridge(
             address(new TransparentUpgradeableProxy(address(templates.bridge), adminProxy, ""))
@@ -82,7 +82,8 @@ contract BridgeCreator is Ownable {
         address adminProxy,
         address rollup,
         address nativeToken,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
+        address espressoTEEVerifier
     ) external returns (BridgeContracts memory) {
         // create ETH-based bridge if address zero is provided for native token, otherwise create ERC20-based bridge
         BridgeContracts memory frame = _createBridge(
@@ -96,7 +97,11 @@ contract BridgeCreator is Ownable {
         } else {
             IERC20Bridge(address(frame.bridge)).initialize(IOwnable(rollup), nativeToken);
         }
-        frame.sequencerInbox.initialize(IBridge(frame.bridge), maxTimeVariation);
+        frame.sequencerInbox.initialize(
+            IBridge(frame.bridge),
+            maxTimeVariation,
+            espressoTEEVerifier
+        );
         frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
         frame.rollupEventInbox.initialize(frame.bridge);
         frame.outbox.initialize(frame.bridge);

@@ -19,6 +19,7 @@ import "../../src/rollup/DeployHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -124,7 +125,7 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-
+        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -134,7 +135,8 @@ contract RollupCreatorTest is Test {
                 nativeToken: address(0),
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
+                batchPosterManager: batchPosterManager,
+                espressoTEEVerifier: address(espressoTEEVerifier)
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
@@ -280,7 +282,7 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-
+        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -290,7 +292,8 @@ contract RollupCreatorTest is Test {
                 nativeToken: nativeToken,
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
+                batchPosterManager: batchPosterManager,
+                espressoTEEVerifier: address(espressoTEEVerifier)
             });
 
         address rollupAddress = rollupCreator.createRollup(deployParams);
@@ -433,7 +436,7 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-
+        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -443,7 +446,8 @@ contract RollupCreatorTest is Test {
                 nativeToken: address(0),
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
+                batchPosterManager: batchPosterManager,
+                espressoTEEVerifier: address(espressoTEEVerifier)
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
@@ -524,11 +528,7 @@ contract RollupCreatorTest is Test {
 }
 
 contract ProxyUpgradeAction {
-    function perform(
-        address admin,
-        address payable target,
-        address newLogic
-    ) public payable {
+    function perform(address admin, address payable target, address newLogic) public payable {
         ProxyAdmin(admin).upgrade(TransparentUpgradeableProxy(target), newLogic);
     }
 }

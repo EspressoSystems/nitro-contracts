@@ -48,9 +48,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
-import {
-    AutomataDcapAttestation
-} from "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
+import {EspressoTEEVerifier} from "../bridge/EspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -96,7 +94,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     IOwnable public rollup;
 
     // TEE attestation contract
-    AutomataDcapAttestation attest;
+    EspressoTEEVerifier espressoTEEVerifier;
 
     mapping(address => bool) public isBatchPoster;
 
@@ -138,12 +136,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
-    constructor(
-        uint256 _maxDataSize,
-        IReader4844 reader4844_,
-        bool _isUsingFeeToken,
-        address _attest
-    ) {
+    constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
         maxDataSize = _maxDataSize;
         if (hostChainIsArbitrum) {
             if (reader4844_ != IReader4844(address(0))) revert DataBlobsNotSupported();
@@ -152,7 +145,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
         reader4844 = reader4844_;
         isUsingFeeToken = _isUsingFeeToken;
-        attest = AutomataDcapAttestation(_attest);
     }
 
     function _chainIdChanged() internal view returns (bool) {
@@ -193,7 +185,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     function initialize(
         IBridge bridge_,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
+        address _espressoTEEVerifier
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -214,6 +207,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         rollup = bridge_.rollup();
 
         _setMaxTimeVariation(maxTimeVariation_);
+        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -362,7 +356,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+        (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
         if (!success) {
             string memory errorMessage = string(output);
             revert InvalidTEEAttestationQuote(errorMessage);
@@ -419,7 +413,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         // Check that the attestation quote is valid
-        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+        (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
         if (!success) {
             string memory errorMessage = string(output);
             revert InvalidTEEAttestationQuote(errorMessage);
@@ -490,7 +484,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
         //  If address is rollup skip the batch poster check
         if (isBatchPoster[msg.sender]) {
-            (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+            (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
             if (!success) {
                 string memory errorMessage = string(output);
                 revert InvalidTEEAttestationQuote(errorMessage);
@@ -800,6 +794,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setBatchPosterManager(address newBatchPosterManager) external onlyRollupOwner {
         batchPosterManager = newBatchPosterManager;
         emit OwnerFunctionCalled(5);
+    }
+
+    function setEspressoTEEVerifier(address _espressoTEEVerifier) external onlyRollupOwner {
+        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
+        emit OwnerFunctionCalled(6);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
