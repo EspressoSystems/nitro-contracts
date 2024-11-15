@@ -7,6 +7,7 @@ import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
+import '@nomicfoundation/hardhat-foundry'
 // import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
 
@@ -21,7 +22,7 @@ const solidity = {
           enabled: true,
           runs: 1,
         },
-        viaIR: true
+        viaIR: true,
       },
     },
   ],
@@ -215,6 +216,6 @@ module.exports = {
     target: 'ethers-v5',
   },
   contractSizer: {
-    strict: true
-  }
+    strict: true,
+  },
 }
