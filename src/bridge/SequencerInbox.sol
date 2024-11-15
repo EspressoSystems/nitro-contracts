@@ -30,7 +30,8 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
-    InvalidCelestiaBatch
+    InvalidCelestiaBatch,
+    InvalidTEEAttestationQuote
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -47,7 +48,9 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
-import "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
+import {
+    AutomataDcapAttestation
+} from "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -111,15 +114,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     modifier onlyRollupOwnerOrBatchPosterManager() {
         if (msg.sender != rollup.owner() && msg.sender != batchPosterManager) {
             revert NotBatchPosterManager(msg.sender);
-        }
-        _;
-    }
-
-    modifier onlyValidQuote(bytes32 quote) {
-        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
-        if (!success) {
-            string memory errorMessage = string(output);
-            revert InvalidTEEAttestationQuote(errorMessage);
         }
         _;
     }
@@ -361,11 +355,19 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256 newMessageCount,
+        bytes memory quote
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+        if (!success) {
+            string memory errorMessage = string(output);
+            revert InvalidTEEAttestationQuote(errorMessage);
+        }
+
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead
@@ -414,8 +416,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount,
         bytes memory quote
-    ) external refundsGas(gasRefunder, reader4844) onlyValidQuote(quote) {
+    ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+        // Check that the attestation quote is valid
+        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+        if (!success) {
+            string memory errorMessage = string(output);
+            revert InvalidTEEAttestationQuote(errorMessage);
+        }
+
         (
             bytes32 dataHash,
             IBridge.TimeBounds memory timeBounds,
@@ -477,8 +486,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount,
         bytes memory quote
-    ) external override refundsGas(gasRefunder, IReader4844(address(0))) onlyValidQuote(quote) {
+    ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
+        //  If address is rollup skip the batch poster check
+        if (isBatchPoster[msg.sender]) {
+            (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+            if (!success) {
+                string memory errorMessage = string(output);
+                revert InvalidTEEAttestationQuote(errorMessage);
+            }
+        }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead

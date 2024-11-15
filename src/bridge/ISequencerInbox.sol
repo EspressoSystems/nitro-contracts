@@ -165,7 +165,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256 newMessageCount,
+        bytes memory quote
     ) external;
 
     function addSequencerL2Batch(
@@ -174,7 +175,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256 newMessageCount,
+        bytes memory quote
     ) external;
 
     function addSequencerL2BatchFromBlobs(
@@ -182,7 +184,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256 newMessageCount,
+        bytes memory quote
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
