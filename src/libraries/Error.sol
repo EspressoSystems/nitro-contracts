@@ -199,3 +199,6 @@ error BadMaxTimeVariation();
 
 /// @dev Thrown when Blobstream verification fails for a Celestia Data Root
 error InvalidCelestiaBatch();
+
+/// @dev Thrown when the TEE Attestation quote is invalid
+error InvalidTEEAttestationQuote();

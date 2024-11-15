@@ -47,6 +47,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
+import "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -91,6 +92,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     IOwnable public rollup;
 
+    // TEE attestation contract
+    AutomataDcapAttestation attest;
+
     mapping(address => bool) public isBatchPoster;
 
     // we previously stored the max time variation in a (uint,uint,uint,uint) struct here
@@ -107,6 +111,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     modifier onlyRollupOwnerOrBatchPosterManager() {
         if (msg.sender != rollup.owner() && msg.sender != batchPosterManager) {
             revert NotBatchPosterManager(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyValidQuote(bytes32 quote) {
+        (bool success, bytes memory output) = attest.verifyAndAttestOnChain(quote);
+        if (!success) {
+            string memory errorMessage = string(output);
+            revert InvalidTEEAttestationQuote(errorMessage);
         }
         _;
     }
@@ -131,7 +144,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
-    constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
+    constructor(
+        uint256 _maxDataSize,
+        IReader4844 reader4844_,
+        bool _isUsingFeeToken,
+        address _attest
+    ) {
         maxDataSize = _maxDataSize;
         if (hostChainIsArbitrum) {
             if (reader4844_ != IReader4844(address(0))) revert DataBlobsNotSupported();
@@ -140,6 +158,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
         reader4844 = reader4844_;
         isUsingFeeToken = _isUsingFeeToken;
+        attest = AutomataDcapAttestation(_attest);
     }
 
     function _chainIdChanged() internal view returns (bool) {
@@ -393,8 +412,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
-    ) external refundsGas(gasRefunder, reader4844) {
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external refundsGas(gasRefunder, reader4844) onlyValidQuote(quote) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         (
             bytes32 dataHash,
@@ -455,8 +475,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
-    ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external override refundsGas(gasRefunder, IReader4844(address(0))) onlyValidQuote(quote) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
