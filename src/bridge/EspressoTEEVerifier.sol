@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import {
     AutomataDcapAttestation
-} from "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
+} from "@automata-network/dcap-attestation/contracts/AutomataDcapAttestation.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-
 /**
  *
  * @title  Verifies quotes from the TEE and attests on-chain
@@ -15,7 +14,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract EspressoTEEVerifier is Initializable {
     // TEE attestation contract
-    AutomataDcapAttestation attest;
+    AutomataDcapAttestation public attest;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -36,4 +35,14 @@ contract EspressoTEEVerifier is Initializable {
         // TODO: add more verification logic
         return attest.verifyAndAttestOnChain(quote);
     }
+
+    /*
+     *   set the attestation contract
+     */
+
+    function setAttestationContract(address _attest) external {
+        attest = AutomataDcapAttestation(_attest);
+    }
 }
+
+//  TODO: check how to add ownable to the contract to be able to change the attestation contract?

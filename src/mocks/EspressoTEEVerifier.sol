@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {
     AutomataDcapAttestation
-} from "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
+} from "@automata-network/dcap-attestation/contracts/AutomataDcapAttestation.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract EspressoTEEVerifierTest is Initializable {
     // TEE attestation contract
-    AutomataDcapAttestation attest;
+    AutomataDcapAttestation public attest;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {

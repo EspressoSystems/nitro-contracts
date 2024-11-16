@@ -238,7 +238,9 @@ describe('SequencerInbox', async () => {
     const inboxFac = new Inbox__factory(deployer)
     const inboxTemplate = await inboxFac.deploy(117964)
 
-    const _espressoTEEVerifierFac = await new EspressoTEEVerifierTest__factory()
+    const _espressoTEEVerifierFac = await new EspressoTEEVerifierTest__factory(
+      deployer
+    )
     const espressoTEEVerifierTemplate = await _espressoTEEVerifierFac.deploy()
 
     const bridgeFac = new Bridge__factory(deployer)
