@@ -7,7 +7,7 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import "../../src/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierTest} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract RollupMock {
     address public immutable owner;
@@ -67,7 +67,18 @@ contract SequencerInboxTest is Test {
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
         bridge.setDelayedInbox(dummyInbox, true);
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
 
         SequencerInbox seqInboxImpl = new SequencerInbox(
             maxDataSize,
@@ -106,8 +117,18 @@ contract SequencerInboxTest is Test {
             abi.encodeWithSelector(ArbSys.arbOSVersion.selector),
             abi.encode(uint256(11))
         );
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
 
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         SequencerInbox seqInboxImpl = new SequencerInbox(
             maxDataSize,
             IReader4844(address(0)),
@@ -282,7 +303,20 @@ contract SequencerInboxTest is Test {
             address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, ""))
         );
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
@@ -298,7 +332,20 @@ contract SequencerInboxTest is Test {
         );
         address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
+
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
@@ -313,7 +360,20 @@ contract SequencerInboxTest is Test {
             address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, ""))
         );
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -327,7 +387,18 @@ contract SequencerInboxTest is Test {
         );
         address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 

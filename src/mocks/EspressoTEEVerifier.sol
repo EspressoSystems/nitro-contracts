@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     AutomataDcapAttestation
 } from "@automata-network/dcap-attestation/AutomataDcapAttestation.sol";
-import "../libraries/DelegateCallAware.sol";
-import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  *
@@ -14,11 +13,16 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
  *         to verify the quote and attest on-chain. Along with some additional verification logic.
  */
 
-contract EspressoTEEVerifierTest {
+contract EspressoTEEVerifierTest is Initializable {
     // TEE attestation contract
     AutomataDcapAttestation attest;
 
-    constructor(address _attest) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _attest) public initializer {
         attest = AutomataDcapAttestation(_attest);
     }
 

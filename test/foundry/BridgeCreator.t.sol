@@ -8,7 +8,8 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import "../../src/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierTest} from "../../src/mocks/EspressoTEEVerifier.sol";
+
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;
     address public owner = address(100);
@@ -122,7 +123,20 @@ contract BridgeCreatorTest is Test {
             40
         );
         timeVars.delayBlocks;
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
@@ -194,7 +208,20 @@ contract BridgeCreatorTest is Test {
             40
         );
         timeVars.delayBlocks; // TODO: what is this?
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,

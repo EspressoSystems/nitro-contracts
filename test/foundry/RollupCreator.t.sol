@@ -19,7 +19,7 @@ import "../../src/rollup/DeployHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import "../../src/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierTest} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -91,7 +91,7 @@ contract RollupCreatorTest is Test {
 
     function test_createEthRollup() public {
         vm.startPrank(deployer);
-
+        address proxyAdmin = address(140);
         // deployment params
         ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
             ((60 * 60 * 24) / 15),
@@ -125,7 +125,19 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -244,6 +256,7 @@ contract RollupCreatorTest is Test {
 
     function test_createErc20Rollup() public {
         vm.startPrank(deployer);
+        address proxyAdmin = address(140);
         address nativeToken = address(
             new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000 ether, deployer)
         );
@@ -282,7 +295,20 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -403,7 +429,7 @@ contract RollupCreatorTest is Test {
 
     function test_upgrade() public {
         vm.startPrank(deployer);
-
+        address proxyAdminEspresso = address(140);
         // deployment params
         ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
             ((60 * 60 * 24) / 15),
@@ -436,7 +462,19 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        EspressoTEEVerifierTest espressoTEEVerifier = new EspressoTEEVerifierTest(address(0));
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdminEspresso,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
