@@ -3,4 +3,4 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/automata-dcap-attestation"]
 	path = lib/automata-dcap-attestation
-	url = https://github.com/automata-network/automata-dcap-attestation
+	url = https://github.com/EspressoSystems/automata-dcap-attestation
