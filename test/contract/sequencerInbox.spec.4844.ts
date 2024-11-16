@@ -238,12 +238,8 @@ describe('SequencerInbox', async () => {
     const inboxFac = new Inbox__factory(deployer)
     const inboxTemplate = await inboxFac.deploy(117964)
 
-    const _espressoTEEVerifierFac = await new EspressoTEEVerifierTest__factory(
-      deployer
-    )
-    const espressoTEEVerifierTemplate = await _espressoTEEVerifierFac.deploy(
-      '0x0000000000000000000000000000000000000000'
-    )
+    const _espressoTEEVerifierFac = await new EspressoTEEVerifierTest__factory()
+    const espressoTEEVerifierTemplate = await _espressoTEEVerifierFac.deploy()
 
     const bridgeFac = new Bridge__factory(deployer)
     const bridgeTemplate = await bridgeFac.deploy()
@@ -292,6 +288,15 @@ describe('SequencerInbox', async () => {
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
 
+    const espressoTEEVerifier = await _espressoTEEVerifierFac
+      .attach(espressoTEEVerifierProxy.address)
+      .connect(user)
+
+    await (
+      await espressoTEEVerifier.initialize(
+        '0x0000000000000000000000000000000000000000'
+      )
+    ).wait()
     await (
       await sequencerInbox.initialize(
         bridgeProxy.address,
