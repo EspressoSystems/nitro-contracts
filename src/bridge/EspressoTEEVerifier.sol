@@ -4,7 +4,10 @@ pragma solidity ^0.8.0;
 import {
     AutomataDcapAttestation
 } from "@automata-network/dcap-attestation/contracts/AutomataDcapAttestation.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 /**
  *
  * @title  Verifies quotes from the TEE and attests on-chain
@@ -12,7 +15,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
  *         to verify the quote and attest on-chain. Along with some additional verification logic.
  */
 
-contract EspressoTEEVerifier is Initializable {
+contract EspressoTEEVerifier is Initializable, OwnableUpgradeable {
     // TEE attestation contract
     AutomataDcapAttestation public attest;
 
@@ -23,6 +26,7 @@ contract EspressoTEEVerifier is Initializable {
 
     function initialize(address _attest) public initializer {
         attest = AutomataDcapAttestation(_attest);
+        __Ownable_init();
     }
 
     /**
@@ -40,9 +44,7 @@ contract EspressoTEEVerifier is Initializable {
      *   set the attestation contract
      */
 
-    function setAttestationContract(address _attest) external {
+    function setAttestationContract(address _attest) external onlyOwner {
         attest = AutomataDcapAttestation(_attest);
     }
 }
-
-//  TODO: check how to add ownable to the contract to be able to change the attestation contract?

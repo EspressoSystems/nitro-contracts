@@ -49,7 +49,7 @@
   "dependencies": {
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
     "@openzeppelin/contracts": "4.8.0",
-    "@openzeppelin/contracts-upgradeable": "4.5.2",
+    "@openzeppelin/contracts-upgradeable": "4.8.0",
     "patch-package": "^6.4.7",
     "solady": "0.0.182"
   },
