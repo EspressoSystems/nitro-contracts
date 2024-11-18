@@ -412,13 +412,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes memory quote
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-        // Check that the attestation quote is valid
-        (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
-        if (!success) {
-            string memory errorMessage = string(output);
-            revert InvalidTEEAttestationQuote(errorMessage);
-        }
-
         (
             bytes32 dataHash,
             IBridge.TimeBounds memory timeBounds,
