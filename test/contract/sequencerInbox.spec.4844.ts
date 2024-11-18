@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierTest__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -227,7 +228,10 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
-
+    const espressoTEEVerifierInboxFac = new EspressoTEEVerifierTest__factory(
+      deployer
+    )
+    const espressoTEEVerifierInbox = await espressoTEEVerifierInboxFac.deploy()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
@@ -242,6 +246,7 @@ describe('SequencerInbox', async () => {
     await rollupMock.deployed()
     await inboxTemplate.deployed()
     await bridgeTemplate.deployed()
+    await espressoTEEVerifierInbox.deployed()
     await seqInboxTemplate.deployed()
 
     const transparentUpgradeableProxyFac =
@@ -252,6 +257,12 @@ describe('SequencerInbox', async () => {
       adminAddr,
       '0x'
     )
+    const espressoTEEVerifierProxy =
+      await transparentUpgradeableProxyFac.deploy(
+        espressoTEEVerifierInbox.address,
+        adminAddr,
+        '0x'
+      )
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -264,23 +275,36 @@ describe('SequencerInbox', async () => {
     )
     await bridgeProxy.deployed()
     await inboxProxy.deployed()
+    await espressoTEEVerifierProxy.deployed()
     await sequencerInboxProxy.deployed()
 
     const bridge = await bridgeFac.attach(bridgeProxy.address).connect(user)
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
+    const espressoTEEVerifier = await espressoTEEVerifierInboxFac
+      .attach(espressoTEEVerifierProxy.address)
+      .connect(user)
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
     await (
-      await sequencerInbox.initialize(bridgeProxy.address, {
-        delayBlocks: maxDelayBlocks,
-        delaySeconds: maxDelayTime,
-        futureBlocks: 10,
-        futureSeconds: 3000,
-      })
+      await espressoTEEVerifier.initialize(
+        '0x0000000000000000000000000000000000000000'
+      )
+    ).wait()
+    await (
+      await sequencerInbox.initialize(
+        bridgeProxy.address,
+        {
+          delayBlocks: maxDelayBlocks,
+          delaySeconds: maxDelayTime,
+          futureBlocks: 10,
+          futureSeconds: 3000,
+        },
+        espressoTEEVerifier.address
+      )
     ).wait()
 
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
@@ -366,14 +390,15 @@ describe('SequencerInbox', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
         ](
           await bridge.sequencerMessageCount(),
           '0x0042',
           await bridge.delayedMessageCount(),
           gasRefunder.address,
           subMessageCount,
-          subMessageCount.add(1)
+          subMessageCount.add(1),
+          '0x'
         )
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {
-    AutomataDcapAttestation
-} from "@automata-network/dcap-attestation/contracts/AutomataDcapAttestation.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {
     OwnableUpgradeable
@@ -17,15 +14,13 @@ import {
 
 contract EspressoTEEVerifierTest is Initializable, OwnableUpgradeable {
     // TEE attestation contract
-    AutomataDcapAttestation public attest;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address _attest) public initializer {
-        attest = AutomataDcapAttestation(_attest);
+    function initialize(address _attestationContract) public initializer {
         __Ownable_init();
     }
 
@@ -37,13 +32,5 @@ contract EspressoTEEVerifierTest is Initializable, OwnableUpgradeable {
      */
     function verify(bytes memory quote) external view returns (bool success, bytes memory output) {
         return (true, "");
-    }
-
-    /*
-     *   set the attestation contract
-     */
-
-    function setAttestationContract(address _attest) external onlyOwner {
-        attest = AutomataDcapAttestation(_attest);
     }
 }

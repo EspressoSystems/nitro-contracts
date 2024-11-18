@@ -23,6 +23,14 @@ jobs:
         with:
           version: nightly
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
@@ -32,9 +40,6 @@ jobs:
 
       - name: Install packages
         run: yarn
-
-      - name: Source env
-        run: source .env.sample.goerli
 
       - name: Build
         run: forge test
@@ -54,6 +59,20 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
+      - name: Run unused Solidity errors checker
+        uses: OffchainLabs/actions/check-unused-errors@main
+        with:
+          directory: './src'
+          exceptions_file: './test/unused-errors/exceptions.txt'
 
       - name: Setup nodejs
         uses: actions/setup-node@v2
@@ -79,9 +98,6 @@ jobs:
       - name: Build
         run: yarn build:all
 
-      - name: Source env
-        run: source .env.sample.goerli
-
       - name: Run tests
         run: yarn hardhat --network hardhat test test/contract/*.spec.ts
 
@@ -99,12 +115,6 @@ jobs:
 
       - name: Test function signatures
         run: yarn run test:signatures
-
-      - name: Run unused Solidity errors checker
-        uses: OffchainLabs/actions/check-unused-errors@main
-        with:
-          directory: './src'
-          exceptions_file: './test/unused-errors/exceptions.txt'
 
       - name: Run coverage
         run: yarn hardhat coverage --testfiles "test/contract/*.spec.ts"
@@ -128,6 +138,14 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
 
       - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
@@ -158,12 +176,20 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
+          args: --espresso --latest-espresso-image
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-testnode-ref: integration
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -172,14 +198,19 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
       - name: Install packages
         run: yarn
 
       - name: Compile contracts
         run: yarn build
-
-      - name: Source env
-        run: source .env.sample.goerli
 
       - name: Run e2e tests
         run: yarn test:e2e
@@ -191,13 +222,20 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
-          args: --l3-fee-token
+          args: --l3-fee-token --espresso --latest-espresso-image
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-testnode-ref: integration
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -206,14 +244,19 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
       - name: Install packages
         run: yarn
 
       - name: Compile contracts
         run: yarn build
-
-      - name: Source env
-        run: source .env.sample.goerli
 
       - name: Run e2e tests
         run: yarn test:e2e
@@ -225,13 +268,20 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
         with:
           l3-node: true
-          args: --l3-fee-token --l3-fee-token-decimals 6
+          args: --espresso --latest-espresso-image --l3-fee-token --l3-fee-token-decimals 6
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-testnode-ref: 'integration'
+          nitro-testnode-repo: EspressoSystems/nitro-testnode
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -240,14 +290,19 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
       - name: Install packages
         run: yarn
 
       - name: Compile contracts
         run: yarn build
-
-      - name: Source env
-        run: source .env.sample.goerli
 
       - name: Run e2e tests
         run: yarn test:e2e

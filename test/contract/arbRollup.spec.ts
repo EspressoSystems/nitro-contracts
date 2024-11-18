@@ -47,6 +47,9 @@ import {
   SequencerInbox,
   SequencerInbox__factory,
   Bridge,
+  EspressoTEEVerifierTest__factory,
+  TransparentUpgradeableProxy__factory,
+  TransparentUpgradeableProxy,
 } from '../../build/types'
 import {
   abi as UpgradeExecutorABI,
@@ -72,6 +75,7 @@ import { constants, providers } from 'ethers'
 import { blockStateHash, MachineStatus } from './common/challengeLib'
 import * as globalStateLib from './common/globalStateLib'
 import { RollupChallengeStartedEvent } from '../../build/types/src/rollup/IRollupCore'
+import { Address } from '@arbitrum/sdk'
 
 const zerobytes32 = ethers.constants.HashZero
 const stakeRequirement = 10
@@ -97,9 +101,11 @@ let admin: Signer
 let sequencer: Signer
 let challengeManager: ChallengeManager
 let upgradeExecutor: string
+let espressoTEEVerifierProxy: TransparentUpgradeableProxy
 // let adminproxy: string
 
 async function getDefaultConfig(
+  espressoTEEVerifier: string,
   _confirmPeriodBlocks = confirmationPeriodBlocks
 ): Promise<ConfigStruct> {
   return {
@@ -119,6 +125,7 @@ async function getDefaultConfig(
     wasmModuleRoot: wasmModuleRoot,
     loserStakeEscrow: ZERO_ADDR,
     genesisBlockNum: 0,
+    espressoTEEVerifier,
   }
 }
 
@@ -187,6 +194,25 @@ const setup = async () => {
     'Bridge'
   )) as Bridge__factory
   const ethBridge = await ethBridgeFac.deploy()
+
+  const espressoTEEVerifierFac = (await ethers.getContractFactory(
+    'EspressoTEEVerifierTest'
+  )) as EspressoTEEVerifierTest__factory
+  const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+  await espressoTEEVerifier.deployed()
+  const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
+    'TransparentUpgradeableProxy'
+  )) as TransparentUpgradeableProxy__factory
+  const adminAddress = await admin.getAddress()
+  espressoTEEVerifierProxy = await transparentUpgradeableProxyFac.deploy(
+    espressoTEEVerifier.address,
+    adminAddress,
+    '0x'
+  )
+  await espressoTEEVerifierProxy.deployed()
+  await espressoTEEVerifierFac
+    .attach(espressoTEEVerifierProxy.address)
+    .connect(user)
 
   const ethSequencerInboxFac = (await ethers.getContractFactory(
     'SequencerInbox'
@@ -286,7 +312,7 @@ const setup = async () => {
   const maxFeePerGas = BigNumber.from('1000000000')
 
   const deployParams = {
-    config: await getDefaultConfig(),
+    config: await getDefaultConfig(espressoTEEVerifierProxy.address),
     batchPosters: [await sequencer.getAddress()],
     validators: [
       await val1.getAddress(),
@@ -550,7 +576,7 @@ describe('ArbRollup', () => {
     await expect(
       rollupAdmin
         .connect(await impersonateAccount(upgradeExecutor))
-        .initialize(await getDefaultConfig(), {
+        .initialize(await getDefaultConfig(espressoTEEVerifierProxy.address), {
           challengeManager: constants.AddressZero,
           bridge: constants.AddressZero,
           inbox: constants.AddressZero,
@@ -1363,18 +1389,21 @@ describe('ArbRollup', () => {
     )
     const proxyPrimaryImpl = rollupAdminLogicFac.attach(proxyPrimaryTarget)
     await expect(
-      proxyPrimaryImpl.initialize(await getDefaultConfig(), {
-        challengeManager: constants.AddressZero,
-        bridge: constants.AddressZero,
-        inbox: constants.AddressZero,
-        outbox: constants.AddressZero,
-        rollupAdminLogic: constants.AddressZero,
-        rollupEventInbox: constants.AddressZero,
-        rollupUserLogic: constants.AddressZero,
-        sequencerInbox: constants.AddressZero,
-        validatorUtils: constants.AddressZero,
-        validatorWalletCreator: constants.AddressZero,
-      })
+      proxyPrimaryImpl.initialize(
+        await getDefaultConfig(espressoTEEVerifierProxy.address),
+        {
+          challengeManager: constants.AddressZero,
+          bridge: constants.AddressZero,
+          inbox: constants.AddressZero,
+          outbox: constants.AddressZero,
+          rollupAdminLogic: constants.AddressZero,
+          rollupEventInbox: constants.AddressZero,
+          rollupUserLogic: constants.AddressZero,
+          sequencerInbox: constants.AddressZero,
+          validatorUtils: constants.AddressZero,
+          validatorWalletCreator: constants.AddressZero,
+        }
+      )
     ).to.be.revertedWith('Function must be called through delegatecall')
   })
 
@@ -1481,7 +1510,8 @@ describe('ArbRollup', () => {
         0,
         ethers.constants.AddressZero,
         0,
-        0
+        0,
+        '0x'
       )
     ).to.revertedWith('NotBatchPoster')
   })

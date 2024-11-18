@@ -99,6 +99,19 @@ contract RollupCreatorTest is Test {
             60 * 60 * 24,
             60 * 60
         );
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         Config memory config = Config({
             confirmPeriodBlocks: 20,
             extraChallengeTimeBlocks: 200,
@@ -110,7 +123,8 @@ contract RollupCreatorTest is Test {
             chainId: 1337,
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
-            sequencerInboxMaxTimeVariation: timeVars
+            sequencerInboxMaxTimeVariation: timeVars,
+            espressoTEEVerifier: address(espressoTEEVerifier)
         });
 
         // prepare funds
@@ -126,18 +140,6 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
-
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -147,8 +149,7 @@ contract RollupCreatorTest is Test {
                 nativeToken: address(0),
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager,
-                espressoTEEVerifier: address(espressoTEEVerifier)
+                batchPosterManager: batchPosterManager
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
@@ -268,6 +269,21 @@ contract RollupCreatorTest is Test {
             60 * 60 * 24,
             60 * 60
         );
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdmin,
+                    ""
+                )
+            )
+        );
+
+        espressoTEEVerifier.initialize(address(0));
+
         Config memory config = Config({
             confirmPeriodBlocks: 20,
             extraChallengeTimeBlocks: 200,
@@ -279,7 +295,8 @@ contract RollupCreatorTest is Test {
             chainId: 1337,
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
-            sequencerInboxMaxTimeVariation: timeVars
+            sequencerInboxMaxTimeVariation: timeVars,
+            espressoTEEVerifier: address(espressoTEEVerifier)
         });
 
         // approve fee token to pay for deployment of L2 factories
@@ -296,19 +313,6 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
-
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-
-        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -318,8 +322,7 @@ contract RollupCreatorTest is Test {
                 nativeToken: nativeToken,
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager,
-                espressoTEEVerifier: address(espressoTEEVerifier)
+                batchPosterManager: batchPosterManager
             });
 
         address rollupAddress = rollupCreator.createRollup(deployParams);
@@ -437,6 +440,19 @@ contract RollupCreatorTest is Test {
             60 * 60 * 24,
             60 * 60
         );
+
+        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+
+        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(espressoTEEVerifierImplementation),
+                    proxyAdminEspresso,
+                    ""
+                )
+            )
+        );
+        espressoTEEVerifier.initialize(address(0));
         Config memory config = Config({
             confirmPeriodBlocks: 20,
             extraChallengeTimeBlocks: 200,
@@ -448,7 +464,8 @@ contract RollupCreatorTest is Test {
             chainId: 1337,
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
-            sequencerInboxMaxTimeVariation: timeVars
+            sequencerInboxMaxTimeVariation: timeVars,
+            espressoTEEVerifier: address(espressoTEEVerifier)
         });
 
         // prepare funds
@@ -463,18 +480,6 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
-
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdminEspresso,
-                    ""
-                )
-            )
-        );
-        espressoTEEVerifier.initialize(address(0));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -484,8 +489,7 @@ contract RollupCreatorTest is Test {
                 nativeToken: address(0),
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager,
-                espressoTEEVerifier: address(espressoTEEVerifier)
+                batchPosterManager: batchPosterManager
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams

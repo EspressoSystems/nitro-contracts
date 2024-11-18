@@ -43,7 +43,6 @@ contract RollupCreator is Ownable {
         //// @dev The address of the batch poster, not used when set to zero address
         address[] batchPosters;
         address batchPosterManager;
-        address espressoTEEVerifier;
     }
 
     BridgeCreator public bridgeCreator;
@@ -143,7 +142,7 @@ contract RollupCreator is Ownable {
             address(rollup),
             deployParams.nativeToken,
             deployParams.config.sequencerInboxMaxTimeVariation,
-            deployParams.espressoTEEVerifier
+            deployParams.config.espressoTEEVerifier
         );
 
         IChallengeManager challengeManager = IChallengeManager(

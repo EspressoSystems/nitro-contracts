@@ -133,7 +133,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
-    // TEE attestation contract
     EspressoTEEVerifier espressoTEEVerifier;
 
     constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
@@ -181,6 +180,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         __LEGACY_MAX_TIME_VARIATION.futureBlocks = 0;
         __LEGACY_MAX_TIME_VARIATION.delaySeconds = 0;
         __LEGACY_MAX_TIME_VARIATION.futureSeconds = 0;
+    }
+
+    function initialize(
+        IBridge bridge_,
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
+    ) external onlyDelegated {
+        revert Deprecated();
     }
 
     function initialize(
@@ -349,6 +355,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        revert Deprecated();
+    }
+
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
         uint256 newMessageCount,
         bytes memory quote
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
@@ -408,8 +425,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory quote
+        uint256 newMessageCount
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         (
@@ -463,6 +479,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender == tx.origin && !isUsingFeeToken) {
             submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
         }
+    }
+
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
+        revert Deprecated();
     }
 
     function addSequencerL2Batch(

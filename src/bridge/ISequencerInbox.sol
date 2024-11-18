@@ -165,8 +165,26 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external;
+
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
         uint256 newMessageCount,
         bytes memory quote
+    ) external;
+
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
     ) external;
 
     function addSequencerL2Batch(
@@ -184,8 +202,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory quote
+        uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
@@ -233,6 +250,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
     function updateRollupAddress() external;
 
     // ---------- initializer ----------
+
+    function initialize(IBridge bridge_, MaxTimeVariation calldata maxTimeVariation_) external;
 
     function initialize(
         IBridge bridge_,
