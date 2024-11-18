@@ -293,16 +293,24 @@ describe('SequencerInboxForceInclude', async () => {
         '0x0000000000000000000000000000000000000000'
       )
     ).wait()
-    await sequencerInbox.initialize(
-      bridgeProxy.address,
-      {
-        delayBlocks: maxDelayBlocks,
-        delaySeconds: maxDelayTime,
-        futureBlocks: 10,
-        futureSeconds: 3000,
-      },
-      espressoTEEVerifier.address
-    )
+
+    await (
+      await sequencerInbox
+        .connect(user)
+        .functions[
+          'initialize(address,(uint256,uint256,uint256,uint256),address)'
+        ](
+          bridgeProxy.address,
+          {
+            delayBlocks: maxDelayBlocks,
+            delaySeconds: maxDelayTime,
+            futureBlocks: 10,
+            futureSeconds: 3000,
+          },
+          espressoTEEVerifier.address,
+          { gasLimit: 10000000 }
+        )
+    ).wait()
 
     await (
       await sequencerInbox
