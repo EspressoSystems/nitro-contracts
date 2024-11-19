@@ -23,7 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
-  EspressoTEEVerifierTest__factory,
+  EspressoTEEVerifierMock__factory,
   Inbox,
   Inbox__factory,
   MessageTester,
@@ -248,10 +248,13 @@ describe('SequencerInboxForceInclude', async () => {
       'Bridge'
     )) as Bridge__factory
     const bridgeTemplate = await bridgeFac.deploy()
+
     const espressoTEEVerifierInboxFac = (await ethers.getContractFactory(
-      'EspressoTEEVerifierTest'
-    )) as EspressoTEEVerifierTest__factory
-    const espressoTEEVerifierInbox = await espressoTEEVerifierInboxFac.deploy()
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifier = await espressoTEEVerifierInboxFac.deploy()
+    await espressoTEEVerifier.deployed()
+
     const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
       'TransparentUpgradeableProxy'
     )) as TransparentUpgradeableProxy__factory
@@ -261,12 +264,7 @@ describe('SequencerInboxForceInclude', async () => {
       adminAddr,
       '0x'
     )
-    const espressoTEEVerifierProxy =
-      await transparentUpgradeableProxyFac.deploy(
-        espressoTEEVerifierInbox.address,
-        adminAddr,
-        '0x'
-      )
+
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -281,18 +279,11 @@ describe('SequencerInboxForceInclude', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
-    const espressoTEEVerifier = await espressoTEEVerifierInboxFac
-      .attach(espressoTEEVerifierProxy.address)
-      .connect(user)
+
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await bridge.initialize(rollup.address)
-    await (
-      await espressoTEEVerifier.initialize(
-        '0x0000000000000000000000000000000000000000'
-      )
-    ).wait()
 
     await (
       await sequencerInbox

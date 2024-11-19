@@ -19,7 +19,7 @@ import "../../src/rollup/DeployHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import {EspressoTEEVerifierTest} from "../../src/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -100,18 +100,8 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-        espressoTEEVerifier.initialize(address(0));
         Config memory config = Config({
             confirmPeriodBlocks: 20,
             extraChallengeTimeBlocks: 200,
@@ -270,19 +260,7 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
-
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-
-        espressoTEEVerifier.initialize(address(0));
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -441,18 +419,8 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdminEspresso,
-                    ""
-                )
-            )
-        );
-        espressoTEEVerifier.initialize(address(0));
         Config memory config = Config({
             confirmPeriodBlocks: 20,
             extraChallengeTimeBlocks: 200,

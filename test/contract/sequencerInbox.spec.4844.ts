@@ -23,7 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
-  EspressoTEEVerifierTest__factory,
+  EspressoTEEVerifierMock__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -228,10 +228,11 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
-    const espressoTEEVerifierInboxFac = new EspressoTEEVerifierTest__factory(
+    const espressoTEEVerifierFac = new EspressoTEEVerifierMock__factory(
       deployer
     )
-    const espressoTEEVerifierInbox = await espressoTEEVerifierInboxFac.deploy()
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    await espressoTEEVerifier.deployed()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
@@ -246,7 +247,6 @@ describe('SequencerInbox', async () => {
     await rollupMock.deployed()
     await inboxTemplate.deployed()
     await bridgeTemplate.deployed()
-    await espressoTEEVerifierInbox.deployed()
     await seqInboxTemplate.deployed()
 
     const transparentUpgradeableProxyFac =
@@ -257,12 +257,7 @@ describe('SequencerInbox', async () => {
       adminAddr,
       '0x'
     )
-    const espressoTEEVerifierProxy =
-      await transparentUpgradeableProxyFac.deploy(
-        espressoTEEVerifierInbox.address,
-        adminAddr,
-        '0x'
-      )
+
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -275,25 +270,17 @@ describe('SequencerInbox', async () => {
     )
     await bridgeProxy.deployed()
     await inboxProxy.deployed()
-    await espressoTEEVerifierProxy.deployed()
     await sequencerInboxProxy.deployed()
 
     const bridge = await bridgeFac.attach(bridgeProxy.address).connect(user)
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
-    const espressoTEEVerifier = await espressoTEEVerifierInboxFac
-      .attach(espressoTEEVerifierProxy.address)
-      .connect(user)
+
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
-    await (
-      await espressoTEEVerifier.initialize(
-        '0x0000000000000000000000000000000000000000'
-      )
-    ).wait()
 
     await (
       await sequencerInbox

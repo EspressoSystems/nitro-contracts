@@ -47,9 +47,8 @@ import {
   SequencerInbox,
   SequencerInbox__factory,
   Bridge,
-  EspressoTEEVerifierTest__factory,
-  TransparentUpgradeableProxy__factory,
-  TransparentUpgradeableProxy,
+  EspressoTEEVerifierMock__factory,
+  EspressoTEEVerifierMock,
 } from '../../build/types'
 import {
   abi as UpgradeExecutorABI,
@@ -101,8 +100,7 @@ let admin: Signer
 let sequencer: Signer
 let challengeManager: ChallengeManager
 let upgradeExecutor: string
-let espressoTEEVerifierProxy: TransparentUpgradeableProxy
-// let adminproxy: string
+let espressoTEEVerifier: EspressoTEEVerifierMock
 
 async function getDefaultConfig(
   espressoTEEVerifier: string,
@@ -196,23 +194,12 @@ const setup = async () => {
   const ethBridge = await ethBridgeFac.deploy()
 
   const espressoTEEVerifierFac = (await ethers.getContractFactory(
-    'EspressoTEEVerifierTest'
-  )) as EspressoTEEVerifierTest__factory
+    'EspressoTEEVerifierMock'
+  )) as EspressoTEEVerifierMock__factory
+
   const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+
   await espressoTEEVerifier.deployed()
-  const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
-    'TransparentUpgradeableProxy'
-  )) as TransparentUpgradeableProxy__factory
-  const adminAddress = await admin.getAddress()
-  espressoTEEVerifierProxy = await transparentUpgradeableProxyFac.deploy(
-    espressoTEEVerifier.address,
-    adminAddress,
-    '0x'
-  )
-  await espressoTEEVerifierProxy.deployed()
-  await espressoTEEVerifierFac
-    .attach(espressoTEEVerifierProxy.address)
-    .connect(user)
 
   const ethSequencerInboxFac = (await ethers.getContractFactory(
     'SequencerInbox'
@@ -312,7 +299,7 @@ const setup = async () => {
   const maxFeePerGas = BigNumber.from('1000000000')
 
   const deployParams = {
-    config: await getDefaultConfig(espressoTEEVerifierProxy.address),
+    config: await getDefaultConfig(espressoTEEVerifier.address),
     batchPosters: [await sequencer.getAddress()],
     validators: [
       await val1.getAddress(),
@@ -576,7 +563,7 @@ describe('ArbRollup', () => {
     await expect(
       rollupAdmin
         .connect(await impersonateAccount(upgradeExecutor))
-        .initialize(await getDefaultConfig(espressoTEEVerifierProxy.address), {
+        .initialize(await getDefaultConfig(espressoTEEVerifier.address), {
           challengeManager: constants.AddressZero,
           bridge: constants.AddressZero,
           inbox: constants.AddressZero,
@@ -1390,7 +1377,7 @@ describe('ArbRollup', () => {
     const proxyPrimaryImpl = rollupAdminLogicFac.attach(proxyPrimaryTarget)
     await expect(
       proxyPrimaryImpl.initialize(
-        await getDefaultConfig(espressoTEEVerifierProxy.address),
+        await getDefaultConfig(espressoTEEVerifier.address),
         {
           challengeManager: constants.AddressZero,
           bridge: constants.AddressZero,
@@ -1504,15 +1491,9 @@ describe('ArbRollup', () => {
 
   it('should fail the batch poster check', async function () {
     await expect(
-      sequencerInbox.addSequencerL2Batch(
-        0,
-        '0x',
-        0,
-        ethers.constants.AddressZero,
-        0,
-        0,
-        '0x'
-      )
+      sequencerInbox.functions[
+        'addSequencerL2Batch(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](0, '0x', 0, ethers.constants.AddressZero, 0, 0, '0x')
     ).to.revertedWith('NotBatchPoster')
   })
 

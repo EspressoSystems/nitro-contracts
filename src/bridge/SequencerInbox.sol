@@ -373,10 +373,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
+        bool success = espressoTEEVerifier.verify(quote);
         if (!success) {
-            string memory errorMessage = string(output);
-            revert InvalidTEEAttestationQuote(errorMessage);
+            revert InvalidTEEAttestationQuote();
         }
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
@@ -504,10 +503,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
         //  If address is rollup skip the batch poster check
         if (isBatchPoster[msg.sender]) {
-            (bool success, bytes memory output) = espressoTEEVerifier.verify(quote);
+            bool success = espressoTEEVerifier.verify(quote);
             if (!success) {
-                string memory errorMessage = string(output);
-                revert InvalidTEEAttestationQuote(errorMessage);
+                revert InvalidTEEAttestationQuote();
             }
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(

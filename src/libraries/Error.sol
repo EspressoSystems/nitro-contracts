@@ -201,4 +201,4 @@ error BadMaxTimeVariation();
 error InvalidCelestiaBatch();
 
 /// @dev Thrown when the TEE Attestation quote is invalid
-error InvalidTEEAttestationQuote(string);
+error InvalidTEEAttestationQuote();

@@ -15,7 +15,6 @@ import {
   ERC20,
   ERC20Inbox__factory,
   ERC20__factory,
-  EspressoTEEVerifierTest__factory,
   EthVault__factory,
   IERC20Bridge__factory,
   IInbox__factory,
@@ -633,6 +632,7 @@ describe('Orbit Chain', () => {
   })
 
   //  TODO: Fill fix these in follow up PR's
+
   // it('can deploy deterministic factories to L2', async function () {
   //   const rollupCreator = RollupCreator__factory.connect(
   //     await _getRollupCreatorFromLogs(l1Provider),

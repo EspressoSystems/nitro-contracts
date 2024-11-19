@@ -8,7 +8,7 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import {EspressoTEEVerifierTest} from "../../src/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;
@@ -124,19 +124,8 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks;
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-
-        espressoTEEVerifier.initialize(address(0));
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
@@ -209,19 +198,8 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks; // TODO: what is this?
 
-        EspressoTEEVerifierTest espressoTEEVerifierImplementation = new EspressoTEEVerifierTest();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
-        EspressoTEEVerifierTest espressoTEEVerifier = EspressoTEEVerifierTest(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(espressoTEEVerifierImplementation),
-                    proxyAdmin,
-                    ""
-                )
-            )
-        );
-
-        espressoTEEVerifier.initialize(address(0));
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
