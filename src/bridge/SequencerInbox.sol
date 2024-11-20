@@ -133,7 +133,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
-    EspressoTEEVerifier espressoTEEVerifier;
+    EspressoTEEVerifier public espressoTEEVerifier;
 
     constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
         maxDataSize = _maxDataSize;
@@ -491,6 +491,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert Deprecated();
     }
 
+    /*
+     * addSequencerL2Batch is called by either the rollup admin or batch poster
+     * running in TEE to add a new L2 batch to the rollup
+     * @param sequenceNumber - the sequence number of the L2 batch
+     * @param data - the data of the L2 batch
+     * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
+     * @param gasRefunder - the gas refunder contract
+     * @param prevMessageCount - the number of messages in the previous L2 batch
+     * @param newMessageCount - the number of messages in the new L2 batch
+     * @param quote - the atttestation quote from the TEE
+     */
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -501,7 +512,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes memory quote
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
-        //  If address is rollup skip the batch poster check
+
+        // Only check the attestation quote if the batch has been posted by the
+        // batch poster
         if (isBatchPoster[msg.sender]) {
             bool success = espressoTEEVerifier.verify(quote);
             if (!success) {

@@ -410,7 +410,6 @@ contract RollupCreatorTest is Test {
 
     function test_upgrade() public {
         vm.startPrank(deployer);
-        address proxyAdminEspresso = address(140);
         // deployment params
         ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
             ((60 * 60 * 24) / 15),
