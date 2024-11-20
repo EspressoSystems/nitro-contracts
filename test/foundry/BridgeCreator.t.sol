@@ -8,13 +8,13 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;
     address public owner = address(100);
     uint256 public constant MAX_DATA_SIZE = 117_964;
     IReader4844 dummyReader4844 = IReader4844(address(137));
-
     BridgeCreator.BridgeContracts ethBasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new Bridge(),
@@ -124,11 +124,14 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks;
 
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
             nativeToken,
-            timeVars
+            timeVars,
+            address(espressoTEEVerifier)
         );
         (
             IBridge bridge,
@@ -195,11 +198,14 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks; // TODO: what is this?
 
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
             nativeToken,
-            timeVars
+            timeVars,
+            address(espressoTEEVerifier)
         );
         (
             IBridge bridge,

@@ -30,7 +30,8 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
-    InvalidCelestiaBatch
+    InvalidCelestiaBatch,
+    InvalidTEEAttestationQuote
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -47,6 +48,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
+import {EspressoTEEVerifier} from "../bridge/EspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -131,6 +133,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
+    EspressoTEEVerifier public espressoTEEVerifier;
+
     constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
         maxDataSize = _maxDataSize;
         if (hostChainIsArbitrum) {
@@ -182,6 +186,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IBridge bridge_,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
     ) external onlyDelegated {
+        revert Deprecated();
+    }
+
+    function initialize(
+        IBridge bridge_,
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
+        address _espressoTEEVerifier
+    ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
 
@@ -201,6 +213,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         rollup = bridge_.rollup();
 
         _setMaxTimeVariation(maxTimeVariation_);
+        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -344,9 +357,27 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        revert Deprecated();
+    }
+
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        bool success = espressoTEEVerifier.verify(quote);
+        if (!success) {
+            revert InvalidTEEAttestationQuote();
+        }
+
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead
@@ -457,7 +488,39 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
+        revert Deprecated();
+    }
+
+    /*
+     * addSequencerL2Batch is called by either the rollup admin or batch poster
+     * running in TEE to add a new L2 batch to the rollup
+     * @param sequenceNumber - the sequence number of the L2 batch
+     * @param data - the data of the L2 batch
+     * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
+     * @param gasRefunder - the gas refunder contract
+     * @param prevMessageCount - the number of messages in the previous L2 batch
+     * @param newMessageCount - the number of messages in the new L2 batch
+     * @param quote - the atttestation quote from the TEE
+     */
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
+
+        // Only check the attestation quote if the batch has been posted by the
+        // batch poster
+        if (isBatchPoster[msg.sender]) {
+            bool success = espressoTEEVerifier.verify(quote);
+            if (!success) {
+                revert InvalidTEEAttestationQuote();
+            }
+        }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead
@@ -762,6 +825,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setBatchPosterManager(address newBatchPosterManager) external onlyRollupOwner {
         batchPosterManager = newBatchPosterManager;
         emit OwnerFunctionCalled(5);
+    }
+
+    function setEspressoTEEVerifier(address _espressoTEEVerifier) external onlyRollupOwner {
+        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
+        emit OwnerFunctionCalled(6);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
