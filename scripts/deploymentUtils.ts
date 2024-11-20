@@ -244,7 +244,6 @@ export async function deployAllContracts(
     validatorWalletCreator,
     rollupCreator,
     deployHelper,
-    espressoTEEVerifierMock,
   }
 }
 
