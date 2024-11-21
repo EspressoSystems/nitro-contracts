@@ -24,6 +24,7 @@ export const config = {
       delaySeconds: ethers.BigNumber.from('86400'),
       futureSeconds: ethers.BigNumber.from('3600'),
     },
+    espressoTEEVerifier: '0xb562622f2D76F355D673560CB88c1dF6088702f1',
   },
   validators: [
     '0x1234123412341234123412341234123412341234',

@@ -184,6 +184,7 @@ export async function deployAllContracts(
     [],
     verify
   )
+
   const osp: Contract = await deployContract(
     'OneStepProofEntry',
     signer,
