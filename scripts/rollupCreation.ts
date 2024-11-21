@@ -102,7 +102,9 @@ export async function createRollup(
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
 
-    config.rollupConfig.espressoTEEVerifier = espressoTEEVerifierAddress
+    if (config && config.rollupConfig) {
+      config.rollupConfig.espressoTEEVerifier = espressoTEEVerifierAddress
+    }
 
     const deployParams = isDevDeployment
       ? await _getDevRollupConfig(
