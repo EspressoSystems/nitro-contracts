@@ -78,6 +78,7 @@ async function main() {
     'using RollupCreator',
     contracts.rollupCreator.address
   )
+
   const result = await createRollup(
     deployerWallet,
     true,

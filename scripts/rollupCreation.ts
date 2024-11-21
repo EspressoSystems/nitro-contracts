@@ -102,10 +102,6 @@ export async function createRollup(
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
 
-    if (config && config.rollupConfig) {
-      config.rollupConfig.espressoTEEVerifier = espressoTEEVerifierAddress
-    }
-
     const deployParams = isDevDeployment
       ? await _getDevRollupConfig(
           feeToken,
@@ -332,7 +328,7 @@ async function _getDevRollupConfig(
         delaySeconds: ethers.BigNumber.from('86400'),
         futureSeconds: ethers.BigNumber.from('3600'),
       },
-      espressoTEEVerifer: espressoTEEVerifierAddress,
+      espressoTEEVerifier: espressoTEEVerifierAddress,
     },
     validators: validators,
     maxDataSize: _maxDataSize,
