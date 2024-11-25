@@ -182,10 +182,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         __LEGACY_MAX_TIME_VARIATION.futureSeconds = 0;
     }
 
-    function initialize(
-        IBridge bridge_,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
-    ) external onlyDelegated {
+    function initialize(IBridge, ISequencerInbox.MaxTimeVariation calldata) external onlyDelegated {
         revert Deprecated();
     }
 
@@ -373,7 +370,18 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        bool success = espressoTEEVerifier.verify(quote);
+        // take keccak2256 hash of all the function arguments except the quote
+        bytes32 reportDataHash = keccak256(
+            abi.encodePacked(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount
+            )
+        );
+        bool success = espressoTEEVerifier.verify(quote, reportDataHash);
         if (!success) {
             revert InvalidTEEAttestationQuote();
         }
@@ -481,12 +489,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     function addSequencerL2Batch(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
+        uint256,
+        bytes calldata,
+        uint256,
         IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256,
+        uint256
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         revert Deprecated();
     }
@@ -516,7 +524,18 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // Only check the attestation quote if the batch has been posted by the
         // batch poster
         if (isBatchPoster[msg.sender]) {
-            bool success = espressoTEEVerifier.verify(quote);
+            // take keccak2256 hash of all the function arguments except the quote
+            bytes32 reportDataHash = keccak256(
+                abi.encodePacked(
+                    sequenceNumber,
+                    data,
+                    afterDelayedMessagesRead,
+                    address(gasRefunder),
+                    prevMessageCount,
+                    newMessageCount
+                )
+            );
+            bool success = espressoTEEVerifier.verify(quote, reportDataHash);
             if (!success) {
                 revert InvalidTEEAttestationQuote();
             }

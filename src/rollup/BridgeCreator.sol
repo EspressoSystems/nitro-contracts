@@ -80,10 +80,10 @@ contract BridgeCreator is Ownable {
 
     /// @dev Deprecated
     function createBridge(
-        address adminProxy,
-        address rollup,
-        address nativeToken,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation
+        address,
+        address,
+        address,
+        ISequencerInbox.MaxTimeVariation calldata
     ) external returns (BridgeContracts memory) {
         revert Deprecated();
     }

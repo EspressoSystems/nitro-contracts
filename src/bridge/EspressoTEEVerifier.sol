@@ -14,6 +14,12 @@ import {
     ENCLAVE_REPORT_LENGTH
 } from "@automata-network/dcap-attestation/contracts/types/Constants.sol";
 import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
+import {
+    V3QuoteVerifier
+} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
+import {BytesUtils} from "@automata-network/dcap-attestation/contracts/utils/BytesUtils.sol";
+import {Ownable} from "solady/auth/Ownable.sol";
+
 /**
  *
  * @title  Verifies quotes from the TEE and attests on-chain
@@ -21,28 +27,45 @@ import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/
  *         to verify the quote. Along with some additional verification logic.
  */
 
-contract EspressoTEEVerifier is V3QuoteVerifier {
-    constructor(address _router) V3QuoteVerifier(_router) {}
+contract EspressoTEEVerifier is Ownable {
+    using BytesUtils for bytes;
+    // TODO: add comments
+    V3QuoteVerifier public quoteVerifier;
+    bytes32 public mrEnclave;
+    bytes32 public mrSigner;
 
-    /**
+    constructor(bytes32 _mrEnclave, bytes32 _mrSigner, address _quoteVerifier) {
+        quoteVerifier = V3QuoteVerifier(_quoteVerifier);
+        mrEnclave = _mrEnclave;
+        mrSigner = _mrSigner;
+        _initializeOwner(msg.sender);
+    }
+
+    /*
         @notice Verify a quote from the TEE and attest on-chain
         @param rawQuote The quote from the TEE
-        @return success True if the quote was verified and attested on-chain
-     */
-    function verify(bytes calldata rawQuote) external view returns (bool success) {
+        @param reportDataHash The hash of the report data
+        @return success True if the quote was verified and attested on-chain, false otherwise
+    */
+    function verify(
+        bytes calldata rawQuote,
+        bytes32 reportDataHash
+    ) external view returns (bool success) {
         // Parse the header
-        Header memory header = _parseQuoteHeader(rawQuote);
+        Header memory header = parseQuoteHeader(rawQuote);
 
+        // Currently only version 3 is supported
         if (header.version != 3) {
             return false;
         }
 
-        (success, ) = this.verifyQuote(header, rawQuote);
+        // Verify the quote
+        (success, ) = quoteVerifier.verifyQuote(header, rawQuote);
         if (!success) {
             return false;
         }
 
-        //  Parse enclave quote
+        // Parse enclave quote
         uint256 offset = HEADER_LENGTH + ENCLAVE_REPORT_LENGTH;
         EnclaveReport memory localReport;
         (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:offset]);
@@ -50,14 +73,24 @@ contract EspressoTEEVerifier is V3QuoteVerifier {
             return false;
         }
 
-        return true;
+        // Check that mrEnclave and mrSigner match
+        if (localReport.mrEnclave != mrEnclave || localReport.mrSigner != mrSigner) {
+            return false;
+        }
 
-        // TODO: Use the parsed enclave report (localReport) to do other verifications
+        if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
+            return false;
+        }
+
+        return true;
     }
 
-    function _parseQuoteHeader(
-        bytes calldata rawQuote
-    ) private pure returns (Header memory header) {
+    /*
+        @notice Parses the header from the quote
+        @param rawQuote The raw quote in bytes
+        @return header The parsed header
+    */
+    function parseQuoteHeader(bytes calldata rawQuote) public pure returns (Header memory header) {
         bytes2 attestationKeyType = bytes2(rawQuote[2:4]);
         bytes2 qeSvn = bytes2(rawQuote[8:10]);
         bytes2 pceSvn = bytes2(rawQuote[10:12]);
@@ -72,5 +105,45 @@ contract EspressoTEEVerifier is V3QuoteVerifier {
             qeVendorId: qeVendorId,
             userData: bytes20(rawQuote[28:48])
         });
+    }
+
+    /*
+        @notice Parses the enclave report from the quote
+        @param rawEnclaveReport The raw enclave report from the quote in bytes
+        @return success True if the enclave report was parsed successfully
+        @return enclaveReport The parsed enclave report
+    */
+
+    function parseEnclaveReport(
+        bytes memory rawEnclaveReport
+    ) public pure returns (bool success, EnclaveReport memory enclaveReport) {
+        if (rawEnclaveReport.length != ENCLAVE_REPORT_LENGTH) {
+            return (false, enclaveReport);
+        }
+        enclaveReport.cpuSvn = bytes16(rawEnclaveReport.substring(0, 16));
+        enclaveReport.miscSelect = bytes4(rawEnclaveReport.substring(16, 4));
+        enclaveReport.reserved1 = bytes28(rawEnclaveReport.substring(20, 28));
+        enclaveReport.attributes = bytes16(rawEnclaveReport.substring(48, 16));
+        enclaveReport.mrEnclave = bytes32(rawEnclaveReport.substring(64, 32));
+        enclaveReport.reserved2 = bytes32(rawEnclaveReport.substring(96, 32));
+        enclaveReport.mrSigner = bytes32(rawEnclaveReport.substring(128, 32));
+        enclaveReport.reserved3 = rawEnclaveReport.substring(160, 96);
+        enclaveReport.isvProdId = uint16(BELE.leBytesToBeUint(rawEnclaveReport.substring(256, 2)));
+        enclaveReport.isvSvn = uint16(BELE.leBytesToBeUint(rawEnclaveReport.substring(258, 2)));
+        enclaveReport.reserved4 = rawEnclaveReport.substring(260, 60);
+        enclaveReport.reportData = rawEnclaveReport.substring(320, 64);
+        success = true;
+    }
+
+    function setOwner(address newOwner) external onlyOwner {
+        _setOwner(newOwner);
+    }
+
+    function setMrEnclave(bytes32 _mrEnclave) external onlyOwner {
+        mrEnclave = _mrEnclave;
+    }
+
+    function setMrSigner(bytes32 _mrSigner) external onlyOwner {
+        mrSigner = _mrSigner;
     }
 }
