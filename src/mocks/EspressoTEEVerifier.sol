@@ -11,7 +11,10 @@ pragma solidity ^0.8.0;
 contract EspressoTEEVerifierMock {
     constructor() {}
 
-    function verify(bytes calldata rawQuote) external view returns (bool success) {
+    function verify(
+        bytes calldata rawQuote,
+        bytes32 reportDataHash
+    ) external view returns (bool success) {
         return (true);
     }
 }

@@ -28,13 +28,10 @@ contract EspressoTEEVerifierTest is Test {
         vm.stopPrank();
     }
 
-    /*
-      Test that the verify function returns sucess for a valid quote
-    */
     function testVerifyQuoteValid() public {
         vm.startPrank(adminTEE);
 
-        string memory quotePath = "/test/foundry/configs/valid_quote.bin";
+        string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         bytes memory sampleQuote = vm.readFileBinary(inputFile);
         bool success = espressoTEEVerifier.verify(sampleQuote, reportDataHash);
@@ -42,9 +39,6 @@ contract EspressoTEEVerifierTest is Test {
         vm.stopPrank();
     }
 
-    /*
-      Test that the verify function returns false for an invalid quote
-    */
     function testVerifyQuoteInValid() public {
         string memory quotePath = "/test/foundry/configs/incorrect_attestation_quote.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
@@ -56,7 +50,6 @@ contract EspressoTEEVerifierTest is Test {
     /**
         Test incorrect report data hash
     */
-
     function testIncorrectReportDataHash() public {
         vm.startPrank(adminTEE);
 
@@ -67,9 +60,6 @@ contract EspressoTEEVerifierTest is Test {
         assertEq(success, false);
     }
 
-    /**
-        Test incorrect mrEnclave
-    */
     function testIncorrectMrEnclave() public {
         vm.startPrank(adminTEE);
 
@@ -85,9 +75,6 @@ contract EspressoTEEVerifierTest is Test {
         assertEq(success, false);
     }
 
-    /**
-        Test incorrect mrSigner
-    */
     function testIncorrectMrSigner() public {
         vm.startPrank(adminTEE);
 
@@ -103,9 +90,6 @@ contract EspressoTEEVerifierTest is Test {
         assertEq(success, false);
     }
 
-    /**
-        Test set owner
-    */
     function testSetOwner() public {
         vm.startPrank(adminTEE);
 
@@ -115,9 +99,6 @@ contract EspressoTEEVerifierTest is Test {
         vm.stopPrank();
     }
 
-    /**
-        Test set mrEnclave
-    */
     function testSetMrEnclave() public {
         vm.startPrank(adminTEE);
 
@@ -129,9 +110,6 @@ contract EspressoTEEVerifierTest is Test {
         vm.stopPrank();
     }
 
-    /**
-        Test set mrSigner
-    */
     function testSetMrSigner() public {
         vm.startPrank(adminTEE);
 

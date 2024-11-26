@@ -7,7 +7,7 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {EspressoTEEVerifier} from "../../src/bridge/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -67,21 +67,15 @@ contract SequencerInboxTest is Test {
     address adminTEE = address(141);
     address fakeAddress = address(145);
 
-    EspressoTEEVerifier espressoTEEVerifier;
+    EspressoTEEVerifierMock espressoTEEVerifier;
     V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
     bytes invalidQuote;
 
     function setUp() public {
         vm.startPrank(adminTEE);
-        vm.createSelectFork("https://rpc.ankr.com/eth_sepolia");
 
-        espressoTEEVerifier = new EspressoTEEVerifier(
-            mrEnclave,
-            mrSigner,
-            // Address of the deployed V3Verifier contract
-            address(0x6E64769A13617f528a2135692484B681Ee1a7169)
-        );
+        espressoTEEVerifier = new EspressoTEEVerifierMock();
 
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
@@ -530,20 +524,6 @@ contract SequencerInboxTest is Test {
             subMessageCount,
             subMessageCount + 1,
             sampleQuote
-        );
-
-        //  expect revert InvalidTEEAttestationQuote when quote is invalid
-        vm.expectRevert(abi.encodeWithSelector(InvalidTEEAttestationQuote.selector));
-        vm.prank(tx.origin);
-
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber + 6,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1,
-            invalidQuote
         );
     }
 

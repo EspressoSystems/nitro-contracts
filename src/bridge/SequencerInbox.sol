@@ -347,12 +347,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     function addSequencerL2BatchFromOrigin(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
+        uint256,
+        bytes calldata,
+        uint256,
         IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256,
+        uint256
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         revert Deprecated();
     }

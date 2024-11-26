@@ -22,7 +22,6 @@ import {
   Inbox__factory,
   RollupCore__factory,
   RollupCreator__factory,
-  TransparentUpgradeableProxy__factory,
 } from '../../build/types'
 import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
