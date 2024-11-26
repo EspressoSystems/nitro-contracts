@@ -805,7 +805,7 @@ describe('Orbit Chain', () => {
     const deployFactoriesToL2 = true
     const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
     const espressoTEEVerifierFac = (await hardhatEthers.getContractFactory(
-      'EspressoTEEVerifierMoc'
+      'EspressoTEEVerifierMock'
     )) as EspressoTEEVerifierMock__factory
     const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
 

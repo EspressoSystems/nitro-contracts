@@ -182,6 +182,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         __LEGACY_MAX_TIME_VARIATION.futureSeconds = 0;
     }
 
+    /**
+        Deprecated because we created another `initialize` function that accepts the `EspressoTEEVerifier` contract
+        address as a parameter which is used by the `SequencerInbox` contract to verify the TEE attestation quote.
+     */
     function initialize(IBridge, ISequencerInbox.MaxTimeVariation calldata) external onlyDelegated {
         revert Deprecated();
     }

@@ -24,7 +24,7 @@ import {Ownable} from "solady/auth/Ownable.sol";
  *
  * @title  Verifies quotes from the TEE and attests on-chain
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
- *         from automatato verify the quote. Along with some additional verification logic.
+ *         from automata to verify the quote. Along with some additional verification logic.
  */
 contract EspressoTEEVerifier is Ownable {
     using BytesUtils for bytes;
