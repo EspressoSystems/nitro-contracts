@@ -372,7 +372,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
         // take keccak2256 hash of all the function arguments except the quote
         bytes32 reportDataHash = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 sequenceNumber,
                 data,
                 afterDelayedMessagesRead,
@@ -385,6 +385,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!success) {
             revert InvalidTEEAttestationQuote();
         }
+
+        emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -526,7 +528,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (isBatchPoster[msg.sender]) {
             // take keccak2256 hash of all the function arguments except the quote
             bytes32 reportDataHash = keccak256(
-                abi.encodePacked(
+                abi.encode(
                     sequenceNumber,
                     data,
                     afterDelayedMessagesRead,
@@ -539,6 +541,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             if (!success) {
                 revert InvalidTEEAttestationQuote();
             }
+            emit TEEAttestationQuoteVerified(sequenceNumber);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

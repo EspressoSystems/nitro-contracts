@@ -78,7 +78,13 @@ contract BridgeCreator is Ownable {
         return frame;
     }
 
-    /// @dev Deprecated
+    /*
+     * Deprecated because we added a new method to create bridges
+     * which requires the address of the `EspressoTEEVerifier` contract
+     * to be passed in. `EspressoTEEVerifier` is required by the sequencer
+     * inbox contract to verify the quote from the TEE to check if the batch has
+     * been posted by a batch poster running in the TEE.
+     */
     function createBridge(
         address,
         address,

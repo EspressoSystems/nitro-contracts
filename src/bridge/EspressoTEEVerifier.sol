@@ -24,12 +24,12 @@ import {Ownable} from "solady/auth/Ownable.sol";
  *
  * @title  Verifies quotes from the TEE and attests on-chain
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
- *         to verify the quote. Along with some additional verification logic.
+ *         from automatato verify the quote. Along with some additional verification logic.
  */
-
 contract EspressoTEEVerifier is Ownable {
     using BytesUtils for bytes;
-    // TODO: add comments
+
+    // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
     bytes32 public mrEnclave;
     bytes32 public mrSigner;
@@ -65,7 +65,7 @@ contract EspressoTEEVerifier is Ownable {
             return false;
         }
 
-        // Parse enclave quote
+        // // Parse enclave quote
         uint256 offset = HEADER_LENGTH + ENCLAVE_REPORT_LENGTH;
         EnclaveReport memory localReport;
         (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:offset]);
@@ -78,6 +78,8 @@ contract EspressoTEEVerifier is Ownable {
             return false;
         }
 
+        //  Verify that the reportDataHash if the hash signed by the TEE
+        // We do not check the signature because `quoteVerifier.verifyQuote` already does that
         if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
             return false;
         }
@@ -113,7 +115,6 @@ contract EspressoTEEVerifier is Ownable {
         @return success True if the enclave report was parsed successfully
         @return enclaveReport The parsed enclave report
     */
-
     function parseEnclaveReport(
         bytes memory rawEnclaveReport
     ) public pure returns (bool success, EnclaveReport memory enclaveReport) {
@@ -135,14 +136,23 @@ contract EspressoTEEVerifier is Ownable {
         success = true;
     }
 
+    /*
+     * @dev Set the owner of the contract
+     */
     function setOwner(address newOwner) external onlyOwner {
         _setOwner(newOwner);
     }
 
+    /*
+     * @dev Set the mrEnclave of the contract
+     */
     function setMrEnclave(bytes32 _mrEnclave) external onlyOwner {
         mrEnclave = _mrEnclave;
     }
 
+    /*
+     * @dev Set the mrSigner of the contract
+     */
     function setMrSigner(bytes32 _mrSigner) external onlyOwner {
         mrSigner = _mrSigner;
     }
