@@ -22,7 +22,7 @@ import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/
  */
 
 contract EspressoTEEVerifier is V3QuoteVerifier {
-    constructor(address _router) V3QuoteVerifier(_router) {}
+    constructor(address _edc_router, address _router) V3QuoteVerifier(_edc_router, _router) {}
 
     /**
         @notice Verify a quote from the TEE and attest on-chain

@@ -106,7 +106,7 @@ export async function deployAllContracts(
   const reader4844 = isOnArb
     ? ethers.constants.AddressZero
     : (await Toolkit4844.deployReader4844(signer)).address
-
+  console.log("4844Reader deployed at:", reader4844)
   const ethSequencerInbox = await deployContract(
     'SequencerInbox',
     signer,
