@@ -644,7 +644,10 @@ describe('Orbit Chain', () => {
 
     const inbox = l2Network.ethBridge.inbox
     const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
-    let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas)
+    let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
+      from: userL1Wallet.address,
+      gasPrice: maxFeePerGas,
+    })
 
     if (nativeToken) {
       const decimals = await nativeToken.decimals()
@@ -689,7 +692,6 @@ describe('Orbit Chain', () => {
       ).wait()
     }
 
-    // deploy factories
     const receipt = await (
       await deployHelper
         .connect(userL1Wallet)
@@ -738,7 +740,10 @@ describe('Orbit Chain', () => {
 
     const inbox = l2Network.ethBridge.inbox
     const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
-    let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas)
+    let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
+      from: userL1Wallet.address,
+      gasPrice: maxFeePerGas,
+    })
     if (nativeToken) {
       const decimals = await nativeToken.decimals()
       if (decimals < 18) {
