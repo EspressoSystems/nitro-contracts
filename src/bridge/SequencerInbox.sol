@@ -30,8 +30,7 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
-    InvalidCelestiaBatch,
-    InvalidTEEAttestationQuote
+    InvalidCelestiaBatch
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -385,12 +384,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 newMessageCount
             )
         );
-        bool success = espressoTEEVerifier.verify(quote, reportDataHash);
-        if (!success) {
-            revert InvalidTEEAttestationQuote();
-        }
-
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        // Verify the quote for the batch poster running in the TEE
+        espressoTEEVerifier.verify(quote, reportDataHash);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -541,11 +536,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     newMessageCount
                 )
             );
-            bool success = espressoTEEVerifier.verify(quote, reportDataHash);
-            if (!success) {
-                revert InvalidTEEAttestationQuote();
-            }
-            emit TEEAttestationQuoteVerified(sequenceNumber);
+            espressoTEEVerifier.verify(quote, reportDataHash);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

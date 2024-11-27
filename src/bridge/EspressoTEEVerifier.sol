@@ -29,6 +29,20 @@ import {Ownable} from "solady/auth/Ownable.sol";
 contract EspressoTEEVerifier is Ownable {
     using BytesUtils for bytes;
 
+    // We only support version 3 for now
+    error InvalidHeaderVersion();
+    // This error is thrown when the automata verification fails
+    error InvalidQuote();
+    // This error is thrown when the enclave report fails to parse
+    error FailedToParseEnclaveReport();
+    // This error is thrown when the mrEnclave and mrSigner don't match
+    error InvalidMREnclaveOrSigner();
+    // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
+    error InvalidReportDataHash();
+
+    /// @dev a TEE attestation quote was verified
+    event TEEAttestationQuoteVerified(bytes32 reportDataHash);
+
     // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
     bytes32 public mrEnclave;
@@ -45,24 +59,20 @@ contract EspressoTEEVerifier is Ownable {
         @notice Verify a quote from the TEE and attest on-chain
         @param rawQuote The quote from the TEE
         @param reportDataHash The hash of the report data
-        @return success True if the quote was verified and attested on-chain, false otherwise
     */
-    function verify(
-        bytes calldata rawQuote,
-        bytes32 reportDataHash
-    ) external view returns (bool success) {
+    function verify(bytes calldata rawQuote, bytes32 reportDataHash) external {
         // Parse the header
         Header memory header = parseQuoteHeader(rawQuote);
 
         // Currently only version 3 is supported
         if (header.version != 3) {
-            return false;
+            revert InvalidHeaderVersion();
         }
 
         // Verify the quote
-        (success, ) = quoteVerifier.verifyQuote(header, rawQuote);
+        (bool success, ) = quoteVerifier.verifyQuote(header, rawQuote);
         if (!success) {
-            return false;
+            revert InvalidQuote();
         }
 
         // // Parse enclave quote
@@ -70,21 +80,21 @@ contract EspressoTEEVerifier is Ownable {
         EnclaveReport memory localReport;
         (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:offset]);
         if (!success) {
-            return false;
+            revert FailedToParseEnclaveReport();
         }
 
         // Check that mrEnclave and mrSigner match
         if (localReport.mrEnclave != mrEnclave || localReport.mrSigner != mrSigner) {
-            return false;
+            revert InvalidMREnclaveOrSigner();
         }
 
         //  Verify that the reportDataHash if the hash signed by the TEE
         // We do not check the signature because `quoteVerifier.verifyQuote` already does that
         if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
-            return false;
+            revert InvalidReportDataHash();
         }
 
-        return true;
+        emit TEEAttestationQuoteVerified(reportDataHash);
     }
 
     /*
@@ -134,13 +144,6 @@ contract EspressoTEEVerifier is Ownable {
         enclaveReport.reserved4 = rawEnclaveReport.substring(260, 60);
         enclaveReport.reportData = rawEnclaveReport.substring(320, 64);
         success = true;
-    }
-
-    /*
-     * @dev Set the owner of the contract
-     */
-    function setOwner(address newOwner) external onlyOwner {
-        _setOwner(newOwner);
     }
 
     /*
