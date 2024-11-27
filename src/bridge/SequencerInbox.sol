@@ -349,6 +349,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert Deprecated();
     }
 
+    /**
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
     function addSequencerL2BatchFromOrigin(
         uint256,
         bytes calldata,
@@ -490,6 +494,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    /**
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
     function addSequencerL2Batch(
         uint256,
         bytes calldata,
@@ -503,13 +511,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     /*
      * addSequencerL2Batch is called by either the rollup admin or batch poster
-     * running in TEE to add a new L2 batch to the rollup
-     * @param sequenceNumber - the sequence number of the L2 batch
-     * @param data - the data of the L2 batch
+     * running in TEE to add a new batch
+     * @param sequenceNumber - the sequence number of the batch
+     * @param data - the data of the batch
      * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
      * @param gasRefunder - the gas refunder contract
-     * @param prevMessageCount - the number of messages in the previous L2 batch
-     * @param newMessageCount - the number of messages in the new L2 batch
+     * @param prevMessageCount - the number of messages in the previous batch
+     * @param newMessageCount - the number of messages in the new batch
      * @param quote - the atttestation quote from the TEE
      */
     function addSequencerL2Batch(
