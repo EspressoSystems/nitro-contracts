@@ -244,6 +244,7 @@ export async function deployAllContracts(
     validatorWalletCreator,
     rollupCreator,
     deployHelper,
+    reader4844
   }
 }
 

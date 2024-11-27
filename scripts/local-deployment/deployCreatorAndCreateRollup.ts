@@ -116,6 +116,16 @@ async function main() {
     JSON.stringify([chainInfo], null, 2),
     'utf8'
   )
+  const readerAddress =
+    process.env.READER_ADDR !== undefined
+      ? process.env.READER_ADDR
+      : 'reader_addr.json'
+  await fs.writeFile(
+    readerAddress,
+    JSON.stringify([contracts.reader4844], null, 2),
+    'utf8'
+  )
+
 }
 
 main()
