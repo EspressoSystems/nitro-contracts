@@ -384,8 +384,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 newMessageCount
             )
         );
-        // Verify the quote for the batch poster running in the TEE
+        // verify the quote for the batch poster running in the TEE
         espressoTEEVerifier.verify(quote, reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -536,7 +537,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     newMessageCount
                 )
             );
+            // verify the quote for the batch poster running in the TEE
             espressoTEEVerifier.verify(quote, reportDataHash);
+            emit TEEAttestationQuoteVerified(sequenceNumber);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

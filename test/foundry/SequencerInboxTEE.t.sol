@@ -24,7 +24,7 @@ contract RollupMock {
 }
 
 contract SequencerInboxTest is Test {
-    event TEEAttestationQuoteVerified(bytes32 reportDataHash);
+    event TEEAttestationQuoteVerified(uint256 indexed seqMessageIndex);
     error InvalidReportDataHash();
 
     address rollupOwner = address(137);
@@ -82,6 +82,10 @@ contract SequencerInboxTest is Test {
         vm.prank(rollupOwner);
         bridge.setDelayedInbox(dummyInbox, true);
 
+        seqInboxImpl = new SequencerInbox(maxDataSize, IReader4844(reader4844), false);
+        seqInbox = SequencerInbox(
+            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
+        );
         seqInbox.initialize(bridge, maxTimeVariation, address(espressoTEEVerifier));
 
         vm.prank(rollupOwner);
@@ -112,7 +116,7 @@ contract SequencerInboxTest is Test {
 
         //  We expect the TEE attestation quote to be validated
         vm.expectEmit();
-        emit TEEAttestationQuoteVerified(reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             l2TEEData,
@@ -165,7 +169,7 @@ contract SequencerInboxTest is Test {
 
         //  We expect the TEE attestation quote to be validated
         vm.expectEmit();
-        emit TEEAttestationQuoteVerified(reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
         seqInbox.addSequencerL2Batch(
             sequenceNumber,
             l2TEEData,

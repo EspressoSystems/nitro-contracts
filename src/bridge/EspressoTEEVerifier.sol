@@ -40,9 +40,6 @@ contract EspressoTEEVerifier is Ownable {
     // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
     error InvalidReportDataHash();
 
-    /// @dev a TEE attestation quote was verified
-    event TEEAttestationQuoteVerified(bytes32 reportDataHash);
-
     // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
     bytes32 public mrEnclave;
@@ -93,8 +90,6 @@ contract EspressoTEEVerifier is Ownable {
         if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
             revert InvalidReportDataHash();
         }
-
-        emit TEEAttestationQuoteVerified(reportDataHash);
     }
 
     /*

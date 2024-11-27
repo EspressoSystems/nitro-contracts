@@ -70,7 +70,6 @@ contract SequencerInboxTest is Test {
     EspressoTEEVerifierMock espressoTEEVerifier;
     V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
-    bytes invalidQuote;
 
     function setUp() public {
         vm.startPrank(adminTEE);
@@ -80,9 +79,6 @@ contract SequencerInboxTest is Test {
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         sampleQuote = vm.readFileBinary(inputFile);
-        quotePath = "/test/foundry/configs/incorrect_attestation_quote.bin";
-        inputFile = string.concat(vm.projectRoot(), quotePath);
-        invalidQuote = vm.readFileBinary(inputFile);
         vm.stopPrank();
     }
 
