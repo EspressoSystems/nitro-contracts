@@ -30,8 +30,7 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
-    InvalidCelestiaBatch,
-    InvalidTEEAttestationQuote
+    InvalidCelestiaBatch
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -182,10 +181,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         __LEGACY_MAX_TIME_VARIATION.futureSeconds = 0;
     }
 
-    function initialize(
-        IBridge bridge_,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
-    ) external onlyDelegated {
+    /**
+        Deprecated because we created another `initialize` function that accepts the `EspressoTEEVerifier` contract
+        address as a parameter which is used by the `SequencerInbox` contract to verify the TEE attestation quote.
+     */
+    function initialize(IBridge, ISequencerInbox.MaxTimeVariation calldata) external onlyDelegated {
         revert Deprecated();
     }
 
@@ -349,13 +349,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert Deprecated();
     }
 
+    /**
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
     function addSequencerL2BatchFromOrigin(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
+        uint256,
+        bytes calldata,
+        uint256,
         IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256,
+        uint256
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         revert Deprecated();
     }
@@ -373,10 +377,20 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        bool success = espressoTEEVerifier.verify(quote);
-        if (!success) {
-            revert InvalidTEEAttestationQuote();
-        }
+        // take keccak2256 hash of all the function arguments except the quote
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount
+            )
+        );
+        // verify the quote for the batch poster running in the TEE
+        espressoTEEVerifier.verify(quote, reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -480,26 +494,30 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    /**
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
     function addSequencerL2Batch(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
+        uint256,
+        bytes calldata,
+        uint256,
         IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256,
+        uint256
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         revert Deprecated();
     }
 
     /*
      * addSequencerL2Batch is called by either the rollup admin or batch poster
-     * running in TEE to add a new L2 batch to the rollup
-     * @param sequenceNumber - the sequence number of the L2 batch
-     * @param data - the data of the L2 batch
+     * running in TEE to add a new batch
+     * @param sequenceNumber - the sequence number of the batch
+     * @param data - the data of the batch
      * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
      * @param gasRefunder - the gas refunder contract
-     * @param prevMessageCount - the number of messages in the previous L2 batch
-     * @param newMessageCount - the number of messages in the new L2 batch
+     * @param prevMessageCount - the number of messages in the previous batch
+     * @param newMessageCount - the number of messages in the new batch
      * @param quote - the atttestation quote from the TEE
      */
     function addSequencerL2Batch(
@@ -516,10 +534,20 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // Only check the attestation quote if the batch has been posted by the
         // batch poster
         if (isBatchPoster[msg.sender]) {
-            bool success = espressoTEEVerifier.verify(quote);
-            if (!success) {
-                revert InvalidTEEAttestationQuote();
-            }
+            // take keccak2256 hash of all the function arguments except the quote
+            bytes32 reportDataHash = keccak256(
+                abi.encode(
+                    sequenceNumber,
+                    data,
+                    afterDelayedMessagesRead,
+                    address(gasRefunder),
+                    prevMessageCount,
+                    newMessageCount
+                )
+            );
+            // verify the quote for the batch poster running in the TEE
+            espressoTEEVerifier.verify(quote, reportDataHash);
+            emit TEEAttestationQuoteVerified(sequenceNumber);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

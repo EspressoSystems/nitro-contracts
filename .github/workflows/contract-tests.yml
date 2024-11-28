@@ -183,7 +183,7 @@ jobs:
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
+          nitro-testnode-ref: celestia-integration
           nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
@@ -229,7 +229,7 @@ jobs:
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
+          nitro-testnode-ref: celestia-integration
           nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
@@ -275,7 +275,7 @@ jobs:
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: 'integration'
+          nitro-testnode-ref: 'celestia-integration'
           nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry

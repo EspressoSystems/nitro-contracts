@@ -7,20 +7,13 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {EspressoTEEVerifier} from "../../src/bridge/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {
-    AutomataDcapAttestation
-} from "@automata-network/dcap-attestation/contracts/AutomataDcapAttestation.sol";
-import {
     V3QuoteVerifier
 } from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
-import {PCCSRouter} from "@automata-network/dcap-attestation/contracts/PCCSRouter.sol";
-
-import {PCCSSetupBase} from "@automata-network/dcap-attestation/test/utils/PCCSSetupBase.sol";
-import {RiscZeroSetup} from "@automata-network/dcap-attestation/test/utils/RiscZeroSetup.sol";
 
 contract RollupMock {
     address public immutable owner;
@@ -30,7 +23,7 @@ contract RollupMock {
     }
 }
 
-contract SequencerInboxTest is Test, PCCSSetupBase, RiscZeroSetup {
+contract SequencerInboxTest is Test {
     // cannot reference events outside of the original contract until 0.8.21
     // we currently use 0.8.9
     event MessageDelivered(
@@ -66,40 +59,26 @@ contract SequencerInboxTest is Test, PCCSSetupBase, RiscZeroSetup {
         });
     address dummyInbox = address(139);
     address proxyAdmin = address(140);
+    bytes32 mrEnclave = bytes32(0x51dfe95acffa8a4075b716257c836895af9202a5fd56c8c2208dacb79c659ff0);
+    bytes32 mrSigner = bytes32(0x0c8242bba090f54b10de0c2d1ca4b633b9c08b7178451c71d737c214b72fc836);
     IReader4844 dummyReader4844 = IReader4844(address(137));
 
     uint256 public constant MAX_DATA_SIZE = 117964;
     address adminTEE = address(141);
     address fakeAddress = address(145);
 
-    EspressoTEEVerifier espressoTEEVerifier;
+    EspressoTEEVerifierMock espressoTEEVerifier;
     V3QuoteVerifier quoteVerifier;
-    PCCSRouter pccsRouter;
     bytes sampleQuote;
-    bytes invalidQuote;
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
         vm.startPrank(adminTEE);
 
-        // PCCS Setup
-        pccsRouter = setupPccsRouter();
-        pcsDaoUpserts();
-
-        string memory tcbInfoPath = "/test/foundry/configs/tcbinfo.json";
-        string memory qeIdPath = "/test/foundry/configs/tee_identity.json";
-        qeIdDaoUpsert(3, qeIdPath);
-        fmspcTcbDaoUpsert(tcbInfoPath);
-
-        // PCCS Setup
-        espressoTEEVerifier = new EspressoTEEVerifier(address(pccsRouter));
+        espressoTEEVerifier = new EspressoTEEVerifierMock();
 
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         sampleQuote = vm.readFileBinary(inputFile);
-        quotePath = "/test/foundry/configs/incorrect_attestation_quote.bin";
-        inputFile = string.concat(vm.projectRoot(), quotePath);
-        invalidQuote = vm.readFileBinary(inputFile);
         vm.stopPrank();
     }
 
@@ -287,7 +266,7 @@ contract SequencerInboxTest is Test, PCCSSetupBase, RiscZeroSetup {
         vm.prank(tx.origin);
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
-        bytes memory sampleQuote = vm.readFileBinary(inputFile);
+        sampleQuote = vm.readFileBinary(inputFile);
 
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -541,20 +520,6 @@ contract SequencerInboxTest is Test, PCCSSetupBase, RiscZeroSetup {
             subMessageCount,
             subMessageCount + 1,
             sampleQuote
-        );
-
-        //  expect revert InvalidTEEAttestationQuote when quote is invalid
-        vm.expectRevert(abi.encodeWithSelector(InvalidTEEAttestationQuote.selector));
-        vm.prank(tx.origin);
-
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber + 6,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1,
-            invalidQuote
         );
     }
 

@@ -5,15 +5,25 @@ import { deployContract } from './deploymentUtils'
 async function main() {
   const [deployer] = await ethers.getSigners()
 
-  const pccsRouterAddress = process.env.PCCS_ROUTER_ADDRESS as string
-  if (!pccsRouterAddress) {
-    throw new Error('PCCS_ROUTER_ADDRESS not set')
+  const v3QuoteVerifier = process.env.V3_QUOTE_VERIFIER_ADDRESS
+  if (!v3QuoteVerifier) {
+    throw new Error('V3_QUOTE_VERIFIER_ADDRESS not set')
+  }
+
+  const mrEnclave = process.env.MR_ENCLAVE
+  if (!mrEnclave) {
+    throw new Error('MR_ENCLAVE not set')
+  }
+
+  const mrSigner = process.env.MR_SIGNER
+  if (!mrSigner) {
+    throw new Error('MR_SIGNER not set')
   }
 
   const esperssoTEEVerifier = await deployContract(
     'EspressoTEEVerifier',
     deployer,
-    [pccsRouterAddress],
+    [mrEnclave, mrSigner, v3QuoteVerifier],
     true
   )
   console.log(
