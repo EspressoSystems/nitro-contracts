@@ -19,6 +19,7 @@ import {
 } from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import {BytesUtils} from "@automata-network/dcap-attestation/contracts/utils/BytesUtils.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
+import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
 
 /**
  *
@@ -26,19 +27,8 @@ import {Ownable} from "solady/auth/Ownable.sol";
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
  *         from automata to verify the quote. Along with some additional verification logic.
  */
-contract EspressoTEEVerifier is Ownable {
+contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
     using BytesUtils for bytes;
-
-    // We only support version 3 for now
-    error InvalidHeaderVersion();
-    // This error is thrown when the automata verification fails
-    error InvalidQuote();
-    // This error is thrown when the enclave report fails to parse
-    error FailedToParseEnclaveReport();
-    // This error is thrown when the mrEnclave and mrSigner don't match
-    error InvalidMREnclaveOrSigner();
-    // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
-    error InvalidReportDataHash();
 
     // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
@@ -54,10 +44,11 @@ contract EspressoTEEVerifier is Ownable {
 
     /*
         @notice Verify a quote from the TEE and attest on-chain
+        The verification is considered successful if the function does not revert.
         @param rawQuote The quote from the TEE
         @param reportDataHash The hash of the report data
     */
-    function verify(bytes calldata rawQuote, bytes32 reportDataHash) external {
+    function verify(bytes calldata rawQuote, bytes32 reportDataHash) external view {
         // Parse the header
         Header memory header = parseQuoteHeader(rawQuote);
 
