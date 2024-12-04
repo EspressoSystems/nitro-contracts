@@ -44,6 +44,7 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
 
     /*
         @notice Verify a quote from the TEE and attest on-chain
+        The verification is considered successful if the function does not revert.
         @param rawQuote The quote from the TEE
         @param reportDataHash The hash of the report data
     */
