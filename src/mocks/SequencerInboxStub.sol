@@ -25,7 +25,7 @@ contract SequencerInboxStub is SequencerInbox {
         delaySeconds = uint64(maxTimeVariation_.delaySeconds);
         futureSeconds = uint64(maxTimeVariation_.futureSeconds);
         isBatchPoster[sequencer_] = true;
-        espressoTEEVerifier = EspressoTEEVerifier(espressoTEEVerifier_);
+        espressoTEEVerifier = IEspressoTEEVerifier(espressoTEEVerifier_);
     }
 
     function addInitMessage(uint256 chainId) external {

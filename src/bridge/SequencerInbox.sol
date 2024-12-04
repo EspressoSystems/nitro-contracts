@@ -49,7 +49,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
-import {EspressoTEEVerifier} from "../bridge/EspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../bridge/IEspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -132,7 +132,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
 
-    EspressoTEEVerifier public espressoTEEVerifier;
+    IEspressoTEEVerifier public espressoTEEVerifier;
 
     constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
         maxDataSize = _maxDataSize;
@@ -213,7 +213,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         rollup = bridge_.rollup();
 
         _setMaxTimeVariation(maxTimeVariation_);
-        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
+        espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -856,7 +856,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     function setEspressoTEEVerifier(address _espressoTEEVerifier) external onlyRollupOwner {
-        espressoTEEVerifier = EspressoTEEVerifier(_espressoTEEVerifier);
+        espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
         emit OwnerFunctionCalled(6);
     }
 
