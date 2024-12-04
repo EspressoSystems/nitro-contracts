@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import {EspressoTEEVerifier} from "../../src/bridge/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifier, IEspressoTEEVerifier} from "../../src/bridge/EspressoTEEVerifier.sol";
 
 contract EspressoTEEVerifierTest is Test {
     address proxyAdmin = address(140);
@@ -38,7 +38,7 @@ contract EspressoTEEVerifierTest is Test {
         string memory quotePath = "/test/foundry/configs/incorrect_header_in_quote.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         bytes memory invalidQuote = vm.readFileBinary(inputFile);
-        vm.expectRevert(EspressoTEEVerifier.InvalidHeaderVersion.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidHeaderVersion.selector);
         espressoTEEVerifier.verify(invalidQuote, reportDataHash);
     }
 
@@ -46,7 +46,7 @@ contract EspressoTEEVerifierTest is Test {
         string memory quotePath = "/test/foundry/configs/invalid_quote.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         bytes memory invalidQuote = vm.readFileBinary(inputFile);
-        vm.expectRevert(EspressoTEEVerifier.InvalidQuote.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidQuote.selector);
         espressoTEEVerifier.verify(invalidQuote, reportDataHash);
     }
 
@@ -58,7 +58,7 @@ contract EspressoTEEVerifierTest is Test {
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
         bytes memory sampleQuote = vm.readFileBinary(inputFile);
-        vm.expectRevert(EspressoTEEVerifier.InvalidReportDataHash.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidReportDataHash.selector);
         espressoTEEVerifier.verify(sampleQuote, bytes32(0));
     }
 
@@ -75,7 +75,7 @@ contract EspressoTEEVerifierTest is Test {
             mrSigner,
             v3QuoteVerifier
         );
-        vm.expectRevert(EspressoTEEVerifier.InvalidMREnclaveOrSigner.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidMREnclaveOrSigner.selector);
         espressoTEEVerifier.verify(sampleQuote, reportDataHash);
     }
 
@@ -92,7 +92,7 @@ contract EspressoTEEVerifierTest is Test {
             incorrectMrSigner,
             v3QuoteVerifier
         );
-        vm.expectRevert(EspressoTEEVerifier.InvalidMREnclaveOrSigner.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidMREnclaveOrSigner.selector);
         espressoTEEVerifier.verify(sampleQuote, reportDataHash);
     }
 
