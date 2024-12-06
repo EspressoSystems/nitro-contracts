@@ -354,12 +354,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         to verify that the batch is posted by the batch poster running in TEE.
      */
     function addSequencerL2BatchFromOrigin(
-        uint256,
-        bytes calldata,
-        uint256,
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
-        uint256,
-        uint256
+        uint256 prevMessageCount,
+        uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         revert Deprecated();
     }
