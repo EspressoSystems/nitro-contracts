@@ -185,7 +185,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         Deprecated because we created another `initialize` function that accepts the `EspressoTEEVerifier` contract
         address as a parameter which is used by the `SequencerInbox` contract to verify the TEE attestation quote.
      */
-    function initialize(IBridge, ISequencerInbox.MaxTimeVariation calldata) external onlyDelegated {
+    function initialize(
+        IBridge bridge_,
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
+    ) external onlyDelegated {
         revert Deprecated();
     }
 
@@ -341,10 +344,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     /// @dev Deprecated, kept for abi generation and will be removed in the future
     function addSequencerL2BatchFromOrigin(
-        uint256,
-        bytes calldata,
-        uint256,
-        IGasRefunder
+        uint256 sequencerNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder
     ) external pure {
         revert Deprecated();
     }
