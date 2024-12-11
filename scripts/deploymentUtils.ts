@@ -114,7 +114,7 @@ export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
 }
 
 // Function to handle all deployments of core contracts using deployContract function
-export async function depgoyAllContracts(
+export async function deployAllContracts(
   signer: any,
   maxDataSize: BigNumber,
   verify: boolean = true,
