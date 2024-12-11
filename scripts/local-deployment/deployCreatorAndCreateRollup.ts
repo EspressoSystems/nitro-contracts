@@ -26,10 +26,6 @@ async function main() {
     throw new Error('PARENT_CHAIN_ID not set')
   }
 
-  let espressoLightClientAddr = process.env.LIGHT_CLIENT_ADDR as string
-  if (!espressoLightClientAddr) {
-    throw new Error("LIGHT_CLIENT_ADDR not set")
-  }
 
   const deployerWallet = new ethers.Wallet(
     deployerPrivKey,
@@ -49,7 +45,7 @@ async function main() {
 
   /// deploy templates and rollup creator
   console.log('Deploy RollupCreator')
-  const contracts = await deployAllContracts(deployerWallet, maxDataSize, false, espressoLightClientAddr)
+  const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
 
   //  for local deployment, we use a mock address
   const espressoTEEVerifierMock = await deployContract(

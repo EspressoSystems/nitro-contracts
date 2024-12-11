@@ -114,11 +114,10 @@ export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
 }
 
 // Function to handle all deployments of core contracts using deployContract function
-export async function deployAllContracts(
+export async function depgoyAllContracts(
   signer: any,
   maxDataSize: BigNumber,
   verify: boolean = true,
-  espressoLightClientAddr?: string
 ): Promise<Record<string, Contract>> {
   const isOnArb = await _isRunningOnArbitrum(signer)
 
@@ -198,11 +197,10 @@ export async function deployAllContracts(
     [],
     verify
   )
-  const hostIoArg = espressoLightClientAddr ? [espressoLightClientAddr] : []
   const proverHostIo = await deployContract(
     'OneStepProverHostIo',
     signer,
-    hostIoArg,
+    [],
     verify
   )
 
