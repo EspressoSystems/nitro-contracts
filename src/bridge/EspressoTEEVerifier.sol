@@ -14,12 +14,12 @@ import {
     ENCLAVE_REPORT_LENGTH
 } from "@automata-network/dcap-attestation/contracts/types/Constants.sol";
 import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
-import {
-    V3QuoteVerifier
-} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import {BytesUtils} from "@automata-network/dcap-attestation/contracts/utils/BytesUtils.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
+import {
+    QuoteVerifierBase
+} from "@automata-network/dcap-attestation/contracts/bases/QuoteVerifierBase.sol";
 
 /**
  *
@@ -28,6 +28,9 @@ import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
  *         from automata to verify the quote. Along with some additional verification logic.
  */
 contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
+    event MREnclaveSet(bytes32 indexed mrEnclave);
+    event MRSignerSet(bytes32 indexed mrSigner);
+
     using BytesUtils for bytes;
 
     // V3QuoteVerififer contract from automata to verify the quote
@@ -63,10 +66,10 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
             revert InvalidQuote();
         }
 
-        // // Parse enclave quote
-        uint256 offset = HEADER_LENGTH + ENCLAVE_REPORT_LENGTH;
+        // Parse enclave quote
+        uint256 lastIndex = HEADER_LENGTH + ENCLAVE_REPORT_LENGTH;
         EnclaveReport memory localReport;
-        (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:offset]);
+        (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:lastIndex]);
         if (!success) {
             revert FailedToParseEnclaveReport();
         }
@@ -89,18 +92,13 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
         @return header The parsed header
     */
     function parseQuoteHeader(bytes calldata rawQuote) public pure returns (Header memory header) {
-        bytes2 attestationKeyType = bytes2(rawQuote[2:4]);
-        bytes2 qeSvn = bytes2(rawQuote[8:10]);
-        bytes2 pceSvn = bytes2(rawQuote[10:12]);
-        bytes16 qeVendorId = bytes16(rawQuote[12:28]);
-
         header = Header({
             version: uint16(BELE.leBytesToBeUint(rawQuote[0:2])),
-            attestationKeyType: attestationKeyType,
+            attestationKeyType: bytes2(rawQuote[2:4]),
             teeType: bytes4(uint32(BELE.leBytesToBeUint(rawQuote[4:8]))),
-            qeSvn: qeSvn,
-            pceSvn: pceSvn,
-            qeVendorId: qeVendorId,
+            qeSvn: bytes2(rawQuote[8:10]),
+            pceSvn: bytes2(rawQuote[10:12]),
+            qeVendorId: bytes16(rawQuote[12:28]),
             userData: bytes20(rawQuote[28:48])
         });
     }
@@ -136,6 +134,7 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
      * @dev Set the mrEnclave of the contract
      */
     function setMrEnclave(bytes32 _mrEnclave) external onlyOwner {
+        emit MREnclaveSet(_mrEnclave);
         mrEnclave = _mrEnclave;
     }
 
@@ -143,6 +142,7 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
      * @dev Set the mrSigner of the contract
      */
     function setMrSigner(bytes32 _mrSigner) external onlyOwner {
+        emit MRSignerSet(_mrSigner);
         mrSigner = _mrSigner;
     }
 }
