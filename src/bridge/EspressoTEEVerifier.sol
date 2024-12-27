@@ -15,11 +15,8 @@ import {
 } from "@automata-network/dcap-attestation/contracts/types/Constants.sol";
 import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
 import {BytesUtils} from "@automata-network/dcap-attestation/contracts/utils/BytesUtils.sol";
-import {Ownable} from "solady/auth/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
-import {
-    QuoteVerifierBase
-} from "@automata-network/dcap-attestation/contracts/bases/QuoteVerifierBase.sol";
 
 /**
  *
@@ -27,7 +24,7 @@ import {
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
  *         from automata to verify the quote. Along with some additional verification logic.
  */
-contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
+contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
     event MREnclaveSet(bytes32 indexed mrEnclave);
     event MRSignerSet(bytes32 indexed mrSigner);
 
@@ -42,7 +39,6 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable {
         quoteVerifier = V3QuoteVerifier(_quoteVerifier);
         mrEnclave = _mrEnclave;
         mrSigner = _mrSigner;
-        _initializeOwner(msg.sender);
     }
 
     /*
