@@ -111,4 +111,16 @@ contract EspressoTEEVerifierTest is Test {
         assertEq(espressoTEEVerifier.mrSigner(), newMrSigner);
         vm.stopPrank();
     }
+
+    // Test Ownership transfer using Ownable2Step contract
+    function testOwnershipTransfer() public {
+        vm.startPrank(adminTEE);
+        assertEq(address(espressoTEEVerifier.owner()), adminTEE);
+        espressoTEEVerifier.transferOwnership(fakeAddress);
+        vm.stopPrank();
+        vm.startPrank(fakeAddress);
+        espressoTEEVerifier.acceptOwnership();
+        assertEq(address(espressoTEEVerifier.owner()), fakeAddress);
+        vm.stopPrank();
+    }
 }
