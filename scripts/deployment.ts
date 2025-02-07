@@ -35,8 +35,7 @@ async function main() {
     const contracts = await deployAllContracts(
       signer,
       ethers.BigNumber.from(maxDataSize),
-      true,
-      espressoLightClientAddress
+      true
     )
 
     const contractAddresses = {
