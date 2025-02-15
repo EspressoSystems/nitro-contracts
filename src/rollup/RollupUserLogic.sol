@@ -447,7 +447,7 @@ abstract contract AbsRollupUserLogic is
     }
 
     /**
-     * @notice Remove the given zombie from nodes it is staked on, moving backwords from the latest node it is staked on
+     * @notice Remove the given zombie from nodes it is staked on, moving backwards from the latest node it is staked on
      * @param zombieNum Index of the zombie to remove
      * @param maxNodes Maximum number of nodes to remove the zombie from (to limit the cost of this transaction)
      */
