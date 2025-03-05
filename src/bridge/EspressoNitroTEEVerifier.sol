@@ -24,9 +24,7 @@ contract EspressoNitroTEEVerifier is NitroValidator, Ownable2Step {
 
     mapping(address => bool) public registeredSigners;
 
-    constructor(ICertManager certManager, uint256 _maxAge) NitroValidator(certManager) {
-        maxAge = _maxAge;
-    }
+    constructor(ICertManager certManager) NitroValidator(certManager) {}
 
     function registerSigner(bytes calldata attestationTbs, bytes calldata signature) external {
         Ptrs memory ptrs = validateAttestation(attestationTbs, signature);
@@ -55,7 +53,7 @@ contract EspressoNitroTEEVerifier is NitroValidator, Ownable2Step {
         }
     }
 
-    function deleteResgiteredSigner(address signer) external onlyOwner {
+    function deleteRegisteredSigner(address signer) external onlyOwner {
         delete registeredSigners[signer];
     }
 }

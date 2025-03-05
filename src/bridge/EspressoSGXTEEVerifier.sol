@@ -41,10 +41,8 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
         @notice Verify a quote from the TEE and attest on-chain
         The verification is considered successful if the function does not revert.
         @param attestation The attestation from the TEE
-        @param The second argument is not used but added so that we can get the same ABI 
-        as the EspressoNitroTEEVerifier
     */
-    function registerSigner(bytes calldata attestation, bytes calldata) external {
+    function registerSigner(bytes calldata attestation) external {
         // Parse the header
         Header memory header = parseQuoteHeader(attestation);
 
@@ -71,6 +69,7 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
             revert InvalidEnclaveHash();
         }
 
+        //  TODO: Check what the importance of this 20 is?
         // Check that reportData is indeed a valid address
         if (localReport.reportData.length != 20) {
             revert InvalidReportData();
@@ -132,7 +131,7 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
         }
     }
 
-    function deleteResgiteredSigner(address signer) external onlyOwner {
+    function deleteRegisteredSigner(address signer) external onlyOwner {
         delete registeredSigners[signer];
     }
 }

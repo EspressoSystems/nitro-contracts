@@ -14,6 +14,7 @@ import {EspressoNitroTEEVerifier} from "./EspressoNitroTEEVerifier.sol";
 contract EspressoTEEVerifier is Ownable2Step {
     EspressoSGXTEEVerifier public espressoSGXTEEVerifier;
     EspressoNitroTEEVerifier public espressoNitroTEEVerifier;
+    error InvalidSignature();
 
     enum TeeType {
         SGX,
@@ -33,7 +34,8 @@ contract EspressoTEEVerifier is Ownable2Step {
 
         bool validNitroSigner = espressoNitroTEEVerifier.registeredSigners(signer);
         bool validSGXSigner = espressoSGXTEEVerifier.registeredSigners(signer);
-        // we check if the signer is registerd in either of the Verifier contracts and if not we revert
+        // we check if the signer is registerd in either of the verifier contracts
+        //if not we revert
         if (!validNitroSigner && !validSGXSigner) {
             revert InvalidSignature();
         }
@@ -45,7 +47,7 @@ contract EspressoTEEVerifier is Ownable2Step {
         TeeType teeType
     ) external {
         if (teeType == TeeType.SGX) {
-            espressoSGXTEEVerifier.registerSigner(attestation, signature);
+            espressoSGXTEEVerifier.registerSigner(attestation);
         } else if (teeType == TeeType.NITRO) {
             espressoNitroTEEVerifier.registerSigner(attestation, signature);
         }
@@ -63,11 +65,11 @@ contract EspressoTEEVerifier is Ownable2Step {
         }
     }
 
-    function deleteResgiteredSigner(address signer, TeeType teeType) external onlyOwner {
+    function deleteRegisteredSigner(address signer, TeeType teeType) external onlyOwner {
         if (teeType == TeeType.SGX) {
-            espressoSGXTEEVerifier.deleteResgiteredSigner(signer);
+            espressoSGXTEEVerifier.deleteRegisteredSigner(signer);
         } else if (teeType == TeeType.NITRO) {
-            espressoNitroTEEVerifier.deleteResgiteredSigner(signer);
+            espressoNitroTEEVerifier.deleteRegisteredSigner(signer);
         }
     }
 

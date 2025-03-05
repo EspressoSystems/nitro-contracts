@@ -9,6 +9,7 @@ import {EspressoNitroTEEVerifier} from "./EspressoNitroTEEVerifier.sol";
  * @notice This interface allows interaction with the EspressoTEEVerifier contract functions
  */
 interface IEspressoTEEVerifier {
+    error InvalidSignature();
     enum TeeType {
         SGX,
         NITRO
