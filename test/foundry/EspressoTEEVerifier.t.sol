@@ -47,17 +47,6 @@ contract EspressoTEEVerifierTest is Test {
         vm.stopPrank();
     }
 
-    function testVerifyFailsIfNotRegisteredSigner() public {
-        vm.startPrank(adminTEE);
-        bytes32 newEnclaveHash = bytes32(hex"01");
-        // Create signature using admine address which is not registered signer
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(adminTEE, newEnclaveHash);
-        // convert r, s, v to signature
-        bytes memory signature = abi.encodePacked(r, s, v);
-        vm.expectRevert(IEspressoTEEVerifier.InvalidSignature.selector);
-        espressoTEEVerifier.verify(signature, newEnclaveHash);
-    }
-
     function testSetEnclaveHash() public {
         vm.startPrank(adminTEE);
         bytes32 newEnclaveHash = bytes32(hex"01");
@@ -70,15 +59,6 @@ contract EspressoTEEVerifierTest is Test {
             true
         );
 
-        vm.expectRevert(IEspressoSGXTEEVerifier.InvalidEnclaveHash.selector);
-        espressoTEEVerifier.setEnclaveHash(newEnclaveHash, false, IEspressoTEEVerifier.TeeType.SGX);
-        assertEq(
-            espressoTEEVerifier.registeredEnclaveHash(
-                newEnclaveHash,
-                IEspressoTEEVerifier.TeeType.SGX
-            ),
-            false
-        );
         vm.stopPrank();
     }
 

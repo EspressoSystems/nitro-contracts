@@ -156,10 +156,9 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
         success = true;
     }
 
-    // TODO: check if enclave hash is bytes32 in aws nitro or not
     function setEnclaveHash(bytes32 enclaveHash, bool valid) external onlyOwner {
         if (valid) {
-            registeredEnclaveHash[enclaveHash] = false;
+            registeredEnclaveHash[enclaveHash] = true;
         } else {
             delete registeredEnclaveHash[enclaveHash];
         }

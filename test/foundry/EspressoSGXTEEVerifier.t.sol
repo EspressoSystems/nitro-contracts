@@ -101,6 +101,8 @@ contract EspressoSGXTEEVerifierTest is Test {
         bytes32 newMrEnclave = bytes32(hex"01");
         espressoSGXTEEVerifier.setEnclaveHash(newMrEnclave, true);
         assertEq(espressoSGXTEEVerifier.registeredEnclaveHash(newMrEnclave), true);
+        espressoSGXTEEVerifier.setEnclaveHash(newMrEnclave, false);
+        assertEq(espressoSGXTEEVerifier.registeredEnclaveHash(newMrEnclave), false);
         vm.stopPrank();
     }
 
