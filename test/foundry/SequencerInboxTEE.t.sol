@@ -14,6 +14,7 @@ import {
 import {
     V3QuoteVerifier
 } from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
+import {EspressoSGXTEEVerifier} from "../../src/bridge/EspressoSGXTEEVerifier.sol";
 
 contract RollupMock {
     address public immutable owner;
@@ -47,6 +48,7 @@ contract SequencerInboxTest is Test {
     address fakeAddress = address(145);
 
     EspressoTEEVerifier espressoTEEVerifier;
+    EspressoSGXTEEVerifier espressoSGXTEEVerifier;
     V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
     SequencerInbox seqInboxImpl;
@@ -66,7 +68,8 @@ contract SequencerInboxTest is Test {
 
     function setUp() public {
         vm.createSelectFork("https://rpc.ankr.com/eth_sepolia");
-        espressoTEEVerifier = new EspressoTEEVerifier(mrEnclave, mrSigner, v3QuoteVerifier);
+        espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(mrEnclave, v3QuoteVerifier);
+        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier);
 
         string memory quotePath = "/test/foundry/configs/sequencer_inbox_attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
