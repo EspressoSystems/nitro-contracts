@@ -9,12 +9,29 @@ pragma solidity ^0.8.0;
  */
 
 contract EspressoTEEVerifierMock {
+    enum TeeType {
+        SGX
+    }
+    mapping(address => bool) public registeredSigner;
     constructor() {}
 
-    function verify(
-        bytes calldata rawQuote,
-        bytes32 reportDataHash
-    ) external view returns (bool success) {
-        return (true);
+    function verify(bytes calldata signature, bytes32 userDataHash) external {
+        return;
+    }
+
+    function registerSigner(
+        bytes calldata attestation,
+        bytes calldata data,
+        TeeType teeType
+    ) external {
+        // data length should be 32 bytes
+        require(data.length < 32 || data.length > 32, "Invalid data length");
+        // Convert the data to bytes32 and pass it to the verify function
+        address signerFromReport = address(uint160(uint256(keccak256(data[:20]))));
+        registeredSigner[signerFromReport] = true;
+    }
+
+    function registeredSigners(address signer, TeeType teeType) external view returns (bool) {
+        return registeredSigner[signer];
     }
 }
