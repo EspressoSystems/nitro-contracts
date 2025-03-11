@@ -26,6 +26,7 @@ import {
 import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
 import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
+import { ethers as hardhatEthers } from 'hardhat'
 import {
   l1Networks,
   l2Networks,
@@ -654,25 +655,12 @@ describe('Orbit Chain', () => {
       l1Provider
     )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
     const inbox = l2Network.ethBridge.inbox
     const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
     let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
       from: userL1Wallet.address,
       gasPrice: maxFeePerGas,
     })
-<<<<<<< HEAD
-=======
-  //   const deployHelper = DeployHelper__factory.connect(
-  //     await rollupCreator.l2FactoriesDeployer(),
-  //     l1Provider
-  //   )
->>>>>>> 1a4ac8b (Adding automata verifier to Celestia Contracts branch (#24))
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
 
     if (nativeToken) {
       const decimals = await nativeToken.decimals()
@@ -717,10 +705,6 @@ describe('Orbit Chain', () => {
       ).wait()
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
     const receipt = await (
       await deployHelper
         .connect(userL1Wallet)
@@ -731,15 +715,6 @@ describe('Orbit Chain', () => {
           { value: nativeToken ? BigNumber.from(0) : fee }
         )
     ).wait()
-<<<<<<< HEAD
-=======
-  //     await (
-  //       await nativeToken.connect(userL1Wallet).transfer(inbox, fee)
-  //     ).wait()
-  //   }
->>>>>>> 1a4ac8b (Adding automata verifier to Celestia Contracts branch (#24))
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
 
     const l1TxReceipt = new L1TransactionReceipt(receipt)
     const messages = await l1TxReceipt.getL1ToL2Messages(l2Provider)
@@ -776,10 +751,6 @@ describe('Orbit Chain', () => {
       l1Provider
     )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
     const inbox = l2Network.ethBridge.inbox
     const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
     let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
@@ -823,15 +794,6 @@ describe('Orbit Chain', () => {
       } else {
         fee = await _scaleFrom18ToNative(fee)
       }
-<<<<<<< HEAD
-=======
-  //   const deployHelper = DeployHelper__factory.connect(
-  //     await rollupCreator.l2FactoriesDeployer(),
-  //     l1Provider
-  //   )
->>>>>>> 1a4ac8b (Adding automata verifier to Celestia Contracts branch (#24))
-=======
->>>>>>> f8a152f (Add additional verification to EspressoTEEVerifier (#28))
 
       await (
         await nativeToken
