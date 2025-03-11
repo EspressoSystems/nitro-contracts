@@ -464,7 +464,8 @@ contract SequencerInboxTest is Test {
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1
+            subMessageCount + 1,
+            sampleQuote
         );
         vm.etch(rollupOwner, bytes(""));
 

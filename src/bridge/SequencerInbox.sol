@@ -63,6 +63,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     IBridge public bridge;
 
+    address public constant BLOBSTREAM = 0xa8973BDEf20fe4112C920582938EF2F022C911f5;
+
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
 
