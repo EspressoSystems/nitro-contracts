@@ -32,13 +32,15 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
 
     // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
-    bytes32 public mrEnclave;
-    bytes32 public mrSigner;
+
+    // Creating a mapping for MR_ENCLAVE and MR_SIGNER
+    mapping(bytes32 => bool) public mrEnclaves;
+    mapping(bytes32 => bool) public mrSigners;
 
     constructor(bytes32 _mrEnclave, bytes32 _mrSigner, address _quoteVerifier) {
         quoteVerifier = V3QuoteVerifier(_quoteVerifier);
-        mrEnclave = _mrEnclave;
-        mrSigner = _mrSigner;
+        mrEnclaves[_mrEnclave] = true;
+        mrSigners[_mrSigner] = true;
     }
 
     /*
@@ -70,8 +72,7 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
             revert FailedToParseEnclaveReport();
         }
 
-        // Check that mrEnclave and mrSigner match
-        if (localReport.mrEnclave != mrEnclave || localReport.mrSigner != mrSigner) {
+        if (!mrEnclaves[localReport.mrEnclave] || !mrSigners[localReport.mrSigner]) {
             revert InvalidMREnclaveOrSigner();
         }
 
@@ -129,16 +130,24 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
     /*
      * @dev Set the mrEnclave of the contract
      */
-    function setMrEnclave(bytes32 _mrEnclave) external onlyOwner {
-        emit MREnclaveSet(_mrEnclave);
-        mrEnclave = _mrEnclave;
+    function setMrEnclave(bytes32 _mrEnclave, bool _isValid) external onlyOwner {
+        if (_isValid) {
+            emit MREnclaveSet(_mrEnclave);
+            mrEnclaves[_mrEnclave] = true;
+        } else {
+            delete mrEnclaves[_mrEnclave];
+        }
     }
 
     /*
      * @dev Set the mrSigner of the contract
      */
-    function setMrSigner(bytes32 _mrSigner) external onlyOwner {
-        emit MRSignerSet(_mrSigner);
-        mrSigner = _mrSigner;
+    function setMrSigner(bytes32 _mrSigner, bool _isValid) external onlyOwner {
+        if (_isValid) {
+            emit MRSignerSet(_mrSigner);
+            mrSigners[_mrSigner] = true;
+        } else {
+            delete mrSigners[_mrSigner];
+        }
     }
 }
