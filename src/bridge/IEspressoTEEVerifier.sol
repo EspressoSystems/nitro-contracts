@@ -16,8 +16,8 @@ interface IEspressoTEEVerifier {
     // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
     error InvalidReportDataHash();
 
-    event MREnclaveSet(bytes32 indexed mrEnclave);
-    event MRSignerSet(bytes32 indexed mrSigner);
+    event MREnclaveSet(bytes32 indexed mrEnclave, bool indexed _isValid);
+    event MRSignerSet(bytes32 indexed mrSigner, bool indexed _isValid);
 
     function verify(bytes calldata rawQuote, bytes32 reportDataHash) external view;
 

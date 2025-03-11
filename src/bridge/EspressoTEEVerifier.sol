@@ -128,11 +128,11 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
      */
     function setMrEnclave(bytes32 _mrEnclave, bool _isValid) external onlyOwner {
         if (_isValid) {
-            emit MREnclaveSet(_mrEnclave);
             mrEnclaves[_mrEnclave] = true;
         } else {
             delete mrEnclaves[_mrEnclave];
         }
+        emit MREnclaveSet(_mrEnclave, _isValid);
     }
 
     /*
@@ -140,10 +140,10 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
      */
     function setMrSigner(bytes32 _mrSigner, bool _isValid) external onlyOwner {
         if (_isValid) {
-            emit MRSignerSet(_mrSigner);
             mrSigners[_mrSigner] = true;
         } else {
             delete mrSigners[_mrSigner];
         }
+        emit MRSignerSet(_mrSigner, _isValid);
     }
 }
