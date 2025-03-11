@@ -33,7 +33,6 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
     // V3QuoteVerififer contract from automata to verify the quote
     V3QuoteVerifier public quoteVerifier;
 
-    // Creating a mapping for MR_ENCLAVE and MR_SIGNER
     mapping(bytes32 => bool) public mrEnclaves;
     mapping(bytes32 => bool) public mrSigners;
 
