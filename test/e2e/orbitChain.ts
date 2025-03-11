@@ -27,6 +27,11 @@ import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
 import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
 import { ethers as hardhatEthers } from 'hardhat'
+import {
+  l1Networks,
+  l2Networks,
+} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
+
 const LOCALHOST_L2_RPC = 'http://127.0.0.1:8547'
 const LOCALHOST_L3_RPC = 'http://127.0.0.1:3347'
 
@@ -70,10 +75,18 @@ describe('Orbit Chain', () => {
         l2WethGateway: '',
       },
     }
-    addCustomNetwork({
-      customL1Network: l1Network,
-      customL2Network: l2Network,
-    })
+    if (!l2Networks[l2Network.chainID.toString()]) {
+      if (!l1Networks[l2Network.chainID.toString()]) {
+        addCustomNetwork({
+          customL1Network: l1Network,
+          customL2Network: l2Network,
+        })
+      } else {
+        addCustomNetwork({
+          customL2Network: l2Network,
+        })
+      }
+    }
 
     l1Provider = new JsonRpcProvider(LOCALHOST_L2_RPC)
     l2Provider = new JsonRpcProvider(LOCALHOST_L3_RPC)

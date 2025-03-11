@@ -21,6 +21,7 @@ import {
     NoSuchKeyset,
     NotForked,
     NotBatchPosterManager,
+    NotCodelessOrigin,
     RollupNotChanged,
     DataBlobsNotSupported,
     InitParamZero,
@@ -39,6 +40,7 @@ import "../rollup/IRollupLogic.sol";
 import "./Messages.sol";
 import "../precompiles/ArbGasInfo.sol";
 import "../precompiles/ArbSys.sol";
+import "../libraries/CallerChecker.sol";
 import "../libraries/IReader4844.sol";
 
 import {L1MessageType_batchPostingReport} from "../libraries/MessageTypes.sol";
@@ -377,6 +379,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes memory quote
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
+        if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
@@ -489,10 +492,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (hostChainIsArbitrum) revert DataBlobsNotSupported();
 
         // submit a batch spending report to refund the entity that produced the blob batch data
-        // same as using calldata, we only submit spending report if the caller is the origin of the tx
+        // same as using calldata, we only submit spending report if the caller is the origin and is codeless
         // such that one cannot "double-claim" batch posting refund in the same tx
-        // solhint-disable-next-line avoid-tx-origin
-        if (msg.sender == tx.origin && !isUsingFeeToken) {
+        if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
             submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
         }
     }
