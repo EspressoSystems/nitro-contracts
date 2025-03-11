@@ -25,9 +25,6 @@ import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
  *         from automata to verify the quote. Along with some additional verification logic.
  */
 contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
-    event MREnclaveSet(bytes32 indexed mrEnclave);
-    event MRSignerSet(bytes32 indexed mrSigner);
-
     using BytesUtils for bytes;
 
     // V3QuoteVerififer contract from automata to verify the quote
