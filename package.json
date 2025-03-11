@@ -50,7 +50,7 @@
     "deploy-cachemanager-testnode": "hardhat run scripts/local-deployment/deployCacheManager.ts"
   },
   "dependencies": {
-    "@nomicfoundation/hardhat-verify": "^2.0.13",
+    "@nomicfoundation/hardhat-verify": "^2.0.12",
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",
@@ -61,7 +61,7 @@
   "devDependencies": {
     "@arbitrum/sdk": "^3.4.1",
     "@ethersproject/providers": "^5.7.2",
-    "@nomicfoundation/hardhat-verify": "^2.0.9",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@tovarishfin/hardhat-yul": "^3.0.5",
