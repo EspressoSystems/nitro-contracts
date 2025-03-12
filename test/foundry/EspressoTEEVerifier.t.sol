@@ -100,17 +100,21 @@ contract EspressoTEEVerifierTest is Test {
 
     function testSetMrEnclave() public {
         vm.startPrank(adminTEE);
-        bytes32 newMrEnclave = bytes32(hex"01");
-        espressoTEEVerifier.setMrEnclave(newMrEnclave);
-        assertEq(espressoTEEVerifier.mrEnclave(), newMrEnclave);
+        bytes32 newMrEnclave = bytes32(hex"0123456789abcdef");
+        espressoTEEVerifier.setMrEnclave(newMrEnclave, false);
+        assertEq(espressoTEEVerifier.mrEnclaves(newMrEnclave), false);
+        espressoTEEVerifier.setMrEnclave(newMrEnclave, true);
+        assertEq(espressoTEEVerifier.mrEnclaves(newMrEnclave), true);
         vm.stopPrank();
     }
 
     function testSetMrSigner() public {
         vm.startPrank(adminTEE);
         bytes32 newMrSigner = bytes32(hex"01");
-        espressoTEEVerifier.setMrSigner(newMrSigner);
-        assertEq(espressoTEEVerifier.mrSigner(), newMrSigner);
+        espressoTEEVerifier.setMrSigner(newMrSigner, false);
+        assertEq(espressoTEEVerifier.mrSigners(newMrSigner), false);
+        espressoTEEVerifier.setMrSigner(newMrSigner, true);
+        assertEq(espressoTEEVerifier.mrSigners(newMrSigner), true);
         vm.stopPrank();
     }
 
