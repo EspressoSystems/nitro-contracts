@@ -27,18 +27,16 @@ interface IEspressoTEEVerifier {
         TeeType teeType
     ) external;
 
-    // Function to set the enclave hash
-    function setEnclaveHash(bytes32 enclaveHash, bool valid, TeeType teeType) external;
-
-    // Function to delete a registered signer
-    function deleteRegisteredSigner(address signer, TeeType teeType) external;
-
     // Function to retrieve whether a signer is registered or not
     function registeredSigners(address signer, TeeType teeType) external view returns (bool);
 
-    // Function to retrieve whether an enclave hash is registered or not
-    function registeredEnclaveHash(
+    function registeredEnclaveHashes(
         bytes32 enclaveHash,
+        TeeType teeType
+    ) external view returns (bool);
+
+    function registeredEnclaveSigners(
+        bytes32 enclaveSigner,
         TeeType teeType
     ) external view returns (bool);
 

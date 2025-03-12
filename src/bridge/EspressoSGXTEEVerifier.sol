@@ -28,11 +28,13 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
     V3QuoteVerifier public quoteVerifier;
 
     mapping(bytes32 => bool) public registeredEnclaveHash;
+    mapping(bytes32 => bool) public registeredEnclaveSigner;
     mapping(address => bool) public registeredSigners;
 
-    constructor(bytes32 enclaveHash, address _quoteVerifier) {
+    constructor(bytes32 enclaveHash, bytes32 enclaveSigner, address _quoteVerifier) {
         quoteVerifier = V3QuoteVerifier(_quoteVerifier);
         registeredEnclaveHash[enclaveHash] = true;
+        registeredEnclaveSigner[enclaveSigner] = true;
     }
 
     /*
@@ -72,6 +74,10 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
             revert InvalidEnclaveHash();
         }
 
+        if (!registeredEnclaveSigner[localReport.mrSigner]) {
+            revert InvalidEnclaveSigner();
+        }
+
         //  Verify that the reportDataHash if the hash signed by the TEE
         // We do not check the signature because `quoteVerifier.verifyQuote` already does that
         if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
@@ -84,32 +90,29 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
     /*
         @notice Register a new signer by verifying a quote from the TEE
         @param attestation The attestation from the TEE
-        @param data when registering a signer, data can be passed for each TEE type
-        rest are the address
+        @param data which the TEE has attested to
     */
     function registerSigner(bytes calldata attestation, bytes calldata data) external {
-        // Check that the data length is 32 bytes because verify function expects bytes32
-        if (data.length != 32) {
+        // Check that the data length is 20 bytes because an address is 20 bytes
+        if (data.length != 20) {
             revert InvalidDataLength();
         }
-
-        // Convert the data to bytes32 and pass it to the verify function
-        bytes32 paddedSignerAddress = bytes32(data);
+        bytes32 paddedSignerAddress = keccak256(data);
+        // Convert data to address
         EnclaveReport memory localReport = verify(attestation, paddedSignerAddress);
 
         if (localReport.reportData.length < 20) {
             revert ReportDataTooShort();
         }
 
-        // Extract the first 20 bytes of the reportData as the address
-        address signerFromReport = address(uint160(uint256(keccak256(data[:20]))));
+        address signer = address(uint160(bytes20(data[:20])));
 
         // Check if the extracted address is valid
-        if (signerFromReport == address(0)) {
+        if (signer == address(0)) {
             revert InvalidSignerAddress(); // Custom revert if the address is invalid
         }
         // Mark the signer as registered
-        registeredSigners[signerFromReport] = true;
+        registeredSigners[signer] = true;
     }
 
     /*
@@ -157,11 +160,13 @@ contract EspressoSGXTEEVerifier is IEspressoSGXTEEVerifier, Ownable2Step {
     }
 
     function setEnclaveHash(bytes32 enclaveHash, bool valid) external onlyOwner {
-        if (valid) {
-            registeredEnclaveHash[enclaveHash] = true;
-        } else {
-            delete registeredEnclaveHash[enclaveHash];
-        }
+        registeredEnclaveHash[enclaveHash] = valid;
+        emit EnclaveHashSet(enclaveHash, valid);
+    }
+
+    function setEnclaveSigner(bytes32 enclaveSigner, bool valid) external onlyOwner {
+        registeredEnclaveSigner[enclaveSigner] = valid;
+        emit EnclaveSignerSet(enclaveSigner, valid);
     }
 
     function deleteRegisteredSigner(address signer) external onlyOwner {

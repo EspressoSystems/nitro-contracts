@@ -66,7 +66,7 @@ contract EspressoTEEVerifier is Ownable2Step, IEspressoTEEVerifier {
         @param enclaveHash The hash of the enclave
         @param teeType The type of TEE
      */
-    function registeredEnclaveHash(
+    function registeredEnclaveHashes(
         bytes32 enclaveHash,
         TeeType teeType
     ) external view returns (bool) {
@@ -76,31 +76,19 @@ contract EspressoTEEVerifier is Ownable2Step, IEspressoTEEVerifier {
         revert UnsupportedTeeType();
     }
 
-    /*
-        @notice Set the enclave hash
-        @param enclaveHash The hash of the enclave
-        @param valid True if the enclave hash is valid
+    /**
+        @notice This function retrieves whether an enclave signer is registered or not
+        @param enclaveSigner The enclave signer
         @param teeType The type of TEE
      */
-    function setEnclaveHash(bytes32 enclaveHash, bool valid, TeeType teeType) external onlyOwner {
-        if (teeType == TeeType.SGX) {
-            espressoSGXTEEVerifier.setEnclaveHash(enclaveHash, valid);
-            return;
-        }
-        revert UnsupportedTeeType();
-    }
 
-    /*
-        @notice Delete a registered signer
-        @param signer The address of the signer
-        @param teeType The type of TEE
-     */
-    function deleteRegisteredSigner(address signer, TeeType teeType) external onlyOwner {
+    function registeredEnclaveSigners(
+        bytes32 enclaveSigner,
+        TeeType teeType
+    ) external view returns (bool) {
         if (teeType == TeeType.SGX) {
-            espressoSGXTEEVerifier.deleteRegisteredSigner(signer);
-            return;
+            return espressoSGXTEEVerifier.registeredEnclaveSigner(enclaveSigner);
         }
-
         revert UnsupportedTeeType();
     }
 
