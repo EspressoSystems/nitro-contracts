@@ -27,7 +27,7 @@ contract EspressoTEEVerifierMock {
         // data length should be 32 bytes
         require(data.length == 32, "Invalid data length");
         // Convert the data to bytes32 and pass it to the verify function
-        address signerFromReport = address(uint160(uint256(keccak256(data[:20]))));
+        address signerFromReport = address(uint160(bytes20(data[:20])));
         registeredSigner[signerFromReport] = true;
     }
 
