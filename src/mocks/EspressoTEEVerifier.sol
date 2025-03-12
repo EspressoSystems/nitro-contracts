@@ -24,7 +24,7 @@ contract EspressoTEEVerifierMock {
         bytes calldata data,
         TeeType teeType
     ) external {
-        // data length should be 32 bytes
+        // data length should be 20 bytes
         require(data.length == 20, "Invalid data length");
 
         address signer = address(uint160(bytes20(data[:20])));
