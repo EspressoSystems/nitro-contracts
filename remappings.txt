@@ -5,4 +5,5 @@ openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
 @automata-network/dcap-attestation/contracts=lib/automata-dcap-attestation/contracts/
 @automata-network/dcap-attestation/test=lib/automata-dcap-attestation/forge-test/
+@nitro-validator/=lib/nitro-validator/src/
 solady/=node_modules/solady/src/

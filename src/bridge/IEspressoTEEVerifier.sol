@@ -1,30 +1,58 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Header} from "@automata-network/dcap-attestation/contracts/types/CommonStruct.sol";
-import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
+import {EspressoSGXTEEVerifier} from "./EspressoSGXTEEVerifier.sol";
+import {EspressoNitroTEEVerifier} from "./EspressoNitroTEEVerifier.sol";
 
+/**
+ * @title  Interface for the EspressoTEEVerifier contract
+ * @notice This interface allows interaction with the EspressoTEEVerifier contract functions
+ */
 interface IEspressoTEEVerifier {
-    // We only support version 3 for now
-    error InvalidHeaderVersion();
-    // This error is thrown when the automata verification fails
-    error InvalidQuote();
-    // This error is thrown when the enclave report fails to parse
-    error FailedToParseEnclaveReport();
-    // This error is thrown when the mrEnclave and mrSigner don't match
-    error InvalidMREnclaveOrSigner();
-    // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
-    error InvalidReportDataHash();
+    error InvalidSignature();
+    enum TeeType {
+        SGX,
+        NITRO
+    }
 
-    function verify(bytes calldata rawQuote, bytes32 reportDataHash) external view;
+    /**
+     * @notice Verifies that a given signature corresponds to a valid signer
+     * @param signature The signature to verify
+     * @param userDataHash The user data hash to verify against
+     */
+    function verify(bytes memory signature, bytes32 userDataHash) external view;
 
-    function parseQuoteHeader(bytes calldata rawQuote) external pure returns (Header memory header);
+    /**
+     * @notice Registers a new signer for the given attestation and signature
+     * @param attestation The attestation to register
+     * @param signature The signature to validate and register
+     * @param teeType The type of TEE (SGX or NITRO) for the registration
+     */
+    function registerSigner(
+        bytes calldata attestation,
+        bytes calldata signature,
+        TeeType teeType
+    ) external;
 
-    function parseEnclaveReport(
-        bytes memory rawEnclaveReport
-    ) external pure returns (bool success, EnclaveReport memory enclaveReport);
+    /**
+     * @notice Sets the enclave hash validity for a given TEE type
+     * @param enclaveHash The hash of the enclave to validate
+     * @param valid A boolean indicating if the enclave hash is valid
+     * @param teeType The type of TEE (SGX or NITRO) for the enclave hash setting
+     */
+    function setEnclaveHash(bytes calldata enclaveHash, bool valid, TeeType teeType) external;
 
-    function setMrEnclave(bytes32 _mrEnclave) external;
+    /**
+     * @notice Sets a new EspressoNitroTEEVerifier contract address
+     * @param _espressoNitroTEEVerifier The new EspressoNitroTEEVerifier contract address
+     */
+    function setEspressoNitroTEEVerifier(
+        EspressoNitroTEEVerifier _espressoNitroTEEVerifier
+    ) external;
 
-    function setMrSigner(bytes32 _mrSigner) external;
+    /**
+     * @notice Sets a new EspressoSGXTEEVerifier contract address
+     * @param _espressoSGXTEEVerifier The new EspressoSGXTEEVerifier contract address
+     */
+    function setEspressoSGXTEEVerifier(EspressoSGXTEEVerifier _espressoSGXTEEVerifier) external;
 }

@@ -4,3 +4,6 @@
 [submodule "lib/automata-dcap-attestation"]
 	path = lib/automata-dcap-attestation
 	url = https://github.com/EspressoSystems/automata-dcap-attestation
+[submodule "lib/nitro-validator"]
+	path = lib/nitro-validator
+	url = https://github.com/base/nitro-validator
