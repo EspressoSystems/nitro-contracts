@@ -381,7 +381,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
         // take keccak2256 hash of all the function arguments except the quote
-        uint256 hotshotHeight = uint256(batcherSignatureAndHotshotHeight[0:32]);
+        (uint256 hotshotHeight, bytes memory signature) = abi.decode(
+            batcherSignatureAndHotshotHeight,
+            (uint256, bytes)
+        );
 
         bytes32 reportDataHash = keccak256(
             abi.encode(
@@ -395,7 +398,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             )
         );
         // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(batcherSignatureAndHotshotHeight[32:], reportDataHash);
+        espressoTEEVerifier.verify(signature, reportDataHash);
         emit LastestHotshotHeight(hotshotHeight);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
@@ -542,7 +545,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (isBatchPoster[msg.sender]) {
             // take keccak2256 hash of all the function arguments except the quote
             // extract the hotshot height from the signature
-            uint256 hotshotHeight = uint256(batcherSignatureAndHotshotHeight[0:32]);
+            (uint256 hotshotHeight, bytes memory signature) = abi.decode(
+                batcherSignatureAndHotshotHeight,
+                (uint256, bytes)
+            );
 
             bytes32 reportDataHash = keccak256(
                 abi.encode(
@@ -556,7 +562,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 )
             );
             // verify the quote for the batch poster running in the TEE
-            espressoTEEVerifier.verify(batcherSignatureAndHotshotHeight[32:], reportDataHash);
+            espressoTEEVerifier.verify(signature, reportDataHash);
             emit LastestHotshotHeight(hotshotHeight);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
