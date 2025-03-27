@@ -117,7 +117,7 @@ export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
 export async function deployAllContracts(
   signer: any,
   maxDataSize: BigNumber,
-  verify: boolean = true
+  verify: boolean = true,
 ): Promise<Record<string, Contract>> {
   const isOnArb = await _isRunningOnArbitrum(signer)
 
@@ -203,6 +203,7 @@ export async function deployAllContracts(
     [],
     verify
   )
+
   const osp: Contract = await deployContract(
     'OneStepProofEntry',
     signer,
@@ -258,6 +259,16 @@ export async function deployAllContracts(
     )
   }
   return {
+    ethBridge,
+    ethSequencerInbox,
+    ethInbox,
+    ethRollupEventInbox,
+    ethOutbox,
+    erc20Bridge,
+    erc20SequencerInbox,
+    erc20Inbox,
+    erc20RollupEventInbox,
+    erc20Outbox,
     bridgeCreator,
     prover0,
     proverMem,
