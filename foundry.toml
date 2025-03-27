@@ -9,10 +9,7 @@ optimizer_runs = 1
 via_ir = true
 solc_version = '0.8.25'
 fs_permissions = [{ access = "read", path = "./"}]
-remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
-              'forge-std/=lib/forge-std/src/',
-              '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
-              '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/']
+allow_internal_expect_revert = true
 
 [profile.yul]
 src = 'yul'
