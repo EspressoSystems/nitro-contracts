@@ -47,7 +47,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
-import {IEspressoTEEVerifier} from "../bridge/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -374,13 +374,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory batcherSignatureAndHotshotHeight
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
         // take keccak2256 hash of all the function arguments except the quote
+        uint256 hotshotHeight = uint256(batcherSignatureAndHotshotHeight[0:32]);
+
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -388,12 +390,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 afterDelayedMessagesRead,
                 address(gasRefunder),
                 prevMessageCount,
-                newMessageCount
+                newMessageCount,
+                hotshotHeight
             )
         );
         // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        espressoTEEVerifier.verify(batcherSignatureAndHotshotHeight[32:], reportDataHash);
+        emit LastestHotshotHeight(hotshotHeight);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -530,7 +533,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory batcherSignatureAndHotshotHeight
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
 
@@ -538,6 +541,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // batch poster
         if (isBatchPoster[msg.sender]) {
             // take keccak2256 hash of all the function arguments except the quote
+            // extract the hotshot height from the signature
+            uint256 hotshotHeight = uint256(batcherSignatureAndHotshotHeight[0:32]);
+
             bytes32 reportDataHash = keccak256(
                 abi.encode(
                     sequenceNumber,
@@ -545,12 +551,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     afterDelayedMessagesRead,
                     address(gasRefunder),
                     prevMessageCount,
-                    newMessageCount
+                    newMessageCount,
+                    hotshotHeight
                 )
             );
             // verify the quote for the batch poster running in the TEE
-            espressoTEEVerifier.verify(quote, reportDataHash);
-            emit TEEAttestationQuoteVerified(sequenceNumber);
+            espressoTEEVerifier.verify(batcherSignatureAndHotshotHeight[32:], reportDataHash);
+            emit LastestHotshotHeight(hotshotHeight);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

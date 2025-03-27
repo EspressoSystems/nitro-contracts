@@ -7,7 +7,7 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {EspressoTEEVerifier} from "../../src/bridge/EspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";

@@ -40,7 +40,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     event InvalidateKeyset(bytes32 indexed keysetHash);
 
     /// @dev a TEE attestation quote was verified
-    event TEEAttestationQuoteVerified(uint256 indexed seqMessageIndex);
+    event LastestHotshotHeight(uint256 indexed hotshotHeight);
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
