@@ -380,13 +380,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        // take keccak2256 hash of all the function arguments except the quote
         (uint256 hotshotHeight, bytes memory signature) = abi.decode(
             batcherSignatureAndHotshotHeight,
             (uint256, bytes)
         );
 
-        bytes32 reportDataHash = keccak256(
+        // take keccak2256 hash of all the function arguments
+        // along with the hotshot height
+        bytes32 dataHash = keccak256(
             abi.encode(
                 sequenceNumber,
                 data,
@@ -397,9 +398,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 hotshotHeight
             )
         );
-        // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(signature, reportDataHash);
-        emit LastestHotshotHeight(hotshotHeight);
+        // verify the the reportDataHash was signed by the a registered ephemeral key
+        // generated inside a registered TEE
+        espressoTEEVerifier.verify(signature, dataHash);
+        // signature from a registered ephemeral key generated inside TEE
+        // was verified over the batch data hash
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -527,7 +531,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
      * @param gasRefunder - the gas refunder contract
      * @param prevMessageCount - the number of messages in the previous batch
      * @param newMessageCount - the number of messages in the new batch
-     * @param quote - the atttestation quote from the TEE
+     * @param batcherSignatureAndHotshotHeight - the signature and the hotshot height
      */
     function addSequencerL2Batch(
         uint256 sequenceNumber,
@@ -543,14 +547,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // Only check the attestation quote if the batch has been posted by the
         // batch poster
         if (isBatchPoster[msg.sender]) {
-            // take keccak2256 hash of all the function arguments except the quote
-            // extract the hotshot height from the signature
             (uint256 hotshotHeight, bytes memory signature) = abi.decode(
                 batcherSignatureAndHotshotHeight,
                 (uint256, bytes)
             );
-
-            bytes32 reportDataHash = keccak256(
+            // take keccak2256 hash of all the function arguments
+            // along with the hotshot height
+            bytes32 dataHash = keccak256(
                 abi.encode(
                     sequenceNumber,
                     data,
@@ -561,9 +564,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     hotshotHeight
                 )
             );
-            // verify the quote for the batch poster running in the TEE
-            espressoTEEVerifier.verify(signature, reportDataHash);
-            emit LastestHotshotHeight(hotshotHeight);
+            espressoTEEVerifier.verify(signature, dataHash);
+            // signature from a registered ephemeral key generated inside a registered TEE
+            // was verified over the batch data hash
+            emit TEESignatureVerified(sequenceNumber, hotshotHeight);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
