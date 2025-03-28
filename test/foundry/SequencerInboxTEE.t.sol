@@ -135,7 +135,7 @@ contract SequencerInboxTest is Test {
 
         //  We expect the TEE attestation quote to be validated
         vm.expectEmit();
-        emit ISequencerInbox.LastestHotshotHeight(hotshotHeight);
+        emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             l2TEEData,
@@ -212,7 +212,7 @@ contract SequencerInboxTest is Test {
 
         //  We expect the TEE attestation quote to be validated
         vm.expectEmit();
-        emit ISequencerInbox.LastestHotshotHeight(hotshotHeight);
+        emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
         seqInbox.addSequencerL2Batch(
             sequenceNumber,
             l2TEEData,

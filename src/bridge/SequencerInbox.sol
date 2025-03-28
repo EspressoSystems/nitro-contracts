@@ -387,7 +387,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
         // take keccak2256 hash of all the function arguments
         // along with the hotshot height
-        bytes32 dataHash = keccak256(
+        bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
                 data,
@@ -400,7 +400,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
         // verify the the reportDataHash was signed by the a registered ephemeral key
         // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, dataHash);
+        espressoTEEVerifier.verify(signature, reportDataHash);
         // signature from a registered ephemeral key generated inside TEE
         // was verified over the batch data hash
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -553,7 +553,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             );
             // take keccak2256 hash of all the function arguments
             // along with the hotshot height
-            bytes32 dataHash = keccak256(
+            bytes32 reportDataHash = keccak256(
                 abi.encode(
                     sequenceNumber,
                     data,
@@ -564,7 +564,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     hotshotHeight
                 )
             );
-            espressoTEEVerifier.verify(signature, dataHash);
+            espressoTEEVerifier.verify(signature, reportDataHash);
             // signature from a registered ephemeral key generated inside a registered TEE
             // was verified over the batch data hash
             emit TEESignatureVerified(sequenceNumber, hotshotHeight);
