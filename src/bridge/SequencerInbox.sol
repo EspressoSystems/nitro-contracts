@@ -167,6 +167,7 @@ contract SequencerInbox is
   function initialize(
     IBridge bridge_,
     ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
+    BufferConfig memory bufferConfig_,
     address _espressoTEEVerifier
   ) external onlyDelegated {
     if (bridge != IBridge(address(0))) revert AlreadyInit();
