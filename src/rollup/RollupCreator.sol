@@ -180,13 +180,13 @@ contract RollupCreator is Ownable {
 
         // Create the rollup proxy to figure out the address and initialize it later
         RollupProxy rollup = new RollupProxy{salt: keccak256(abi.encode(deployParams))}();
-
         BridgeCreator.BridgeContracts memory bridgeContracts = bridgeCreator.createBridge(
             address(proxyAdmin),
             address(rollup),
             deployParams.nativeToken,
             deployParams.config.sequencerInboxMaxTimeVariation,
             deployParams.config.bufferConfig
+            deployParams.config.espressoTEEVerifier
         );
 
         IEdgeChallengeManager challengeManager =

@@ -17,6 +17,7 @@ contract SequencerInboxStub is SequencerInbox {
         IReader4844 reader4844_,
         bool isUsingFeeToken_,
         bool isDelayBufferable_
+        address espressoTEEVerifier_
     ) SequencerInbox(maxDataSize_, reader4844_, isUsingFeeToken_, isDelayBufferable_) {
         bridge = bridge_;
         rollup = IOwnable(msg.sender);
@@ -25,6 +26,7 @@ contract SequencerInboxStub is SequencerInbox {
         delaySeconds = uint64(maxTimeVariation_.delaySeconds);
         futureSeconds = uint64(maxTimeVariation_.futureSeconds);
         isBatchPoster[sequencer_] = true;
+        espressoTEEVerifier = IEspressoTEEVerifier(espressoTEEVerifier_);
     }
 
     function addInitMessage(

@@ -1303,7 +1303,7 @@ contract ExpressLaneAuctionTest is Test {
 
         // bad v means invalid sig
         // vm.expectRevert(ECDSAInvalidSignature.selector);
-        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature 'v' value"));
+        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature"));
         rs.auction.resolveMultiBidAuction(bid1, rs.bid0);
 
         bytes32 h0 =
@@ -1317,12 +1317,12 @@ contract ExpressLaneAuctionTest is Test {
 
         // bad v means invalid sig
         // vm.expectRevert(ECDSAInvalidSignature.selector);
-        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature 'v' value"));
+        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature"));
         rs.auction.resolveMultiBidAuction(rs.bid1, bid0);
 
         // bad v means invalid sig
         // vm.expectRevert(ECDSAInvalidSignature.selector);
-        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature 'v' value"));
+        vm.expectRevert(abi.encodePacked("ECDSA: invalid signature"));
         rs.auction.resolveSingleBidAuction(bid0);
     }
 

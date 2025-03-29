@@ -613,7 +613,8 @@ contract OneStepProverHostIo is IOneStepProver {
             impl = executePopCoThread;
         } else if (opcode == Instructions.SWITCH_COTHREAD) {
             impl = executeSwitchCoThread;
-        } else {
+        }
+        else {
             revert("INVALID_MEMORY_OPCODE");
         }
 

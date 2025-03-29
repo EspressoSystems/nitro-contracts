@@ -59,8 +59,9 @@ export async function createRollup(
   signer: Signer,
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
-  feeToken: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string,
+  feeToken: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -99,18 +100,24 @@ export async function createRollup(
 
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
+
     const deployParams = isDevDeployment
-      ? await _getDevRollupConfig(feeToken, validatorWalletCreator, stakeToken)
+      ? await _getDevRollupConfig(
+        feeToken,
+        validatorWalletCreator,
+        stakeToken,
+        espressoTEEVerifierAddress
+      )
       : {
-          config: config.rollupConfig,
-          validators: config.validators,
-          maxDataSize: ethers.BigNumber.from(maxDataSize),
-          nativeToken: feeToken,
-          deployFactoriesToL2: true,
-          maxFeePerGasForRetryables: MAX_FER_PER_GAS,
-          batchPosters: config.batchPosters,
-          batchPosterManager: config.batchPosterManager,
-        }
+        config: config.rollupConfig,
+        validators: config.validators,
+        maxDataSize: ethers.BigNumber.from(maxDataSize),
+        nativeToken: feeToken,
+        deployFactoriesToL2: true,
+        maxFeePerGasForRetryables: MAX_FER_PER_GAS,
+        batchPosters: config.batchPosters,
+        batchPosterManager: config.batchPosterManager,
+      }
 
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
       value: feeCost,
@@ -219,7 +226,8 @@ export async function createRollup(
 async function _getDevRollupConfig(
   feeToken: string,
   validatorWalletCreator: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string
 ) {
   // set up owner address
   const ownerAddress =
@@ -324,6 +332,7 @@ async function _getDevRollupConfig(
         delaySeconds: ethers.BigNumber.from('86400'),
         futureSeconds: ethers.BigNumber.from('3600'),
       },
+      espressoTEEVerifier: espressoTEEVerifierAddress,
     },
     validators: validators,
     maxDataSize: _maxDataSize,

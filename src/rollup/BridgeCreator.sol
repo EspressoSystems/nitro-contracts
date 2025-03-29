@@ -115,18 +115,35 @@ contract BridgeCreator is Ownable {
         return frame;
     }
 
+    /*
+     * Deprecated because we added a new method to create bridges
+     * which requires the address of the `EspressoTEEVerifier` contract
+     * to be passed in. `EspressoTEEVerifier` is required by the sequencer
+     * inbox contract to verify the quote from the TEE to check if the batch has
+     * been posted by a batch poster running in the TEE.
+     */
+    function createBridge(
+        address adminProxy,
+        address rollup,
+        address nativeToken,
+        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation
+    ) external returns (BridgeContracts memory) {
+        revert Deprecated();
+    }
+
     function createBridge(
         address adminProxy,
         address rollup,
         address nativeToken,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
         BufferConfig calldata bufferConfig
+        address espressoTEEVerifier
     ) external returns (BridgeContracts memory) {
         // use create2 salt to ensure deterministic addresses
         bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
         // create delay bufferable sequencer inbox if threshold is non-zero
         bool isDelayBufferable = bufferConfig.threshold != 0;
-
+        
         // create ETH-based bridge if address zero is provided for native token, otherwise create ERC20-based bridge
         BridgeContracts memory frame = _createBridge(
             create2Salt,
@@ -141,7 +158,12 @@ contract BridgeCreator is Ownable {
         } else {
             IERC20Bridge(address(frame.bridge)).initialize(IOwnable(rollup), nativeToken);
         }
-        frame.sequencerInbox.initialize(IBridge(frame.bridge), maxTimeVariation, bufferConfig);
+        frame.sequencerInbox.initialize(
+            IBridge(frame.bridge),
+            maxTimeVariation,
+            bufferConfig,
+            espressoTEEVerifier
+        );
         frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
         frame.rollupEventInbox.initialize(frame.bridge);
         frame.outbox.initialize(frame.bridge);

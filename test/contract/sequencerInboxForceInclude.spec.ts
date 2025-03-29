@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierMock__factory,
   Inbox,
   Inbox__factory,
   MessageTester,
@@ -248,6 +249,13 @@ describe('SequencerInboxForceInclude', async () => {
       'Bridge'
     )) as Bridge__factory
     const bridgeTemplate = await bridgeFac.deploy()
+
+    const espressoTEEVerifierInboxFac = (await ethers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifier = await espressoTEEVerifierInboxFac.deploy()
+    await espressoTEEVerifier.deployed()
+
     const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
       'TransparentUpgradeableProxy'
     )) as TransparentUpgradeableProxy__factory
@@ -257,6 +265,7 @@ describe('SequencerInboxForceInclude', async () => {
       adminAddr,
       '0x'
     )
+
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -271,25 +280,34 @@ describe('SequencerInboxForceInclude', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
+
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await bridge.initialize(rollup.address)
 
-    await sequencerInbox.initialize(
-      bridgeProxy.address,
-      {
-        delayBlocks: maxDelayBlocks,
-        delaySeconds: maxDelayTime,
-        futureBlocks: 10,
-        futureSeconds: 3000,
-      },
-      {
-        threshold: 0,
-        max: 0,
-        replenishRateInBasis: 0,
-      }
-    )
+    await (
+      await sequencerInbox
+        .connect(user)
+        .functions[
+        'initialize(address,(uint256,uint256,uint256,uint256),(uint256,uint256,uint256),address)'
+      ](
+        bridgeProxy.address,
+        {
+          delayBlocks: maxDelayBlocks,
+          delaySeconds: maxDelayTime,
+          futureBlocks: 10,
+          futureSeconds: 3000,
+        },
+        {
+          threshold: 0,
+          max: 0,
+          replenishRateInBasis: 0,
+        },
+        espressoTEEVerifier.address,
+        { gasLimit: 10000000 }
+      )
+    ).wait()
 
     await (
       await sequencerInbox
@@ -353,16 +371,17 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
-        ](
-          0,
-          data,
-          messagesRead,
-          ethers.constants.AddressZero,
-          seqReportedMessageSubCount,
-          seqReportedMessageSubCount.add(10),
-          { gasLimit: 10000000 }
-        )
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](
+        0,
+        data,
+        messagesRead,
+        ethers.constants.AddressZero,
+        seqReportedMessageSubCount,
+        seqReportedMessageSubCount.add(10),
+        '0x',
+        { gasLimit: 10000000 }
+      )
     ).wait()
   })
 
@@ -404,16 +423,17 @@ describe('SequencerInboxForceInclude', async () => {
 
     await sequencerInbox
       .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
-      ](
-        0,
-        '0x',
-        0,
-        ethers.constants.AddressZero,
-        0,
-        ethers.constants.MaxUint256
-      )
+    [
+      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+    ](
+      0,
+      '0x',
+      0,
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.MaxUint256,
+      '0x'
+    )
 
     const delayedTx = await sendDelayedTx(
       user,

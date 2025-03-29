@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierMock__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -227,7 +228,11 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
-
+    const espressoTEEVerifierFac = new EspressoTEEVerifierMock__factory(
+      deployer
+    )
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    await espressoTEEVerifier.deployed()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
@@ -253,6 +258,7 @@ describe('SequencerInbox', async () => {
       adminAddr,
       '0x'
     )
+
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -271,12 +277,18 @@ describe('SequencerInbox', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
+
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
+
     await (
-      await sequencerInbox.initialize(
+      await sequencerInbox
+        .connect(user)
+        .functions[
+        'initialize(address,(uint256,uint256,uint256,uint256),(uint256,uint256,uint256),address)'
+      ](
         bridgeProxy.address,
         {
           delayBlocks: maxDelayBlocks,
@@ -288,10 +300,16 @@ describe('SequencerInbox', async () => {
           threshold: 0,
           max: 0,
           replenishRateInBasis: 0,
-        }
+        },
+        {
+          threshold: 0,
+          max: 0,
+          replenishRateInBasis: 0,
+        },
+        espressoTEEVerifier.address,
+        { gasLimit: 10000000 }
       )
     ).wait()
-
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
     await (
@@ -375,15 +393,16 @@ describe('SequencerInbox', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
-        ](
-          await bridge.sequencerMessageCount(),
-          '0x0042',
-          await bridge.delayedMessageCount(),
-          gasRefunder.address,
-          subMessageCount,
-          subMessageCount.add(1)
-        )
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](
+        await bridge.sequencerMessageCount(),
+        '0x0042',
+        await bridge.delayedMessageCount(),
+        gasRefunder.address,
+        subMessageCount,
+        subMessageCount.add(1),
+        '0x'
+      )
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
   })
@@ -463,7 +482,7 @@ describe('SequencerInbox', async () => {
         (b: any) =>
           b.address.toLowerCase() === sequencerInbox.address.toLowerCase() &&
           b.topics[0] ===
-            sequencerInbox.interface.getEventTopic('SequencerBatchDelivered')
+          sequencerInbox.interface.getEventTopic('SequencerBatchDelivered')
       )
       .map(
         (l: any) => sequencerInbox.interface.parseLog(l).args
@@ -501,7 +520,7 @@ describe('SequencerInbox', async () => {
         (b: any) =>
           b.address.toLowerCase() === sequencerInbox.address.toLowerCase() &&
           b.topics[0] ===
-            sequencerInbox.interface.getEventTopic('InboxMessageDelivered')
+          sequencerInbox.interface.getEventTopic('InboxMessageDelivered')
       )
       .map(
         (l: any) => sequencerInbox.interface.parseLog(l).args

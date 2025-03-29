@@ -20,7 +20,7 @@ export const config = {
     minimumAssertionPeriod: 75,
     validatorAfkBlocks: 201600,
     chainConfig:
-      '{"chainId":13331370,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x1234123412341234123412341234123412341234","GenesisBlockNum":0}}',
+      '{"chainId":13331370,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"EnableEspresso":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x1234123412341234123412341234123412341234","GenesisBlockNum":0}}',
     genesisBlockNum: ethers.BigNumber.from('0'),
     sequencerInboxMaxTimeVariation: {
       delayBlocks: ethers.BigNumber.from('7200'),
@@ -33,6 +33,7 @@ export const config = {
       max: ethers.BigNumber.from('14400'),
       replenishRateInBasis: ethers.BigNumber.from('833'),
     }
+    espressoTEEVerifier: '0xb562622f2D76F355D673560CB88c1dF6088702f1',
   },
   validators: [
     '0x1234123412341234123412341234123412341234',

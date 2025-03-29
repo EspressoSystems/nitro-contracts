@@ -44,6 +44,15 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
             connectedContracts.sequencerInbox.addSequencerL2Batch(
                 0, "", 1, IGasRefunder(address(0)), 0, 1
             );
+                connectedContracts.sequencerInbox.addSequencerL2Batch(
+                0,
+                "",
+                1,
+                IGasRefunder(address(0)),
+                0,
+                1,
+                ""
+            );
         }
 
         validatorWalletCreator = connectedContracts.validatorWalletCreator;
@@ -283,6 +292,58 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
         // previously: emit OwnerFunctionCalled(12);
     }
 
+    /**
+     * @notice Set the token used for stake, where address(0) == eth
+     * @dev Before changing the base stake token, you might need to change the
+     * implementation of the Rollup User facet!
+     * @param newStakeToken address of token used for staking
+     */
+    function setStakeToken(address newStakeToken) external override whenPaused {
+        /*
+         * To change the stake token without breaking consistency one would need to:
+         * Pause the system, have all stakers remove their funds,
+         * update the user logic to handle ERC20s, change the stake token, then resume.
+         *
+         * Note: To avoid loss of funds stakers must remove their funds and claim all the
+         * available withdrawable funds before the system is paused.
+         */
+        bool expectERC20Support = newStakeToken != address(0);
+        // this assumes the rollup isn't its own admin. if needed, instead use a ProxyAdmin by OZ!
+        bool actualERC20Support = IRollupUser(address(this)).isERC20Enabled();
+        require(actualERC20Support == expectERC20Support, "NO_USER_LOGIC_SUPPORT");
+        require(stakerCount() == 0, "NO_ACTIVE_STAKERS");
+        require(totalWithdrawableFunds == 0, "NO_PENDING_WITHDRAW");
+        stakeToken = newStakeToken;
+        emit OwnerFunctionCalled(13);
+    }
+
+    /**
+     * @notice Upgrades the implementation of a beacon controlled by the rollup
+     * @param beacon address of beacon to be upgraded
+     * @param newImplementation new address of implementation
+     */
+    function upgradeBeacon(address beacon, address newImplementation) external override {
+        UpgradeableBeacon(beacon).upgradeTo(newImplementation);
+        emit OwnerFunctionCalled(20);
+    }
+
+    function forceResolveChallenge(
+        address[] calldata stakerA,
+        address[] calldata stakerB
+    ) external override whenPaused {
+        require(stakerA.length > 0, "EMPTY_ARRAY");
+        require(stakerA.length == stakerB.length, "WRONG_LENGTH");
+        for (uint256 i = 0; i < stakerA.length; i++) {
+            uint64 chall = inChallenge(stakerA[i], stakerB[i]);
+
+            require(chall != NO_CHAL_INDEX, "NOT_IN_CHALL");
+            clearChallenge(stakerA[i]);
+            clearChallenge(stakerB[i]);
+            challengeManager.clearChallenge(chall);
+        }
+        emit OwnerFunctionCalled(21);
+    }
+>>>>>>> v2.1.3-alpha
     function forceRefundStaker(
         address[] calldata staker
     ) external override whenPaused {
