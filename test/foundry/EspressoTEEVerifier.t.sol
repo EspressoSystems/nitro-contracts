@@ -18,7 +18,9 @@ contract EspressoTEEVerifierTest is Test {
     address v3QuoteVerifier = address(0x6E64769A13617f528a2135692484B681Ee1a7169);
 
     function setUp() public {
-        vm.createSelectFork("https://rpc.ankr.com/eth_sepolia");
+        vm.createSelectFork(
+            "https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923"
+        );
         // Get the instance of the DCAP Attestation QuoteVerifier on the Arbitrum Sepolia Rollup
         vm.startPrank(adminTEE);
         espressoTEEVerifier = new EspressoTEEVerifier(mrEnclave, mrSigner, v3QuoteVerifier);
