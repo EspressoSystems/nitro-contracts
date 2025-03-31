@@ -135,8 +135,6 @@ contract RollupCreatorTest is Test {
       bytes32(0)
     );
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
-
     Config memory config = Config({
       baseStake: 1000,
       chainId: 1337,
@@ -163,7 +161,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(espressoTEEVerifier)
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds
@@ -366,15 +364,6 @@ contract RollupCreatorTest is Test {
 
   function _createERC20Rollup(address nativeToken) internal {
     vm.startPrank(deployer);
-    address proxyAdmin = address(140);
-    address nativeToken = address(
-      new ERC20PresetFixedSupply(
-        'Appchain Token',
-        'App',
-        1_000_000 ether,
-        deployer
-      )
-    );
 
     // deployment params
     ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox
@@ -388,8 +377,6 @@ contract RollupCreatorTest is Test {
       MachineStatus.FINISHED,
       bytes32(0)
     );
-
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     Config memory config = Config({
       baseStake: 1000,
@@ -417,7 +404,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(espressoTEEVerifier)
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // approve fee token to pay for deployment of L2 factories
@@ -623,8 +610,6 @@ contract RollupCreatorTest is Test {
       bytes32(0)
     );
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
-
     Config memory config = Config({
       baseStake: 1000,
       chainId: 1337,
@@ -651,7 +636,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(espressoTEEVerifier)
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds
