@@ -163,7 +163,6 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      genesisBlockNum: 15_000_000,
       espressoTEEVerifier: address(espressoTEEVerifier)
     });
 
@@ -418,7 +417,6 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      genesisBlockNum: 15_000_000,
       espressoTEEVerifier: address(espressoTEEVerifier)
     });
 
@@ -653,7 +651,6 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      genesisBlockNum: 15_000_000,
       espressoTEEVerifier: address(espressoTEEVerifier)
     });
 

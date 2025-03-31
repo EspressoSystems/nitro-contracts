@@ -15,8 +15,9 @@ contract BridgeCreatorTest is Test {
   address public owner = address(100);
   uint256 public constant MAX_DATA_SIZE = 117_964;
   IReader4844 dummyReader4844 = IReader4844(address(137));
-  BridgeCreator.BridgeContracts ethBasedTemplates =
-    BridgeCreator.BridgeContracts({
+
+  BridgeCreator.BridgeTemplates ethBasedTemplates =
+    BridgeCreator.BridgeTemplates({
       bridge: new Bridge(),
       sequencerInbox: new SequencerInbox(
         MAX_DATA_SIZE,
@@ -34,8 +35,8 @@ contract BridgeCreatorTest is Test {
       rollupEventInbox: new RollupEventInbox(),
       outbox: new Outbox()
     });
-  BridgeCreator.BridgeContracts erc20BasedTemplates =
-    BridgeCreator.BridgeContracts({
+  BridgeCreator.BridgeTemplates erc20BasedTemplates =
+    BridgeCreator.BridgeTemplates({
       bridge: new ERC20Bridge(),
       sequencerInbox: new SequencerInbox(
         MAX_DATA_SIZE,
@@ -267,7 +268,6 @@ contract BridgeCreatorTest is Test {
       bufferConfig,
       address(espressoTEEVerifier)
     );
-
     (
       IBridge bridge,
       ISequencerInbox seqInbox,
@@ -347,12 +347,15 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+
     creator.createBridge(
       proxyAdmin,
       rollup,
       nativeToken,
       timeVars,
-      bufferConfig
+      bufferConfig,
+      address(espressoTEEVerifier)
     );
 
     // can only deploy once from the same address and config
@@ -362,7 +365,8 @@ contract BridgeCreatorTest is Test {
       rollup,
       nativeToken,
       timeVars,
-      bufferConfig
+      bufferConfig,
+      address(espressoTEEVerifier)
     );
 
     // can deploy from a different address
@@ -372,7 +376,8 @@ contract BridgeCreatorTest is Test {
       rollup,
       nativeToken,
       timeVars,
-      bufferConfig
+      bufferConfig,
+      address(espressoTEEVerifier)
     );
   }
 }

@@ -335,6 +335,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
   function initialize(
     IBridge bridge_,
-    MaxTimeVariation calldata maxTimeVariation_
+    MaxTimeVariation calldata maxTimeVariation_,
+    BufferConfig memory bufferConfig_,
+    address _espressoTEEVerifier
   ) external;
 }
