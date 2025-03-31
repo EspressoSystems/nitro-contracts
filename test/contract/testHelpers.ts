@@ -5,6 +5,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierMock__factory,
   Inbox,
   Inbox__factory,
   MessageTester,
@@ -321,6 +322,13 @@ export const setupSequencerInbox = async (
     'Bridge'
   )) as Bridge__factory
   const bridgeTemplate = await bridgeFac.deploy()
+
+  const espressoTEEVerifierInboxFac = (await ethers.getContractFactory(
+    'EspressoTEEVerifierMock'
+  )) as EspressoTEEVerifierMock__factory
+  const espressoTEEVerifier = await espressoTEEVerifierInboxFac.deploy()
+  await espressoTEEVerifier.deployed()
+
   const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
     'TransparentUpgradeableProxy'
   )) as TransparentUpgradeableProxy__factory
@@ -340,6 +348,7 @@ export const setupSequencerInbox = async (
     adminAddr,
     '0x'
   )
+
   const bridge = await bridgeFac.attach(bridgeProxy.address).connect(user)
   const sequencerInbox = await sequencerInboxFac
     .attach(sequencerInboxProxy.address)
@@ -351,7 +360,8 @@ export const setupSequencerInbox = async (
   await sequencerInbox.initialize(
     bridgeProxy.address,
     maxDelay,
-    delayConfigDefault
+    delayConfigDefault,
+    espressoTEEVerifier.address
   )
   await (
     await sequencerInbox
