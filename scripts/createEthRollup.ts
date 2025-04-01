@@ -13,12 +13,18 @@ async function main() {
     throw new Error('ESPRESSO_TEE_VERIFIER_ADDRESS not set')
   }
 
+  const stakeTokenAddress = process.env.STAKE_TOKEN_ADDRESS
+  if (!stakeTokenAddress) {
+    throw new Error('STAKE_TOKEN_ADDRESS not set')
+  }
+
   const [signer] = await ethers.getSigners()
 
   await createRollup(
     signer,
     false,
     rollupCreatorAddress,
+    stakeTokenAddress,
     espressoTEEVerifierAddress,
     feeToken
   )

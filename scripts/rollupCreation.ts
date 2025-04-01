@@ -26,7 +26,6 @@ interface RollupCreatedEvent {
     sequencerInbox: string
     bridge: string
     upgradeExecutor: string
-    validatorUtils: string
     validatorWalletCreator: string
   }
 }
@@ -39,7 +38,6 @@ interface RollupCreationResult {
   rollup: string
   'native-token': string
   'upgrade-executor': string
-  'validator-utils': string
   'validator-wallet-creator': string
 }
 
@@ -61,6 +59,7 @@ export async function createRollup(
   signer: Signer,
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
+  stakeToken: string,
   espressoTEEVerifierAddress: string,
   feeToken: string
 ): Promise<{
@@ -104,20 +103,21 @@ export async function createRollup(
 
     const deployParams = isDevDeployment
       ? await _getDevRollupConfig(
-          feeToken,
-          validatorWalletCreator,
-          espressoTEEVerifierAddress
-        )
+        feeToken,
+        validatorWalletCreator,
+        stakeToken,
+        espressoTEEVerifierAddress
+      )
       : {
-          config: config.rollupConfig,
-          validators: config.validators,
-          maxDataSize: ethers.BigNumber.from(maxDataSize),
-          nativeToken: feeToken,
-          deployFactoriesToL2: true,
-          maxFeePerGasForRetryables: MAX_FER_PER_GAS,
-          batchPosters: config.batchPosters,
-          batchPosterManager: config.batchPosterManager,
-        }
+        config: config.rollupConfig,
+        validators: config.validators,
+        maxDataSize: ethers.BigNumber.from(maxDataSize),
+        nativeToken: feeToken,
+        deployFactoriesToL2: true,
+        maxFeePerGasForRetryables: MAX_FER_PER_GAS,
+        batchPosters: config.batchPosters,
+        batchPosterManager: config.batchPosterManager,
+      }
 
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
       value: feeCost,
@@ -142,7 +142,6 @@ export async function createRollup(
       const sequencerInbox = rollupCreatedEvent.args?.sequencerInbox
       const bridge = rollupCreatedEvent.args?.bridge
       const upgradeExecutor = rollupCreatedEvent.args?.upgradeExecutor
-      const validatorUtils = rollupCreatedEvent.args?.validatorUtils
       const validatorWalletCreator =
         rollupCreatedEvent.args?.validatorWalletCreator
 
@@ -177,7 +176,6 @@ export async function createRollup(
       console.log('AdminProxy Contract created at address:', adminProxy)
       console.log('SequencerInbox (proxy) created at address:', sequencerInbox)
       console.log('Bridge (proxy) Contract created at address:', bridge)
-      console.log('ValidatorUtils Contract created at address:', validatorUtils)
       console.log(
         'ValidatorWalletCreator Contract created at address:',
         validatorWalletCreator
@@ -194,7 +192,6 @@ export async function createRollup(
         rollup: rollupAddress,
         'native-token': nativeToken,
         'upgrade-executor': upgradeExecutor,
-        'validator-utils': validatorUtils,
         'validator-wallet-creator': validatorWalletCreator,
       }
 
@@ -229,6 +226,7 @@ export async function createRollup(
 async function _getDevRollupConfig(
   feeToken: string,
   validatorWalletCreator: string,
+  stakeToken: string,
   espressoTEEVerifierAddress: string
 ) {
   // set up owner address
@@ -306,14 +304,28 @@ async function _getDevRollupConfig(
     config: {
       confirmPeriodBlocks: ethers.BigNumber.from('20'),
       extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
-      stakeToken: ethers.constants.AddressZero,
+      stakeToken: stakeToken,
       baseStake: ethers.utils.parseEther('1'),
       wasmModuleRoot: wasmModuleRoot,
       owner: ownerAddress,
       loserStakeEscrow: ethers.constants.AddressZero,
       chainId: JSON.parse(chainConfig)['chainId'],
       chainConfig: chainConfig,
-      genesisBlockNum: 0,
+      minimumAssertionPeriod: 75,
+      validatorAfkBlocks: 201600,
+      genesisAssertionState: {}, // AssertionState
+      genesisInboxCount: 0,
+      miniStakeValues: [
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+      ],
+      layerZeroBlockEdgeHeight: 2 ** 5,
+      layerZeroBigStepEdgeHeight: 2 ** 5,
+      layerZeroSmallStepEdgeHeight: 2 ** 5,
+      numBigStepLevel: 1,
+      challengeGracePeriodBlocks: 10,
+      bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
       sequencerInboxMaxTimeVariation: {
         delayBlocks: ethers.BigNumber.from('5760'),
         futureBlocks: ethers.BigNumber.from('12'),

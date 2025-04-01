@@ -33,6 +33,10 @@ async function main() {
   if (!rollupCreatorAddress) {
     throw new Error('ROLLUP_CREATOR_ADDRESS not set')
   }
+  const stakeTokenAddress = process.env.STAKE_TOKEN_ADDRESS
+  if (!stakeTokenAddress) {
+    throw new Error('STAKE_TOKEN_ADDRESS not set')
+  }
 
   const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
   if (!espressoTEEVerifierAddress) {
@@ -44,6 +48,7 @@ async function main() {
     deployer,
     false,
     rollupCreatorAddress,
+    stakeTokenAddress,
     espressoTEEVerifierAddress,
     customFeeTokenAddress
   )

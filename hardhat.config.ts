@@ -20,7 +20,7 @@ const solidity = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 100,
+          runs: 2000,
         },
         viaIR: true,
       },
@@ -32,7 +32,16 @@ const solidity = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 0,
+          runs: 20,
+        },
+      },
+    },
+    'src/challengeV2/EdgeChallengeManager.sol': {
+      version: '0.8.17',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 200,
         },
       },
     },
@@ -57,15 +66,19 @@ if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
         enabled: true,
         runs: 100,
       },
+      viaIR: true,
     },
   })
   solidity.overrides = {
-    'src/test-helpers/InterfaceCompatibilityTester.sol': {
-      version: process.env['INTERFACE_TESTER_SOLC_VERSION'],
-      settings: {
-        optimizer: {
-          enabled: true,
-          runs: 100,
+    ...(solidity.overrides || {}),
+    ...{
+      'src/test-helpers/InterfaceCompatibilityTester.sol': {
+        version: process.env['INTERFACE_TESTER_SOLC_VERSION'],
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 100,
+          },
         },
       },
     },
@@ -118,12 +131,6 @@ module.exports = {
       url: 'https://mainnet.infura.io/v3/' + process.env['INFURA_KEY'],
       accounts: process.env['MAINNET_PRIVKEY']
         ? [process.env['MAINNET_PRIVKEY']]
-        : [],
-    },
-    goerli: {
-      url: 'https://goerli.infura.io/v3/' + process.env['INFURA_KEY'],
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
     sepolia: {
@@ -187,13 +194,10 @@ module.exports = {
   etherscan: {
     apiKey: {
       mainnet: process.env['ETHERSCAN_API_KEY'],
-      goerli: process.env['ETHERSCAN_API_KEY'],
       sepolia: process.env['ETHERSCAN_API_KEY'],
       holesky: process.env['ETHERSCAN_API_KEY'],
       arbitrumOne: process.env['ARBISCAN_API_KEY'],
-      arbitrumTestnet: process.env['ARBISCAN_API_KEY'],
       nova: process.env['NOVA_ARBISCAN_API_KEY'],
-      arbGoerliRollup: process.env['ARBISCAN_API_KEY'],
       arbSepolia: process.env['ARBISCAN_API_KEY'],
       base: process.env['BASESCAN_API_KEY'],
       baseSepolia: process.env['BASESCAN_API_KEY'],
@@ -205,14 +209,6 @@ module.exports = {
         urls: {
           apiURL: 'https://api-nova.arbiscan.io/api',
           browserURL: 'https://nova.arbiscan.io/',
-        },
-      },
-      {
-        network: 'arbGoerliRollup',
-        chainId: 421613,
-        urls: {
-          apiURL: 'https://api-goerli.arbiscan.io/api',
-          browserURL: 'https://goerli.arbiscan.io/',
         },
       },
       {
