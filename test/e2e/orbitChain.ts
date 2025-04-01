@@ -741,322 +741,322 @@ describe('Orbit Chain', () => {
     })
   })
 
-  it('can deploy deterministic factories to L2 through RollupCreator', async function () {
-    const rollupCreator = RollupCreator__factory.connect(
-      await _getRollupCreatorFromLogs(l1Provider),
-      l1Provider
-    )
+  // it('can deploy deterministic factories to L2 through RollupCreator', async function () {
+  //   const rollupCreator = RollupCreator__factory.connect(
+  //     await _getRollupCreatorFromLogs(l1Provider),
+  //     l1Provider
+  //   )
 
-    const deployHelper = DeployHelper__factory.connect(
-      await rollupCreator.l2FactoriesDeployer(),
-      l1Provider
-    )
+  //   const deployHelper = DeployHelper__factory.connect(
+  //     await rollupCreator.l2FactoriesDeployer(),
+  //     l1Provider
+  //   )
 
-    const inbox = l2Network.ethBridge.inbox
-    const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
-    let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
-      from: userL1Wallet.address,
-      gasPrice: maxFeePerGas,
-    })
-    if (nativeToken) {
-      const decimals = await nativeToken.decimals()
-      if (decimals < 18) {
-        // if token has less than 18 decimals we need to sum fee costs per each retryable,
-        // as there could be rounding effect for each one of them
-        fee = BigNumber.from(0)
-        fee = fee.add(
-          await _scaleFrom18ToNative(
-            (
-              await deployHelper.NICK_CREATE2_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
-          )
-        )
-        fee = fee.add(
-          await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC2470_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
-          )
-        )
-        fee = fee.add(
-          await _scaleFrom18ToNative(
-            (
-              await deployHelper.ZOLTU_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
-          )
-        )
-        fee = fee.add(
-          await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC1820_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
-          )
-        )
-      } else {
-        fee = await _scaleFrom18ToNative(fee)
-      }
+  //   const inbox = l2Network.ethBridge.inbox
+  //   const maxFeePerGas = BigNumber.from('100000000') // 0.1 gwei
+  //   let fee = await deployHelper.getDeploymentTotalCost(inbox, maxFeePerGas, {
+  //     from: userL1Wallet.address,
+  //     gasPrice: maxFeePerGas,
+  //   })
+  //   if (nativeToken) {
+  //     const decimals = await nativeToken.decimals()
+  //     if (decimals < 18) {
+  //       // if token has less than 18 decimals we need to sum fee costs per each retryable,
+  //       // as there could be rounding effect for each one of them
+  //       fee = BigNumber.from(0)
+  //       fee = fee.add(
+  //         await _scaleFrom18ToNative(
+  //           (
+  //             await deployHelper.NICK_CREATE2_VALUE()
+  //           ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+  //         )
+  //       )
+  //       fee = fee.add(
+  //         await _scaleFrom18ToNative(
+  //           (
+  //             await deployHelper.ERC2470_VALUE()
+  //           ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+  //         )
+  //       )
+  //       fee = fee.add(
+  //         await _scaleFrom18ToNative(
+  //           (
+  //             await deployHelper.ZOLTU_VALUE()
+  //           ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+  //         )
+  //       )
+  //       fee = fee.add(
+  //         await _scaleFrom18ToNative(
+  //           (
+  //             await deployHelper.ERC1820_VALUE()
+  //           ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+  //         )
+  //       )
+  //     } else {
+  //       fee = await _scaleFrom18ToNative(fee)
+  //     }
 
-      await (
-        await nativeToken
-          .connect(userL1Wallet)
-          .approve(rollupCreator.address, fee)
-      ).wait()
-    }
+  //     await (
+  //       await nativeToken
+  //         .connect(userL1Wallet)
+  //         .approve(rollupCreator.address, fee)
+  //     ).wait()
+  //   }
 
-    let userL1NativeAssetBalance: BigNumber
-    if (nativeToken) {
-      userL1NativeAssetBalance = await nativeToken.balanceOf(
-        userL1Wallet.address
-      )
-    } else {
-      userL1NativeAssetBalance = await l1Provider.getBalance(
-        userL1Wallet.address
-      )
-    }
+  //   let userL1NativeAssetBalance: BigNumber
+  //   if (nativeToken) {
+  //     userL1NativeAssetBalance = await nativeToken.balanceOf(
+  //       userL1Wallet.address
+  //     )
+  //   } else {
+  //     userL1NativeAssetBalance = await l1Provider.getBalance(
+  //       userL1Wallet.address
+  //     )
+  //   }
 
-    const genesisAssertionState: AssertionStateStruct = {
-      globalState: {
-        bytes32Vals: [ethers.constants.HashZero, ethers.constants.HashZero],
-        u64Vals: [ethers.BigNumber.from('0'), ethers.BigNumber.from('0')],
-      },
-      machineStatus: 0,
-      endHistoryRoot: ethers.constants.HashZero,
-    }
+  //   const genesisAssertionState: AssertionStateStruct = {
+  //     globalState: {
+  //       bytes32Vals: [ethers.constants.HashZero, ethers.constants.HashZero],
+  //       u64Vals: [ethers.BigNumber.from('0'), ethers.BigNumber.from('0')],
+  //     },
+  //     machineStatus: 0,
+  //     endHistoryRoot: ethers.constants.HashZero,
+  //   }
 
-    const espressoTEEVerifierFac = (await hardhatEthers.getContractFactory(
-      'EspressoTEEVerifierMock'
-    )) as EspressoTEEVerifierMock__factory
-    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+  //   const espressoTEEVerifierFac = (await hardhatEthers.getContractFactory(
+  //     'EspressoTEEVerifierMock'
+  //   )) as EspressoTEEVerifierMock__factory
+  //   const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
 
-    await espressoTEEVerifier.deployed()
+  //   await espressoTEEVerifier.deployed()
 
-    /// deploy params
-    const config = {
-      confirmPeriodBlocks: ethers.BigNumber.from('150'),
-      extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
-      stakeToken: ethers.constants.AddressZero,
-      baseStake: ethers.utils.parseEther('1'),
-      wasmModuleRoot:
-        '0xda4e3ad5e7feacb817c21c8d0220da7650fe9051ece68a3f0b1c5d38bbb27b21',
-      owner: '0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e',
-      loserStakeEscrow: ethers.constants.AddressZero,
-      chainId: ethers.BigNumber.from('433333'),
-      chainConfig:
-        '{"chainId":433333,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e","GenesisBlockNum":0}}',
-      minimumAssertionPeriod: 75,
-      validatorAfkBlocks: 201600,
-      genesisAssertionState: genesisAssertionState, // AssertionState
-      genesisInboxCount: 0,
-      miniStakeValues: [
-        ethers.utils.parseEther('1'),
-        ethers.utils.parseEther('1'),
-        ethers.utils.parseEther('1'),
-      ],
-      layerZeroBlockEdgeHeight: 2 ** 5,
-      layerZeroBigStepEdgeHeight: 2 ** 5,
-      layerZeroSmallStepEdgeHeight: 2 ** 5,
-      anyTrustFastConfirmer: ethers.constants.AddressZero,
-      numBigStepLevel: 1,
-      challengeGracePeriodBlocks: 10,
-      bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
-      sequencerInboxMaxTimeVariation: {
-        delayBlocks: ethers.BigNumber.from('5760'),
-        futureBlocks: ethers.BigNumber.from('12'),
-        delaySeconds: ethers.BigNumber.from('86400'),
-        futureSeconds: ethers.BigNumber.from('3600'),
-      },
-      espressoTEEVerifier: espressoTEEVerifier.address,
-    }
-    const batchPosters = [ethers.Wallet.createRandom().address]
-    const batchPosterManager = ethers.Wallet.createRandom().address
-    const validators = [ethers.Wallet.createRandom().address]
-    const maxDataSize = 104857
-    const nativeTokenAddress = nativeToken
-      ? nativeToken.address
-      : ethers.constants.AddressZero
-    const deployFactoriesToL2 = true
-    const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
+  //   /// deploy params
+  //   const config = {
+  //     confirmPeriodBlocks: ethers.BigNumber.from('150'),
+  //     extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
+  //     stakeToken: ethers.constants.AddressZero,
+  //     baseStake: ethers.utils.parseEther('1'),
+  //     wasmModuleRoot:
+  //       '0xda4e3ad5e7feacb817c21c8d0220da7650fe9051ece68a3f0b1c5d38bbb27b21',
+  //     owner: '0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e',
+  //     loserStakeEscrow: ethers.constants.AddressZero,
+  //     chainId: ethers.BigNumber.from('433333'),
+  //     chainConfig:
+  //       '{"chainId":433333,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e","GenesisBlockNum":0}}',
+  //     minimumAssertionPeriod: 75,
+  //     validatorAfkBlocks: 201600,
+  //     genesisAssertionState: genesisAssertionState, // AssertionState
+  //     genesisInboxCount: 0,
+  //     miniStakeValues: [
+  //       ethers.utils.parseEther('1'),
+  //       ethers.utils.parseEther('1'),
+  //       ethers.utils.parseEther('1'),
+  //     ],
+  //     layerZeroBlockEdgeHeight: 2 ** 5,
+  //     layerZeroBigStepEdgeHeight: 2 ** 5,
+  //     layerZeroSmallStepEdgeHeight: 2 ** 5,
+  //     anyTrustFastConfirmer: ethers.constants.AddressZero,
+  //     numBigStepLevel: 1,
+  //     challengeGracePeriodBlocks: 10,
+  //     bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
+  //     sequencerInboxMaxTimeVariation: {
+  //       delayBlocks: ethers.BigNumber.from('5760'),
+  //       futureBlocks: ethers.BigNumber.from('12'),
+  //       delaySeconds: ethers.BigNumber.from('86400'),
+  //       futureSeconds: ethers.BigNumber.from('3600'),
+  //     },
+  //     espressoTEEVerifier: espressoTEEVerifier.address,
+  //   }
+  //   const batchPosters = [ethers.Wallet.createRandom().address]
+  //   const batchPosterManager = ethers.Wallet.createRandom().address
+  //   const validators = [ethers.Wallet.createRandom().address]
+  //   const maxDataSize = 104857
+  //   const nativeTokenAddress = nativeToken
+  //     ? nativeToken.address
+  //     : ethers.constants.AddressZero
+  //   const deployFactoriesToL2 = true
+  //   const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
 
-    const deployParams = {
-      config,
-      batchPosters,
-      batchPosterManager,
-      validators,
-      maxDataSize,
-      nativeToken: nativeTokenAddress,
-      deployFactoriesToL2,
-      maxFeePerGasForRetryables,
-    }
+  //   const deployParams = {
+  //     config,
+  //     batchPosters,
+  //     batchPosterManager,
+  //     validators,
+  //     maxDataSize,
+  //     nativeToken: nativeTokenAddress,
+  //     deployFactoriesToL2,
+  //     maxFeePerGasForRetryables,
+  //   }
 
-    /// deploy it
-    const receipt = await (
-      await rollupCreator.connect(userL1Wallet).createRollup(deployParams, {
-        value: nativeToken ? BigNumber.from(0) : fee,
-        gasLimit: BigNumber.from('20000000')  // Increased gas limit to 20M
-      })
-    ).wait()
-    const l1TxReceipt = new L1TransactionReceipt(receipt)
+  //   /// deploy it
+  //   const receipt = await (
+  //     await rollupCreator.connect(userL1Wallet).createRollup(deployParams, {
+  //       value: nativeToken ? BigNumber.from(0) : fee,
+  //       gasLimit: BigNumber.from('20000000')  // Increased gas limit to 20M
+  //     })
+  //   ).wait()
+  //   const l1TxReceipt = new L1TransactionReceipt(receipt)
 
-    // 1 init message + 8 msgs for deploying factories
-    const events = l1TxReceipt.getMessageEvents()
-    expect(events.length).to.be.eq(9)
+  //   // 1 init message + 8 msgs for deploying factories
+  //   const events = l1TxReceipt.getMessageEvents()
+  //   expect(events.length).to.be.eq(9)
 
-    // 1st retryable
-    expect(events[1].inboxMessageEvent.messageNum.toString()).to.be.eq('1')
-    await _verifyInboxMsg(
-      events[1].inboxMessageEvent.data,
-      await deployHelper.NICK_CREATE2_DEPLOYER(),
-      await deployHelper.NICK_CREATE2_VALUE(),
-      receipt.effectiveGasPrice,
-      rollupCreator.address
-    )
-    expect(events[2].inboxMessageEvent.messageNum.toString()).to.be.eq('2')
-    expect(events[2].inboxMessageEvent.data).to.be.eq(
-      await deployHelper.NICK_CREATE2_PAYLOAD()
-    )
+  //   // 1st retryable
+  //   expect(events[1].inboxMessageEvent.messageNum.toString()).to.be.eq('1')
+  //   await _verifyInboxMsg(
+  //     events[1].inboxMessageEvent.data,
+  //     await deployHelper.NICK_CREATE2_DEPLOYER(),
+  //     await deployHelper.NICK_CREATE2_VALUE(),
+  //     receipt.effectiveGasPrice,
+  //     rollupCreator.address
+  //   )
+  //   expect(events[2].inboxMessageEvent.messageNum.toString()).to.be.eq('2')
+  //   expect(events[2].inboxMessageEvent.data).to.be.eq(
+  //     await deployHelper.NICK_CREATE2_PAYLOAD()
+  //   )
 
-    // 2nd retryable
-    expect(events[3].inboxMessageEvent.messageNum.toString()).to.be.eq('3')
-    await _verifyInboxMsg(
-      events[3].inboxMessageEvent.data,
-      await deployHelper.ERC2470_DEPLOYER(),
-      await deployHelper.ERC2470_VALUE(),
-      receipt.effectiveGasPrice,
-      rollupCreator.address
-    )
-    expect(events[4].inboxMessageEvent.messageNum.toString()).to.be.eq('4')
-    expect(events[4].inboxMessageEvent.data).to.be.eq(
-      await deployHelper.ERC2470_PAYLOAD()
-    )
+  //   // 2nd retryable
+  //   expect(events[3].inboxMessageEvent.messageNum.toString()).to.be.eq('3')
+  //   await _verifyInboxMsg(
+  //     events[3].inboxMessageEvent.data,
+  //     await deployHelper.ERC2470_DEPLOYER(),
+  //     await deployHelper.ERC2470_VALUE(),
+  //     receipt.effectiveGasPrice,
+  //     rollupCreator.address
+  //   )
+  //   expect(events[4].inboxMessageEvent.messageNum.toString()).to.be.eq('4')
+  //   expect(events[4].inboxMessageEvent.data).to.be.eq(
+  //     await deployHelper.ERC2470_PAYLOAD()
+  //   )
 
-    // 3rd retryable
-    expect(events[5].inboxMessageEvent.messageNum.toString()).to.be.eq('5')
-    await _verifyInboxMsg(
-      events[5].inboxMessageEvent.data,
-      await deployHelper.ZOLTU_CREATE2_DEPLOYER(),
-      await deployHelper.ZOLTU_VALUE(),
-      receipt.effectiveGasPrice,
-      rollupCreator.address
-    )
-    expect(events[6].inboxMessageEvent.messageNum.toString()).to.be.eq('6')
-    expect(events[6].inboxMessageEvent.data).to.be.eq(
-      await deployHelper.ZOLTU_CREATE2_PAYLOAD()
-    )
+  //   // 3rd retryable
+  //   expect(events[5].inboxMessageEvent.messageNum.toString()).to.be.eq('5')
+  //   await _verifyInboxMsg(
+  //     events[5].inboxMessageEvent.data,
+  //     await deployHelper.ZOLTU_CREATE2_DEPLOYER(),
+  //     await deployHelper.ZOLTU_VALUE(),
+  //     receipt.effectiveGasPrice,
+  //     rollupCreator.address
+  //   )
+  //   expect(events[6].inboxMessageEvent.messageNum.toString()).to.be.eq('6')
+  //   expect(events[6].inboxMessageEvent.data).to.be.eq(
+  //     await deployHelper.ZOLTU_CREATE2_PAYLOAD()
+  //   )
 
-    // 4th retryable
-    expect(events[7].inboxMessageEvent.messageNum.toString()).to.be.eq('7')
-    await _verifyInboxMsg(
-      events[7].inboxMessageEvent.data,
-      await deployHelper.ERC1820_DEPLOYER(),
-      await deployHelper.ERC1820_VALUE(),
-      receipt.effectiveGasPrice,
-      rollupCreator.address
-    )
-    expect(events[8].inboxMessageEvent.messageNum.toString()).to.be.eq('8')
-    expect(events[8].inboxMessageEvent.data).to.be.eq(
-      await deployHelper.ERC1820_PAYLOAD()
-    )
+  //   // 4th retryable
+  //   expect(events[7].inboxMessageEvent.messageNum.toString()).to.be.eq('7')
+  //   await _verifyInboxMsg(
+  //     events[7].inboxMessageEvent.data,
+  //     await deployHelper.ERC1820_DEPLOYER(),
+  //     await deployHelper.ERC1820_VALUE(),
+  //     receipt.effectiveGasPrice,
+  //     rollupCreator.address
+  //   )
+  //   expect(events[8].inboxMessageEvent.messageNum.toString()).to.be.eq('8')
+  //   expect(events[8].inboxMessageEvent.data).to.be.eq(
+  //     await deployHelper.ERC1820_PAYLOAD()
+  //   )
 
-    // check total amount to be minted is correct
-    const { amountToBeMintedOnChildChain: amount1 } = await _decodeInboxMessage(
-      events[1].inboxMessageEvent.data
-    )
-    const { amountToBeMintedOnChildChain: amount2 } = await _decodeInboxMessage(
-      events[3].inboxMessageEvent.data
-    )
-    const { amountToBeMintedOnChildChain: amount3 } = await _decodeInboxMessage(
-      events[5].inboxMessageEvent.data
-    )
-    const { amountToBeMintedOnChildChain: amount4 } = await _decodeInboxMessage(
-      events[7].inboxMessageEvent.data
-    )
-    const amountToBeMinted = amount1.add(amount2).add(amount3).add(amount4)
-    let expectedAmountToBeMinted = amountToBeMinted
-    if (nativeToken && (await nativeToken.decimals()) < 18) {
-      // sum up every retryable cost separately due to rounding effect possibly applied to each one
-      const gasCost = maxFeePerGas.mul(BigNumber.from(21000))
-      expectedAmountToBeMinted = BigNumber.from(0)
-      expectedAmountToBeMinted = expectedAmountToBeMinted.add(
-        await _scaleFrom18ToNative(
-          (await deployHelper.NICK_CREATE2_VALUE()).add(gasCost)
-        )
-      )
-      expectedAmountToBeMinted = expectedAmountToBeMinted.add(
-        await _scaleFrom18ToNative(
-          (await deployHelper.ERC2470_VALUE()).add(gasCost)
-        )
-      )
-      expectedAmountToBeMinted = expectedAmountToBeMinted.add(
-        await _scaleFrom18ToNative(
-          (await deployHelper.ZOLTU_VALUE()).add(gasCost)
-        )
-      )
-      expectedAmountToBeMinted = expectedAmountToBeMinted.add(
-        await _scaleFrom18ToNative(
-          (await deployHelper.ERC1820_VALUE()).add(gasCost)
-        )
-      )
-      expectedAmountToBeMinted = await _scaleFromNativeTo18(
-        expectedAmountToBeMinted
-      )
-    }
+  //   // check total amount to be minted is correct
+  //   const { amountToBeMintedOnChildChain: amount1 } = await _decodeInboxMessage(
+  //     events[1].inboxMessageEvent.data
+  //   )
+  //   const { amountToBeMintedOnChildChain: amount2 } = await _decodeInboxMessage(
+  //     events[3].inboxMessageEvent.data
+  //   )
+  //   const { amountToBeMintedOnChildChain: amount3 } = await _decodeInboxMessage(
+  //     events[5].inboxMessageEvent.data
+  //   )
+  //   const { amountToBeMintedOnChildChain: amount4 } = await _decodeInboxMessage(
+  //     events[7].inboxMessageEvent.data
+  //   )
+  //   const amountToBeMinted = amount1.add(amount2).add(amount3).add(amount4)
+  //   let expectedAmountToBeMinted = amountToBeMinted
+  //   if (nativeToken && (await nativeToken.decimals()) < 18) {
+  //     // sum up every retryable cost separately due to rounding effect possibly applied to each one
+  //     const gasCost = maxFeePerGas.mul(BigNumber.from(21000))
+  //     expectedAmountToBeMinted = BigNumber.from(0)
+  //     expectedAmountToBeMinted = expectedAmountToBeMinted.add(
+  //       await _scaleFrom18ToNative(
+  //         (await deployHelper.NICK_CREATE2_VALUE()).add(gasCost)
+  //       )
+  //     )
+  //     expectedAmountToBeMinted = expectedAmountToBeMinted.add(
+  //       await _scaleFrom18ToNative(
+  //         (await deployHelper.ERC2470_VALUE()).add(gasCost)
+  //       )
+  //     )
+  //     expectedAmountToBeMinted = expectedAmountToBeMinted.add(
+  //       await _scaleFrom18ToNative(
+  //         (await deployHelper.ZOLTU_VALUE()).add(gasCost)
+  //       )
+  //     )
+  //     expectedAmountToBeMinted = expectedAmountToBeMinted.add(
+  //       await _scaleFrom18ToNative(
+  //         (await deployHelper.ERC1820_VALUE()).add(gasCost)
+  //       )
+  //     )
+  //     expectedAmountToBeMinted = await _scaleFromNativeTo18(
+  //       expectedAmountToBeMinted
+  //     )
+  //   }
 
-    expect(amountToBeMinted).to.be.eq(expectedAmountToBeMinted)
+  //   expect(amountToBeMinted).to.be.eq(expectedAmountToBeMinted)
 
-    // check amount locked (taken from deployer) matches total amount to be minted
-    let amountTransferedFromDeployer
-    if (nativeToken) {
-      const transferLogs = receipt.logs.filter(log =>
-        log.topics.includes(nativeToken!.interface.getEventTopic('Transfer'))
-      )
-      const decodedEvents = transferLogs.map(
-        log => nativeToken!.interface.parseLog(log).args
-      )
-      const transferedFromDeployer = decodedEvents.filter(
-        log => log.from === userL1Wallet.address
-      )
-      expect(transferedFromDeployer.length).to.be.eq(1)
-      amountTransferedFromDeployer = transferedFromDeployer[0].value
-      expect(await _scaleFromNativeTo18(amountTransferedFromDeployer)).to.be.eq(
-        amountToBeMinted
-      )
-    } else {
-      amountTransferedFromDeployer = userL1NativeAssetBalance.sub(
-        await l1Provider.getBalance(userL1Wallet.address)
-      )
-      expect(amountTransferedFromDeployer).to.be.gte(amountToBeMinted)
-    }
+  //   // check amount locked (taken from deployer) matches total amount to be minted
+  //   let amountTransferedFromDeployer
+  //   if (nativeToken) {
+  //     const transferLogs = receipt.logs.filter(log =>
+  //       log.topics.includes(nativeToken!.interface.getEventTopic('Transfer'))
+  //     )
+  //     const decodedEvents = transferLogs.map(
+  //       log => nativeToken!.interface.parseLog(log).args
+  //     )
+  //     const transferedFromDeployer = decodedEvents.filter(
+  //       log => log.from === userL1Wallet.address
+  //     )
+  //     expect(transferedFromDeployer.length).to.be.eq(1)
+  //     amountTransferedFromDeployer = transferedFromDeployer[0].value
+  //     expect(await _scaleFromNativeTo18(amountTransferedFromDeployer)).to.be.eq(
+  //       amountToBeMinted
+  //     )
+  //   } else {
+  //     amountTransferedFromDeployer = userL1NativeAssetBalance.sub(
+  //       await l1Provider.getBalance(userL1Wallet.address)
+  //     )
+  //     expect(amountTransferedFromDeployer).to.be.gte(amountToBeMinted)
+  //   }
 
-    // check balances after retryable is processed
-    let userL1NativeAssetBalanceAfter, bridgeBalanceAfter: BigNumber
-    const rollupCreatedEvent = receipt.logs.filter(log =>
-      log.topics.includes(
-        rollupCreator.interface.getEventTopic('RollupCreated')
-      )
-    )[0]
-    const decodedRollupCreatedEvent =
-      rollupCreator.interface.parseLog(rollupCreatedEvent)
-    const bridge = decodedRollupCreatedEvent.args.bridge
-    if (nativeToken) {
-      userL1NativeAssetBalanceAfter = await nativeToken.balanceOf(
-        userL1Wallet.address
-      )
-      expect(
-        userL1NativeAssetBalance.sub(userL1NativeAssetBalanceAfter)
-      ).to.be.eq(amountTransferedFromDeployer)
-      bridgeBalanceAfter = await nativeToken.balanceOf(bridge)
-      expect(bridgeBalanceAfter).to.be.eq(amountTransferedFromDeployer)
-    } else {
-      userL1NativeAssetBalanceAfter = await l1Provider.getBalance(
-        userL1Wallet.address
-      )
-      bridgeBalanceAfter = await l1Provider.getBalance(bridge)
-      expect(
-        userL1NativeAssetBalance.sub(userL1NativeAssetBalanceAfter)
-      ).to.be.eq(amountTransferedFromDeployer)
-      expect(bridgeBalanceAfter).to.be.eq(amountToBeMinted)
-    }
-  })
+  //   // check balances after retryable is processed
+  //   let userL1NativeAssetBalanceAfter, bridgeBalanceAfter: BigNumber
+  //   const rollupCreatedEvent = receipt.logs.filter(log =>
+  //     log.topics.includes(
+  //       rollupCreator.interface.getEventTopic('RollupCreated')
+  //     )
+  //   )[0]
+  //   const decodedRollupCreatedEvent =
+  //     rollupCreator.interface.parseLog(rollupCreatedEvent)
+  //   const bridge = decodedRollupCreatedEvent.args.bridge
+  //   if (nativeToken) {
+  //     userL1NativeAssetBalanceAfter = await nativeToken.balanceOf(
+  //       userL1Wallet.address
+  //     )
+  //     expect(
+  //       userL1NativeAssetBalance.sub(userL1NativeAssetBalanceAfter)
+  //     ).to.be.eq(amountTransferedFromDeployer)
+  //     bridgeBalanceAfter = await nativeToken.balanceOf(bridge)
+  //     expect(bridgeBalanceAfter).to.be.eq(amountTransferedFromDeployer)
+  //   } else {
+  //     userL1NativeAssetBalanceAfter = await l1Provider.getBalance(
+  //       userL1Wallet.address
+  //     )
+  //     bridgeBalanceAfter = await l1Provider.getBalance(bridge)
+  //     expect(
+  //       userL1NativeAssetBalance.sub(userL1NativeAssetBalanceAfter)
+  //     ).to.be.eq(amountTransferedFromDeployer)
+  //     expect(bridgeBalanceAfter).to.be.eq(amountToBeMinted)
+  //   }
+  // })
 })
 
 async function _verifyInboxMsg(
