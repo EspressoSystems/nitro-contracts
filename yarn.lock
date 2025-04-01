@@ -3370,6 +3370,11 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha512-j0KLYPhm6zeac4lz3oJ3o65qvgQCcPubiyotZrXqEaG4hNagNYO8qdlUrX5vwqv9ohqeT/Z3j6+yW067yWWdUw==
 
+forge-std@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/forge-std/-/forge-std-1.1.2.tgz#f4a0eda103538d56f9c563f3cd1fa2fd01bd9378"
+  integrity sha512-Wfb0iAS9PcfjMKtGpWQw9mXzJxrWD62kJCUqqLcyuI0+VRtJ3j20XembjF3kS20qELYdXft1vD/SPFVWVKMFOw==
+
 form-data@^2.2.0:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/form-data/-/form-data-2.5.1.tgz#f2cbec57b5e59e23716e128fe44d4e5dd23895f4"
