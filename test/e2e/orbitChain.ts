@@ -892,6 +892,7 @@ describe('Orbit Chain', () => {
     const receipt = await (
       await rollupCreator.connect(userL1Wallet).createRollup(deployParams, {
         value: nativeToken ? BigNumber.from(0) : fee,
+        gasLimit: BigNumber.from('20000000')  // Increased gas limit to 20M
       })
     ).wait()
     const l1TxReceipt = new L1TransactionReceipt(receipt)
