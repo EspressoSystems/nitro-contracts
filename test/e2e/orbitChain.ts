@@ -6,17 +6,20 @@ import {
   L2TransactionReceipt,
   addCustomNetwork,
 } from '@arbitrum/sdk'
+import {
+  l1Networks,
+  l2Networks,
+} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
 import { getBaseFee } from '@arbitrum/sdk/dist/lib/utils/lib'
 import { Filter, JsonRpcProvider } from '@ethersproject/providers'
 import { expect } from 'chai'
-import { ethers as hardhatEthers } from 'hardhat'
+import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
 import {
   ArbSys__factory,
   DeployHelper__factory,
   ERC20,
   ERC20Inbox__factory,
   ERC20__factory,
-  EspressoTEEVerifierMock__factory,
   EthVault__factory,
   IERC20Bridge__factory,
   IInbox__factory,
@@ -24,14 +27,8 @@ import {
   RollupCore__factory,
   RollupCreator__factory,
 } from '../../build/types'
-import { AssertionStateStruct } from '../../build/types/src/challengeV2/IAssertionChain'
 import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
-import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
-import {
-  l1Networks,
-  l2Networks,
-} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
 
 const LOCALHOST_L2_RPC = 'http://127.0.0.1:8547'
 const LOCALHOST_L3_RPC = 'http://127.0.0.1:3347'
@@ -741,6 +738,7 @@ describe('Orbit Chain', () => {
     })
   })
 
+  // TODO: This test is broken from upstream
   // it('can deploy deterministic factories to L2 through RollupCreator', async function () {
   //   const rollupCreator = RollupCreator__factory.connect(
   //     await _getRollupCreatorFromLogs(l1Provider),
@@ -1059,63 +1057,63 @@ describe('Orbit Chain', () => {
   // })
 })
 
-async function _verifyInboxMsg(
-  inboxMsg: string,
-  create2Deployer: string,
-  create2Value: BigNumber,
-  gasPrice: BigNumber,
-  rollupCreatorAddress: string
-) {
-  const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
+// async function _verifyInboxMsg(
+//   inboxMsg: string,
+//   create2Deployer: string,
+//   create2Value: BigNumber,
+//   gasPrice: BigNumber,
+//   rollupCreatorAddress: string
+// ) {
+//   const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
 
-  const msg1 = await _decodeInboxMessage(inboxMsg)
-  expect(msg1.to).to.be.eq(create2Deployer)
-  expect(msg1.l2CallValue).to.be.eq(create2Value)
+//   const msg1 = await _decodeInboxMessage(inboxMsg)
+//   expect(msg1.to).to.be.eq(create2Deployer)
+//   expect(msg1.l2CallValue).to.be.eq(create2Value)
 
-  let expectedAmountToBeMinted = BigNumber.from(create2Value)
-    .add(maxFeePerGasForRetryables.mul(21000))
-    .add(_submissionCost(gasPrice))
-  if (nativeToken && (await nativeToken.decimals()) < 18) {
-    expectedAmountToBeMinted = await _scaleFromNativeTo18(
-      await _scaleFrom18ToNative(expectedAmountToBeMinted)
-    )
-  }
-  expect(msg1.amountToBeMintedOnChildChain).to.be.eq(expectedAmountToBeMinted)
-  expect(msg1.maxSubmissionCost).to.be.eq(_submissionCost(gasPrice))
-  expect(msg1.excessFeeRefundAddress).to.be.eq(applyAlias(rollupCreatorAddress))
-  expect(msg1.callValueRefundAddress).to.be.eq(applyAlias(rollupCreatorAddress))
-  expect(msg1.gasLimit).to.be.eq('21000')
-  expect(msg1.maxFeePerGas).to.be.eq(maxFeePerGasForRetryables)
-  expect(msg1.dataLength).to.be.eq('0')
-}
+//   let expectedAmountToBeMinted = BigNumber.from(create2Value)
+//     .add(maxFeePerGasForRetryables.mul(21000))
+//     .add(_submissionCost(gasPrice))
+//   if (nativeToken && (await nativeToken.decimals()) < 18) {
+//     expectedAmountToBeMinted = await _scaleFromNativeTo18(
+//       await _scaleFrom18ToNative(expectedAmountToBeMinted)
+//     )
+//   }
+//   expect(msg1.amountToBeMintedOnChildChain).to.be.eq(expectedAmountToBeMinted)
+//   expect(msg1.maxSubmissionCost).to.be.eq(_submissionCost(gasPrice))
+//   expect(msg1.excessFeeRefundAddress).to.be.eq(applyAlias(rollupCreatorAddress))
+//   expect(msg1.callValueRefundAddress).to.be.eq(applyAlias(rollupCreatorAddress))
+//   expect(msg1.gasLimit).to.be.eq('21000')
+//   expect(msg1.maxFeePerGas).to.be.eq(maxFeePerGasForRetryables)
+//   expect(msg1.dataLength).to.be.eq('0')
+// }
 
-async function _decodeInboxMessage(encodedMsg: string) {
-  const abiCoder = new ethers.utils.AbiCoder()
-  const types = [
-    'uint256', // uint256(uint160(to))
-    'uint256', // l2CallValue
-    'uint256', // _fromNativeTo18Decimals(amount)
-    'uint256', // maxSubmissionCost
-    'uint256', // uint256(uint160(excessFeeRefundAddress))
-    'uint256', // uint256(uint160(callValueRefundAddress))
-    'uint256', // gasLimit
-    'uint256', // maxFeePerGas
-    'uint256', // data.length (assuming it's a uint256)
-  ]
+// async function _decodeInboxMessage(encodedMsg: string) {
+//   const abiCoder = new ethers.utils.AbiCoder()
+//   const types = [
+//     'uint256', // uint256(uint160(to))
+//     'uint256', // l2CallValue
+//     'uint256', // _fromNativeTo18Decimals(amount)
+//     'uint256', // maxSubmissionCost
+//     'uint256', // uint256(uint160(excessFeeRefundAddress))
+//     'uint256', // uint256(uint160(callValueRefundAddress))
+//     'uint256', // gasLimit
+//     'uint256', // maxFeePerGas
+//     'uint256', // data.length (assuming it's a uint256)
+//   ]
 
-  const decoded = abiCoder.decode(types, encodedMsg)
-  return {
-    to: _uint256ToAddress(decoded[0]),
-    l2CallValue: decoded[1],
-    amountToBeMintedOnChildChain: decoded[2],
-    maxSubmissionCost: decoded[3],
-    excessFeeRefundAddress: _uint256ToAddress(decoded[4]),
-    callValueRefundAddress: _uint256ToAddress(decoded[5]),
-    gasLimit: decoded[6],
-    maxFeePerGas: decoded[7],
-    dataLength: decoded[8],
-  }
-}
+//   const decoded = abiCoder.decode(types, encodedMsg)
+//   return {
+//     to: _uint256ToAddress(decoded[0]),
+//     l2CallValue: decoded[1],
+//     amountToBeMintedOnChildChain: decoded[2],
+//     maxSubmissionCost: decoded[3],
+//     excessFeeRefundAddress: _uint256ToAddress(decoded[4]),
+//     callValueRefundAddress: _uint256ToAddress(decoded[5]),
+//     gasLimit: decoded[6],
+//     maxFeePerGas: decoded[7],
+//     dataLength: decoded[8],
+//   }
+// }
 
 function _uint256ToAddress(uint256: string) {
   return ethers.utils.getAddress(ethers.utils.hexStripZeros(uint256))
