@@ -287,7 +287,7 @@ describe('SequencerInbox', async () => {
       await sequencerInbox
         .connect(user)
         .functions[
-        'initialize(address,(uint256,uint256,uint256,uint256),(uint256,uint256,uint256),address)'
+        'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
       ](
         bridgeProxy.address,
         {
@@ -295,11 +295,6 @@ describe('SequencerInbox', async () => {
           delaySeconds: maxDelayTime,
           futureBlocks: 10,
           futureSeconds: 3000,
-        },
-        {
-          threshold: 0,
-          max: 0,
-          replenishRateInBasis: 0,
         },
         {
           threshold: 0,
@@ -624,3 +619,4 @@ describe('SequencerInbox', async () => {
     )
   }
 })
+
