@@ -325,13 +325,15 @@ contract RollupTest is Test {
   function _createNewBatch() internal returns (uint256) {
     uint256 count = userRollup.bridge().sequencerMessageCount();
     vm.startPrank(sequencer);
+    bytes memory quote;
     userRollup.sequencerInbox().addSequencerL2Batch({
       sequenceNumber: count,
       data: '',
       afterDelayedMessagesRead: 1,
       gasRefunder: IGasRefunder(address(0)),
       prevMessageCount: 0,
-      newMessageCount: 0
+      newMessageCount: 0,
+      quote: quote
     });
     vm.stopPrank();
     assertEq(userRollup.bridge().sequencerMessageCount(), ++count);
@@ -1768,13 +1770,15 @@ contract RollupTest is Test {
   function testRevertNotBatchPoster() public {
     ISequencerInbox sequencerInbox = userRollup.sequencerInbox();
     vm.expectRevert(NotBatchPoster.selector);
+    bytes memory quote;
     sequencerInbox.addSequencerL2Batch(
       0,
       '0x',
       0,
       IGasRefunder(address(0)),
       0,
-      0
+      0,
+      quote
     );
   }
 

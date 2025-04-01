@@ -530,10 +530,9 @@ contract SequencerInbox is
     if (hostChainIsArbitrum) revert DataBlobsNotSupported();
 
     // submit a batch spending report to refund the entity that produced the blob batch data
-    // same as using calldata, we only submit spending report if the caller is the origin of the tx
+    // same as using calldata, we only submit spending report if the caller is the origin and is codeless
     // such that one cannot "double-claim" batch posting refund in the same tx
-    // solhint-disable-next-line avoid-tx-origin
-    if (msg.sender == tx.origin && !isUsingFeeToken) {
+    if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
       submitBatchSpendingReport(
         dataHash,
         seqMessageIndex,
