@@ -320,7 +320,7 @@ jobs:
           cp ./.env-sample ./.env
 
       - name: Test upgrade
-        run: L1_RPC=${{ secrets.L1_RPC || 'https://rpc.ankr.com/eth/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923' }} yarn test:upgrade
+        run: L1_RPC='https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923' yarn test:upgrade
       - name: Run e2e tests
         run: yarn test:e2e
   test-e2e-custom-fee-token:
