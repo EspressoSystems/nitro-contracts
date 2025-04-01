@@ -121,7 +121,7 @@ contract RollupCreatorTest is Test {
 
   function test_createEthRollup() public {
     vm.startPrank(deployer);
-    address proxyAdmin = address(140);
+
     // deployment params
     ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox
       .MaxTimeVariation(((60 * 60 * 24) / 15), 12, 60 * 60 * 24, 60 * 60);

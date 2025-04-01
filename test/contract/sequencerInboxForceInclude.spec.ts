@@ -290,7 +290,7 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(user)
         .functions[
-        'initialize(address,(uint256,uint256,uint256,uint256),(uint256,uint256,uint256),address)'
+        'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
       ](
         bridgeProxy.address,
         {
