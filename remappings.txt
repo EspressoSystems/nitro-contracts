@@ -1,3 +1,4 @@
+espresso-tee-contracts/=lib/espresso-tee-contracts/src/
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
