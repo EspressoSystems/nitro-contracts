@@ -1,9 +1,3 @@
-[submodule "lib/forge-std"]
-	path = lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/automata-dcap-attestation"]
-	path = lib/automata-dcap-attestation
-	url = https://github.com/EspressoSystems/automata-dcap-attestation
 [submodule "lib/espresso-tee-contracts"]
 	path = lib/espresso-tee-contracts
 	url = https://github.com/EspressoSystems/espresso-tee-contracts
