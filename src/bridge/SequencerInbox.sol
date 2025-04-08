@@ -402,7 +402,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // verify the the reportDataHash was signed by the a registered ephemeral key
         // generated inside a registered TEE
         espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        console.log("verified");
         // signature from a registered ephemeral key generated inside TEE
         // was verified over the batch data hash
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
