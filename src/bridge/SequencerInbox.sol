@@ -374,7 +374,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory batcherSignatureAndHotshotHeight
+        bytes memory batcherSignatureAndHotshotHeight,
+        IEspressoTEEVerifier.TeeType teeType
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
         if (msg.sender != tx.origin) revert NotOrigin();
@@ -400,7 +401,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
         // verify the the reportDataHash was signed by the a registered ephemeral key
         // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, reportDataHash);
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        console.log("verified");
         // signature from a registered ephemeral key generated inside TEE
         // was verified over the batch data hash
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -540,7 +542,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory batcherSignatureAndHotshotHeight
+        bytes memory batcherSignatureAndHotshotHeight,
+        IEspressoTEEVerifier.TeeType teeType
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
 
@@ -564,7 +567,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     hotshotHeight
                 )
             );
-            espressoTEEVerifier.verify(signature, reportDataHash);
+            espressoTEEVerifier.verify(signature, reportDataHash, teeType);
             // signature from a registered ephemeral key generated inside a registered TEE
             // was verified over the batch data hash
             emit TEESignatureVerified(sequenceNumber, hotshotHeight);

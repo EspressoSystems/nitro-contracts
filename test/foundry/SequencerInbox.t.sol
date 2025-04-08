@@ -278,7 +278,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
     }
 
@@ -399,7 +400,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
     }
 
@@ -436,7 +438,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
     }
 
@@ -467,7 +470,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
         vm.prank(rollupOwner);
@@ -482,7 +486,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
         vm.prank(rollupOwner);
@@ -507,7 +512,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
         bytes memory authenticatedData = bytes.concat(seqInbox.DATA_BLOB_HEADER_FLAG(), data);
@@ -520,7 +526,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
         vm.expectRevert(
@@ -534,7 +541,8 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            batcherSignatureAndHotshotHeight
+            batcherSignatureAndHotshotHeight,
+            IEspressoTEEVerifier.TeeType.SGX
         );
     }
 

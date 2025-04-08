@@ -151,7 +151,8 @@ contract Simple {
                 IGasRefunder(address(0)),
                 0,
                 0,
-                ""
+                "",
+                IEspressoTEEVerifier.TeeType.SGX
             );
             sequenceNumber++;
         }

@@ -43,7 +43,8 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
             IGasRefunder(address(0)),
             0,
             1,
-            ""
+            "",
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
         validatorUtils = connectedContracts.validatorUtils;

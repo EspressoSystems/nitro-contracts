@@ -9,6 +9,7 @@ pragma experimental ABIEncoderV2;
 import "../libraries/IGasRefunder.sol";
 import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 
 interface ISequencerInbox is IDelayedMessageProvider {
     struct MaxTimeVariation {
@@ -178,7 +179,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory quote,
+        IEspressoTEEVerifier.TeeType teeType
     ) external;
 
     function addSequencerL2Batch(
@@ -197,7 +199,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory quote,
+        IEspressoTEEVerifier.TeeType teeType
     ) external;
 
     function addSequencerL2BatchFromBlobs(
