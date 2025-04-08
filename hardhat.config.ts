@@ -7,6 +7,7 @@ import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
+import '@nomicfoundation/hardhat-foundry'
 // import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
 
@@ -15,13 +16,13 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.19',
+      version: '0.8.25',
       settings: {
         optimizer: {
           enabled: true,
           runs: 1,
         },
-        viaIR: true
+        viaIR: true,
       },
     },
   ],

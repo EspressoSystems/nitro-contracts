@@ -16,12 +16,10 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {NO_CHAL_INDEX} from "../libraries/Constants.sol";
 
 contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeable {
-    function initialize(Config calldata config, ContractDependencies calldata connectedContracts)
-        external
-        override
-        onlyProxy
-        initializer
-    {
+    function initialize(
+        Config calldata config,
+        ContractDependencies calldata connectedContracts
+    ) external override onlyProxy initializer {
         rollupDeploymentBlock = block.number;
         bridge = connectedContracts.bridge;
         sequencerInbox = connectedContracts.sequencerInbox;
@@ -44,7 +42,8 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
             1,
             IGasRefunder(address(0)),
             0,
-            1
+            1,
+            ""
         );
 
         validatorUtils = connectedContracts.validatorUtils;
@@ -255,11 +254,10 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
         emit OwnerFunctionCalled(20);
     }
 
-    function forceResolveChallenge(address[] calldata stakerA, address[] calldata stakerB)
-        external
-        override
-        whenPaused
-    {
+    function forceResolveChallenge(
+        address[] calldata stakerA,
+        address[] calldata stakerB
+    ) external override whenPaused {
         require(stakerA.length > 0, "EMPTY_ARRAY");
         require(stakerA.length == stakerB.length, "WRONG_LENGTH");
         for (uint256 i = 0; i < stakerA.length; i++) {

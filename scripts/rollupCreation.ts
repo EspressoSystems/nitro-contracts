@@ -61,6 +61,7 @@ export async function createRollup(
   signer: Signer,
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
+  espressoTEEVerifierAddress: string,
   feeToken: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
@@ -100,8 +101,13 @@ export async function createRollup(
 
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
+
     const deployParams = isDevDeployment
-      ? await _getDevRollupConfig(feeToken, validatorWalletCreator)
+      ? await _getDevRollupConfig(
+          feeToken,
+          validatorWalletCreator,
+          espressoTEEVerifierAddress
+        )
       : {
           config: config.rollupConfig,
           validators: config.validators,
@@ -222,7 +228,8 @@ export async function createRollup(
 
 async function _getDevRollupConfig(
   feeToken: string,
-  validatorWalletCreator: string
+  validatorWalletCreator: string,
+  espressoTEEVerifierAddress: string
 ) {
   // set up owner address
   const ownerAddress =
@@ -313,6 +320,7 @@ async function _getDevRollupConfig(
         delaySeconds: ethers.BigNumber.from('86400'),
         futureSeconds: ethers.BigNumber.from('3600'),
       },
+      espressoTEEVerifier: espressoTEEVerifierAddress,
     },
     validators: validators,
     maxDataSize: _maxDataSize,

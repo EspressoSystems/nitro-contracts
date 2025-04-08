@@ -26,6 +26,8 @@ struct Config {
     string chainConfig;
     uint64 genesisBlockNum;
     ISequencerInbox.MaxTimeVariation sequencerInboxMaxTimeVariation;
+    // address of the TEE verifier contract
+    address espressoTEEVerifier;
 }
 
 struct ContractDependencies {

@@ -15,6 +15,7 @@ import {
   ERC20,
   ERC20Inbox__factory,
   ERC20__factory,
+  EspressoTEEVerifierMock__factory,
   EthVault__factory,
   IERC20Bridge__factory,
   IInbox__factory,
@@ -30,6 +31,7 @@ import {
   l2Networks,
 } from '@arbitrum/sdk/dist/lib/dataEntities/networks'
 
+import { ethers as hardhatEthers } from 'hardhat'
 const LOCALHOST_L2_RPC = 'http://127.0.0.1:8547'
 const LOCALHOST_L3_RPC = 'http://127.0.0.1:3347'
 
@@ -811,6 +813,22 @@ describe('Orbit Chain', () => {
       )
     }
 
+    const batchPosters = [ethers.Wallet.createRandom().address]
+    const batchPosterManager = ethers.Wallet.createRandom().address
+    const validators = [ethers.Wallet.createRandom().address]
+    const maxDataSize = 104857
+    const nativeTokenAddress = nativeToken
+      ? nativeToken.address
+      : ethers.constants.AddressZero
+    const deployFactoriesToL2 = true
+    const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
+    const espressoTEEVerifierFac = (await hardhatEthers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+
+    await espressoTEEVerifier.deployed()
+
     /// deploy params
     const config = {
       confirmPeriodBlocks: ethers.BigNumber.from('150'),
@@ -831,17 +849,8 @@ describe('Orbit Chain', () => {
         delaySeconds: ethers.BigNumber.from('86400'),
         futureSeconds: ethers.BigNumber.from('3600'),
       },
+      espressoTEEVerifier: espressoTEEVerifier.address,
     }
-    const batchPosters = [ethers.Wallet.createRandom().address]
-    const batchPosterManager = ethers.Wallet.createRandom().address
-    const validators = [ethers.Wallet.createRandom().address]
-    const maxDataSize = 104857
-    const nativeTokenAddress = nativeToken
-      ? nativeToken.address
-      : ethers.constants.AddressZero
-    const deployFactoriesToL2 = true
-    const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
-
     const deployParams = {
       config,
       batchPosters,
