@@ -17,6 +17,8 @@ import {
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
+import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
+import {CertManager} from "@nitro-validator/CertManager.sol";
 
 contract RollupMock {
     address public immutable owner;
@@ -52,6 +54,7 @@ contract SequencerInboxTest is Test {
     address fakeAddress = address(145);
 
     EspressoTEEVerifier espressoTEEVerifier;
+    EspressoNitroTEEVerifier espressoNitroTEEVerifier;
     EspressoSGXTEEVerifier espressoSGXTEEVerifier;
     V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
@@ -76,7 +79,8 @@ contract SequencerInboxTest is Test {
         );
 
         espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(enclaveHash, v3QuoteVerifier);
-        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier);
+        espressoNitroTEEVerifier = new EspressoNitroTEEVerifier(enclaveHash, new CertManager());
+        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
 
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
