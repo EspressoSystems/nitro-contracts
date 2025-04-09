@@ -564,6 +564,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     hotshotHeight
                 )
             );
+
             espressoTEEVerifier.verify(signature, reportDataHash, teeType);
             // signature from a registered ephemeral key generated inside a registered TEE
             // was verified over the batch data hash
