@@ -376,16 +376,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory batcherSignatureAndHotshotHeight
+        bytes memory espressoMetadata
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         // solhint-disable-next-line avoid-tx-origin
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        (uint256 hotshotHeight, bytes memory signature) = abi.decode(
-            batcherSignatureAndHotshotHeight,
-            (uint256, bytes)
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
         );
 
         // take keccak2256 hash of all the function arguments
@@ -403,7 +403,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
         // verify the the reportDataHash was signed by the a registered ephemeral key
         // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, IEspressoTEEVerifier.TeeType.SGX);
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
         // signature from a registered ephemeral key generated inside TEE
         // was verified over the batch data hash
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -563,7 +563,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
      * @param gasRefunder - the gas refunder contract
      * @param prevMessageCount - the number of messages in the previous batch
      * @param newMessageCount - the number of messages in the new batch
-     * @param batcherSignatureAndHotshotHeight - the signature and the hotshot height
+     * @param espressoMetadata - the signature, the hotshot height, and TeeType
      */
     function addSequencerL2Batch(
         uint256 sequenceNumber,
@@ -572,16 +572,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory batcherSignatureAndHotshotHeight
+        bytes memory espressoMetadata
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
 
         // Only check the attestation quote if the batch has been posted by the
         // batch poster
         if (isBatchPoster[msg.sender]) {
-            (uint256 hotshotHeight, bytes memory signature) = abi.decode(
-                batcherSignatureAndHotshotHeight,
-                (uint256, bytes)
+            (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+                espressoMetadata,
+                (uint256, bytes, IEspressoTEEVerifier.TeeType)
             );
             // take keccak2256 hash of all the function arguments
             // along with the hotshot height
@@ -596,7 +596,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     hotshotHeight
                 )
             );
-            espressoTEEVerifier.verify(signature, reportDataHash, IEspressoTEEVerifier.TeeType.SGX);
+
+            espressoTEEVerifier.verify(signature, reportDataHash, teeType);
             // signature from a registered ephemeral key generated inside a registered TEE
             // was verified over the batch data hash
             emit TEESignatureVerified(sequenceNumber, hotshotHeight);
