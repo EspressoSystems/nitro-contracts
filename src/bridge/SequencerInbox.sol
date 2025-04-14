@@ -438,7 +438,7 @@ contract SequencerInbox is
 
     bytes32[] memory dataHashes = reader4844.getDataHashes();
     if (dataHashes.length == 0) revert MissingDataHashes();
-    // take keccak2256 hash of all the function arguments and blob hashes
+    // take keccak2256 hash of all the function arguments and encode packed blob hashes
     // except the quote
     bytes32 reportDataHash = keccak256(
       abi.encode(
