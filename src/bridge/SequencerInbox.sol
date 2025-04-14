@@ -443,7 +443,6 @@ contract SequencerInbox is
     bytes32 reportDataHash = keccak256(
       abi.encode(
         sequenceNumber,
-        data,
         afterDelayedMessagesRead,
         address(gasRefunder),
         prevMessageCount,
