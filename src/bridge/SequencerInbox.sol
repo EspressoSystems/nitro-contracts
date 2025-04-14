@@ -387,9 +387,6 @@ contract SequencerInbox is
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
-    // Question for Espresso Team
-    // Should we check the quote here?
-
     // take keccak2256 hash of all the function arguments except the quote
     bytes32 reportDataHash = keccak256(
       abi.encode(
@@ -423,9 +420,40 @@ contract SequencerInbox is
     uint256 prevMessageCount,
     uint256 newMessageCount
   ) external refundsGas(gasRefunder, reader4844) {
+    revert Deprecated();
+  }
+
+  /// @inheritdoc ISequencerInbox
+  function addSequencerL2BatchFromBlobs(
+    uint256 sequenceNumber,
+    uint256 afterDelayedMessagesRead,
+    IGasRefunder gasRefunder,
+    uint256 prevMessageCount,
+    uint256 newMessageCount,
+    bytes memory quote
+  ) external refundsGas(gasRefunder, reader4844) {
     if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
+
+    bytes32[] memory dataHashes = reader4844.getDataHashes();
+    if (dataHashes.length == 0) revert MissingDataHashes();
+    // take keccak2256 hash of all the function arguments and blob hashes
+    // except the quote
+    bytes32 reportDataHash = keccak256(
+      abi.encode(
+        sequenceNumber,
+        data,
+        afterDelayedMessagesRead,
+        address(gasRefunder),
+        prevMessageCount,
+        newMessageCount,
+        abi.encodePacked(dataHashes)
+      )
+    );
+    // verify the quote for the batch poster running in the TEE
+    espressoTEEVerifier.verify(quote, reportDataHash);
+    emit TEEAttestationQuoteVerified(sequenceNumber);
 
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
