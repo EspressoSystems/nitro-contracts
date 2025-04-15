@@ -434,13 +434,14 @@ describe('SequencerInbox', async () => {
       sequencerInbox.address,
       ['0x0142', '0x0143'],
       sequencerInbox.interface.encodeFunctionData(
-        'addSequencerL2BatchFromBlobs',
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)',
         [
           sequenceNumber,
           afterDelayedMessagesRead,
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
+          '0x'
         ]
       )
     )
