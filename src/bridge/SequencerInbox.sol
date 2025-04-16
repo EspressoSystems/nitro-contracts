@@ -450,7 +450,7 @@ contract SequencerInbox is
         address(gasRefunder),
         prevMessageCount,
         newMessageCount,
-        abi.encodePacked(dataHashes)
+        abi.encode(dataHashes)
       )
     );
     // verify the quote for the batch poster running in the TEE
