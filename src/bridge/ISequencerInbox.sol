@@ -172,7 +172,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) external;
 
     function addSequencerL2Batch(
@@ -191,7 +191,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) external;
 
     function addSequencerL2BatchFromBlobs(
