@@ -7,6 +7,7 @@ import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
+import '@nomicfoundation/hardhat-foundry'
 // import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
 
@@ -15,18 +16,19 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.9',
+      version: '0.8.25',
       settings: {
         optimizer: {
           enabled: true,
           runs: 100,
         },
+        viaIR: true,
       },
     },
   ],
   overrides: {
     'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.9',
+      version: '0.8.20',
       settings: {
         optimizer: {
           enabled: true,
@@ -239,6 +241,14 @@ module.exports = {
         urls: {
           apiURL: 'https://api-sepolia.arbiscan.io/api',
           browserURL: 'https://sepolia.arbiscan.io/',
+        },
+      },
+      {
+        network: 'baseSepolia',
+        chainId: 84532,
+        urls: {
+          apiURL: 'https://api-sepolia.basescan.org/api',
+          browserURL: 'https://sepolia.basescan.org/',
         },
       },
     ],

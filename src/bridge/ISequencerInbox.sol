@@ -39,6 +39,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev a keyset was invalidated
     event InvalidateKeyset(bytes32 indexed keysetHash);
 
+    /// @dev a TEE attestation quote was verified
+    event TEEAttestationQuoteVerified(uint256 indexed seqMessageIndex);
+
     function totalDelayedMessagesRead() external view returns (uint256);
 
     function bridge() external view returns (IBridge);
@@ -162,6 +165,16 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external;
+
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -169,6 +182,16 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount
+    ) external;
+
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
     ) external;
 
     function addSequencerL2BatchFromBlobs(
@@ -226,4 +249,10 @@ interface ISequencerInbox is IDelayedMessageProvider {
     // ---------- initializer ----------
 
     function initialize(IBridge bridge_, MaxTimeVariation calldata maxTimeVariation_) external;
+
+    function initialize(
+        IBridge bridge_,
+        MaxTimeVariation calldata maxTimeVariation_,
+        address _espressoTEEVerifier
+    ) external;
 }

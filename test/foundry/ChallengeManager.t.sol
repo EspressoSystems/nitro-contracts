@@ -24,10 +24,14 @@ contract ChallengeManagerTest is Test {
         );
         chalman.initialize(resultReceiver, sequencerInbox, bridge, osp);
         assertEq(
-            address(chalman.resultReceiver()), address(resultReceiver), "Result receiver not set"
+            address(chalman.resultReceiver()),
+            address(resultReceiver),
+            "Result receiver not set"
         );
         assertEq(
-            address(chalman.sequencerInbox()), address(sequencerInbox), "Sequencer inbox not set"
+            address(chalman.sequencerInbox()),
+            address(sequencerInbox),
+            "Sequencer inbox not set"
         );
         assertEq(address(chalman.bridge()), address(bridge), "Bridge not set");
         assertEq(address(chalman.osp()), address(osp), "OSP not set");
@@ -52,10 +56,12 @@ contract ChallengeManagerTest is Test {
 
         // legacy hashes
         bytes32 legacySegment0 = legacyOSP.getStartMachineHash(
-            keccak256(abi.encodePacked("globalStateHash[0]")), legacyRoot
+            keccak256(abi.encodePacked("globalStateHash[0]")),
+            legacyRoot
         );
         bytes32 legacySegment1 = legacyOSP.getEndMachineHash(
-            MachineStatus.FINISHED, keccak256(abi.encodePacked("globalStateHashes[1]"))
+            MachineStatus.FINISHED,
+            keccak256(abi.encodePacked("globalStateHashes[1]"))
         );
 
         /// new OSP
@@ -72,10 +78,12 @@ contract ChallengeManagerTest is Test {
 
         // new hashes
         bytes32 newSegment0 = _newOSP.getStartMachineHash(
-            keccak256(abi.encodePacked("globalStateHash[0]")), randomRoot
+            keccak256(abi.encodePacked("globalStateHash[0]")),
+            randomRoot
         );
         bytes32 newSegment1 = _newOSP.getEndMachineHash(
-            MachineStatus.FINISHED, keccak256(abi.encodePacked("new_globalStateHashes[1]"))
+            MachineStatus.FINISHED,
+            keccak256(abi.encodePacked("new_globalStateHashes[1]"))
         );
 
         /// do upgrade
@@ -83,7 +91,10 @@ contract ChallengeManagerTest is Test {
         TransparentUpgradeableProxy(payable(address(chalman))).upgradeToAndCall(
             address(chalmanImpl),
             abi.encodeWithSelector(
-                ChallengeManager.postUpgradeInit.selector, _newOSP, legacyRoot, legacyOSP
+                ChallengeManager.postUpgradeInit.selector,
+                _newOSP,
+                legacyRoot,
+                legacyOSP
             )
         );
 
@@ -92,14 +103,16 @@ contract ChallengeManagerTest is Test {
         assertEq(address(_condOsp), address(legacyOSP), "Legacy osp not set");
         assertEq(
             _condOsp.getStartMachineHash(
-                keccak256(abi.encodePacked("globalStateHash[0]")), legacyRoot
+                keccak256(abi.encodePacked("globalStateHash[0]")),
+                legacyRoot
             ),
             legacySegment0,
             "Unexpected start machine hash"
         );
         assertEq(
             _condOsp.getEndMachineHash(
-                MachineStatus.FINISHED, keccak256(abi.encodePacked("globalStateHashes[1]"))
+                MachineStatus.FINISHED,
+                keccak256(abi.encodePacked("globalStateHashes[1]"))
             ),
             legacySegment1,
             "Unexpected end machine hash"
@@ -110,14 +123,16 @@ contract ChallengeManagerTest is Test {
         assertEq(address(_newOsp), address(_newOSP), "New osp not set");
         assertEq(
             _newOsp.getStartMachineHash(
-                keccak256(abi.encodePacked("globalStateHash[0]")), randomRoot
+                keccak256(abi.encodePacked("globalStateHash[0]")),
+                randomRoot
             ),
             newSegment0,
             "Unexpected start machine hash"
         );
         assertEq(
             _newOsp.getEndMachineHash(
-                MachineStatus.FINISHED, keccak256(abi.encodePacked("new_globalStateHashes[1]"))
+                MachineStatus.FINISHED,
+                keccak256(abi.encodePacked("new_globalStateHashes[1]"))
             ),
             newSegment1,
             "Unexpected end machine hash"
@@ -135,7 +150,10 @@ contract ChallengeManagerTest is Test {
         TransparentUpgradeableProxy(payable(address(chalman))).upgradeToAndCall(
             address(chalmanImpl),
             abi.encodeWithSelector(
-                ChallengeManager.postUpgradeInit.selector, newOsp, randomRoot, condOsp
+                ChallengeManager.postUpgradeInit.selector,
+                newOsp,
+                randomRoot,
+                condOsp
             )
         );
 

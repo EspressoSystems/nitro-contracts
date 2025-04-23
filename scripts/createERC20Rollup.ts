@@ -34,11 +34,17 @@ async function main() {
     throw new Error('ROLLUP_CREATOR_ADDRESS not set')
   }
 
+  const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
+  if (!espressoTEEVerifierAddress) {
+    throw new Error('ESPRESSO_TEE_VERIFIER_ADDRESS not set')
+  }
+
   console.log('Creating new rollup with', customFeeTokenAddress, 'as fee token')
   await createRollup(
     deployer,
     false,
     rollupCreatorAddress,
+    espressoTEEVerifierAddress,
     customFeeTokenAddress
   )
 }
