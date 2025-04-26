@@ -14,7 +14,7 @@ interface IEspressoTEEVerifier {
   // This error is thrown when the mrEnclave and mrSigner don't match
   error InvalidMREnclaveOrSigner();
   // This error is thrown when the reportDataHash doesn't match the hash signed by the TEE
-  error InvalidReportDataHash(bytes32, bytes32);
+  error InvalidReportDataHash();
 
   event MREnclaveSet(bytes32 indexed mrEnclave, bool indexed _isValid);
   event MRSignerSet(bytes32 indexed mrSigner, bool indexed _isValid);

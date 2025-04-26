@@ -56,10 +56,7 @@ contract EspressoTEEVerifierBlobsMock is IEspressoTEEVerifier {
     //  Verify that the reportDataHash if the hash signed by the TEE
     // We do not check the signature because `quoteVerifier.verifyQuote` already does that
     if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
-      revert InvalidReportDataHash(
-        reportDataHash,
-        bytes32(localReport.reportData.substring(0, 32))
-      );
+      revert InvalidReportDataHash();
     }
   }
 
