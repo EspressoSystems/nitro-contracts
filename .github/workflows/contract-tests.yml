@@ -155,14 +155,10 @@ jobs:
             echo "$var=${!var}" >> $GITHUB_ENV
           done
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --espresso --latest-espresso-image --pos
+          args: --pos
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Setup nodejs
         uses: actions/setup-node@v3
