@@ -281,7 +281,7 @@ jobs:
 
       - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --l3-node
+          args: --l3node
           no-token-bridge: true
 
       - name: Install Foundry
@@ -330,7 +330,7 @@ jobs:
 
       - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --l3-node
+          args: --l3node
           no-token-bridge: true
 
       - name: Install Foundry
