@@ -73,10 +73,10 @@ contract SequencerInboxBlobsTEE is Test {
         vm.prank(rollupOwner);
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup();
         uint256 sequenceNumber = 1;
-        uint256 afterDelayedMessagesRead = 9;
+        uint256 afterDelayedMessagesRead = 3;
         IGasRefunder gasRefunder = IGasRefunder(address(0));
         uint256 prevMessageCount = 1;
-        uint256 newMessageCount = 9;
+        uint256 newMessageCount = 3;
 
         vm.prank(tx.origin);
         vm.expectRevert();
