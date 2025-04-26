@@ -12,7 +12,7 @@ contract Reader4844 is IReader4844 {
 
     function getDataHashes() external view returns (bytes32[] memory) {
         bytes32[] memory dataHashes = new bytes32[](1); // Fixed size (e.g., 1 element)
-        dataHashes[0] = 0x0136aa65f599c11c29a2346a9134f6260f447b266f47023d51e35d24981bdc4f; // Assign hash
+        dataHashes[0] = 0x014e8e17947683a76729b8efd62f59785227e0011c4ace32d7887589acd46ee7; // Assign hash
         return dataHashes;
     }
 }
