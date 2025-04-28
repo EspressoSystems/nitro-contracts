@@ -76,7 +76,7 @@ jobs:
           exceptions_file: './test/unused-errors/exceptions.txt'
 
       - name: Setup nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'yarn'
@@ -161,7 +161,7 @@ jobs:
           no-token-bridge: true
 
       - name: Setup nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'yarn'
@@ -279,15 +279,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          l3-node: true
-          args: --espresso --latest-espresso-image
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -333,15 +328,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          l3-node: true
-          args: --l3-fee-token --espresso --latest-espresso-image
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: celestia-integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -380,15 +370,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          l3-node: true
-          args: --espresso --latest-espresso-image --l3-fee-token --l3-fee-token-decimals 6
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: 'celestia-integration'
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
