@@ -279,14 +279,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --espresso --latest-espresso-image --l3node
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -332,14 +328,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --espresso --latest-espresso-image --l3node
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -378,14 +370,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
-          args: --espresso --latest-espresso-image --l3node
+          args: --l3node
           no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: integration
-          nitro-testnode-repo: EspressoSystems/nitro-testnode
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
