@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.25;
 
-import {
-    V3QuoteVerifier
-} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
+import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
 import {BELE} from "@automata-network/dcap-attestation/contracts/utils/BELE.sol";
 import {Header} from "@automata-network/dcap-attestation/contracts/types/CommonStruct.sol";
 import {
@@ -15,16 +13,20 @@ import {
 } from "@automata-network/dcap-attestation/contracts/types/Constants.sol";
 import {EnclaveReport} from "@automata-network/dcap-attestation/contracts/types/V3Structs.sol";
 import {BytesUtils} from "@automata-network/dcap-attestation/contracts/utils/BytesUtils.sol";
+import {IEspressoTEEVerifier} from "../bridge/IEspressoTEEVerifier.sol";
+import {
+    V3QuoteVerifier
+} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IEspressoTEEVerifier} from "./IEspressoTEEVerifier.sol";
 
 /**
  *
  * @title  Verifies quotes from the TEE and attests on-chain
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
- *         from automata to verify the quote. Along with some additional verification logic.
+ *         to verify the quote. Along with some additional verification logic.
  */
-contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
+
+contract EspressoTEEVerifierBlobsMock is IEspressoTEEVerifier {
     using BytesUtils for bytes;
 
     // V3QuoteVerififer contract from automata to verify the quote
@@ -33,18 +35,8 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
     mapping(bytes32 => bool) public mrEnclaves;
     mapping(bytes32 => bool) public mrSigners;
 
-    constructor(bytes32 _mrEnclave, bytes32 _mrSigner, address _quoteVerifier) {
-        quoteVerifier = V3QuoteVerifier(_quoteVerifier);
-        mrEnclaves[_mrEnclave] = true;
-        mrSigners[_mrSigner] = true;
-    }
+    constructor() {}
 
-    /*
-        @notice Verify a quote from the TEE and attest on-chain
-        The verification is considered successful if the function does not revert.
-        @param rawQuote The quote from the TEE
-        @param reportDataHash The hash of the report data
-    */
     function verify(bytes calldata rawQuote, bytes32 reportDataHash) external view {
         // Parse the header
         Header memory header = parseQuoteHeader(rawQuote);
@@ -54,22 +46,13 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
             revert InvalidHeaderVersion();
         }
 
-        // Verify the quote
-        (bool success, ) = quoteVerifier.verifyQuote(header, rawQuote);
-        if (!success) {
-            revert InvalidQuote();
-        }
-
         // Parse enclave quote
         uint256 lastIndex = HEADER_LENGTH + ENCLAVE_REPORT_LENGTH;
         EnclaveReport memory localReport;
+        bool success;
         (success, localReport) = parseEnclaveReport(rawQuote[HEADER_LENGTH:lastIndex]);
         if (!success) {
             revert FailedToParseEnclaveReport();
-        }
-
-        if (!mrEnclaves[localReport.mrEnclave] || !mrSigners[localReport.mrSigner]) {
-            revert InvalidMREnclaveOrSigner();
         }
 
         //  Verify that the reportDataHash if the hash signed by the TEE
@@ -77,23 +60,6 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
         if (reportDataHash != bytes32(localReport.reportData.substring(0, 32))) {
             revert InvalidReportDataHash();
         }
-    }
-
-    /*
-        @notice Parses the header from the quote
-        @param rawQuote The raw quote in bytes
-        @return header The parsed header
-    */
-    function parseQuoteHeader(bytes calldata rawQuote) public pure returns (Header memory header) {
-        header = Header({
-            version: uint16(BELE.leBytesToBeUint(rawQuote[0:2])),
-            attestationKeyType: bytes2(rawQuote[2:4]),
-            teeType: bytes4(uint32(BELE.leBytesToBeUint(rawQuote[4:8]))),
-            qeSvn: bytes2(rawQuote[8:10]),
-            pceSvn: bytes2(rawQuote[10:12]),
-            qeVendorId: bytes16(rawQuote[12:28]),
-            userData: bytes20(rawQuote[28:48])
-        });
     }
 
     /*
@@ -123,10 +89,22 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
         success = true;
     }
 
+    function parseQuoteHeader(bytes calldata rawQuote) public pure returns (Header memory header) {
+        header = Header({
+            version: uint16(BELE.leBytesToBeUint(rawQuote[0:2])),
+            attestationKeyType: bytes2(rawQuote[2:4]),
+            teeType: bytes4(uint32(BELE.leBytesToBeUint(rawQuote[4:8]))),
+            qeSvn: bytes2(rawQuote[8:10]),
+            pceSvn: bytes2(rawQuote[10:12]),
+            qeVendorId: bytes16(rawQuote[12:28]),
+            userData: bytes20(rawQuote[28:48])
+        });
+    }
+
     /*
      * @dev Set the mrEnclave of the contract
      */
-    function setMrEnclave(bytes32 _mrEnclave, bool _isValid) external onlyOwner {
+    function setMrEnclave(bytes32 _mrEnclave, bool _isValid) external {
         if (_isValid) {
             mrEnclaves[_mrEnclave] = true;
         } else {
@@ -138,7 +116,7 @@ contract EspressoTEEVerifier is IEspressoTEEVerifier, Ownable2Step {
     /*
      * @dev Set the mrSigner of the contract
      */
-    function setMrSigner(bytes32 _mrSigner, bool _isValid) external onlyOwner {
+    function setMrSigner(bytes32 _mrSigner, bool _isValid) external {
         if (_isValid) {
             mrSigners[_mrSigner] = true;
         } else {
