@@ -249,6 +249,15 @@ interface ISequencerInbox is IDelayedMessageProvider {
     uint256 newMessageCount
   ) external;
 
+  function addSequencerL2BatchFromBlobs(
+    uint256 sequenceNumber,
+    uint256 afterDelayedMessagesRead,
+    IGasRefunder gasRefunder,
+    uint256 prevMessageCount,
+    uint256 newMessageCount,
+    bytes memory quote
+  ) external;
+
   /// @dev    Proves message delays, updates delay buffers, and posts an L2 batch with blob data.
   ///         DelayProof proves the delay of the message and syncs the delay buffer.
   function addSequencerL2BatchFromBlobsDelayProof(

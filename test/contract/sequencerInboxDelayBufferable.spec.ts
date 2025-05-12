@@ -606,6 +606,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -669,6 +670,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -749,6 +751,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -784,6 +787,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -800,6 +804,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount.add(10),
         seqReportedMessageSubCount.add(20),
+        '0x',
         { gasLimit: 10000000 }
       )
     await expect(tx).to.be.revertedWith('DelayProofRequired')
@@ -910,6 +915,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -928,6 +934,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount.add(10),
           seqReportedMessageSubCount.add(20),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -963,6 +970,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount,
           seqReportedMessageSubCount.add(10),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -981,6 +989,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
           ethers.constants.AddressZero,
           seqReportedMessageSubCount.add(10),
           seqReportedMessageSubCount.add(20),
+          '0x',
           { gasLimit: 10000000 }
         )
     )
@@ -1000,6 +1009,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount.add(20),
         seqReportedMessageSubCount.add(30),
+        '0x',
         { gasLimit: 10000000 }
       )
     await expect(txn).to.be.revertedWith('DelayProofRequired')

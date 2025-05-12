@@ -67,7 +67,6 @@ contract SequencerInboxBlobsTEE is Test {
     SequencerInbox seqInboxProxy = SequencerInbox(
       TestUtil.deployProxy(address(seqInboxImpl))
     );
-
     BufferConfig memory bufferConfigDefault = BufferConfig({
       threshold: type(uint64).max,
       max: type(uint64).max,
