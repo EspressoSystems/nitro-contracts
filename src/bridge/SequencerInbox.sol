@@ -446,7 +446,37 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, reader4844) {
+        revert Deprecated();
+    }
+
+    function addSequencerL2BatchFromBlobs(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
+        if (dataHashes.length == 0) revert MissingDataHashes();
+        // take keccak2256 hash of all the function arguments and encode packed blob hashes
+        // except the quote
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                abi.encode(dataHashes)
+            )
+        );
+        // verify the quote for the batch poster running in the TEE
+        espressoTEEVerifier.verify(quote, reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
+
         (
             bytes32 dataHash,
             IBridge.TimeBounds memory timeBounds,
