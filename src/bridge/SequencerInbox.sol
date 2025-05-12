@@ -1101,15 +1101,6 @@ contract SequencerInbox is
     if (!isUsingFeeToken) {
       revert CannotSetFeeTokenPricer();
     }
-    if (extraGas > type(uint64).max) revert ExtraGasNotUint64();
-    bytes memory spendingReportMsg = abi.encodePacked(
-      block.timestamp,
-      batchPoster,
-      dataHash,
-      seqMessageIndex,
-      gasPrice,
-      uint64(extraGas)
-    );
 
     feeTokenPricer = feeTokenPricer_;
     emit FeeTokenPricerSet(address(feeTokenPricer_));
