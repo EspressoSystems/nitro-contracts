@@ -416,7 +416,6 @@ contract OneStepProverHostIo is IOneStepProver {
       proof,
       proofOffset
     );
-
     {
       // TODO: support proving via an authenticated contract
       require(proof[proofOffset] == 0, 'UNKNOWN_INBOX_PROOF');
@@ -424,31 +423,31 @@ contract OneStepProverHostIo is IOneStepProver {
 
       uint256 proofEnd = proof.length;
 
-      function(ExecutionContext calldata, uint64, bytes calldata)
-        internal
-        view
-        returns (bool) inboxValidate;
-
       bool success;
       if (inst.argumentData == Instructions.INBOX_INDEX_SEQUENCER) {
-        inboxValidate = validateSequencerInbox;
         if (proof[proofOffset + 40] & CELESTIA_MESSAGE_HEADER_FLAG != 0) {
           proofEnd = validateDaProof(
             proof[proofOffset + 40:],
             proofOffset + 40
           );
         }
+
+        success = validateSequencerInbox(
+          execCtx,
+          uint64(msgIndex),
+          proof[proofOffset:proofEnd]
+        );
       } else if (inst.argumentData == Instructions.INBOX_INDEX_DELAYED) {
-        inboxValidate = validateDelayedInbox;
+        success = validateDelayedInbox(
+          execCtx,
+          uint64(msgIndex),
+          proof[proofOffset:proofEnd]
+        );
       } else {
         mach.status = MachineStatus.ERRORED;
         return;
       }
-      success = inboxValidate(
-        execCtx,
-        uint64(msgIndex),
-        proof[proofOffset:proofEnd]
-      );
+
       if (!success) {
         mach.status = MachineStatus.ERRORED;
         return;
