@@ -880,6 +880,7 @@ contract SequencerInbox is
     if (isUsingFeeToken && address(_feeTokenPricer) == address(0)) {
       return;
     }
+  }
 
     // report the account who paid the gas (tx.origin) for the tx as batch poster
     // if msg.sender is used and is a contract, it might not be able to spend the refund on l2
@@ -900,6 +901,8 @@ contract SequencerInbox is
       uint256 exchangeRate = _feeTokenPricer.getExchangeRate();
       gasPrice = (gasPrice * exchangeRate) / 1e18;
     }
+    return (keccak256(bytes.concat(header, data)), timeBounds);
+  }
 
     // this msg isn't included in the current sequencer batch, but instead added to
     // the delayed messages queue that is yet to be included
@@ -1098,6 +1101,15 @@ contract SequencerInbox is
     if (!isUsingFeeToken) {
       revert CannotSetFeeTokenPricer();
     }
+    if (extraGas > type(uint64).max) revert ExtraGasNotUint64();
+    bytes memory spendingReportMsg = abi.encodePacked(
+      block.timestamp,
+      batchPoster,
+      dataHash,
+      seqMessageIndex,
+      gasPrice,
+      uint64(extraGas)
+    );
 
     feeTokenPricer = feeTokenPricer_;
     emit FeeTokenPricerSet(address(feeTokenPricer_));
@@ -1109,6 +1121,13 @@ contract SequencerInbox is
   ) external onlyRollupOwner {
     _setBufferConfig(bufferConfig_);
     emit BufferConfigSet(bufferConfig_);
+  }
+
+  function setEspressoTEEVerifier(
+    address _espressoTEEVerifier
+  ) external onlyRollupOwner {
+    espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+    emit OwnerFunctionCalled(6);
   }
 
   function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
