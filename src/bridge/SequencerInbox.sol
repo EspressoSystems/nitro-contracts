@@ -484,7 +484,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             )
         );
         // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash);
+        espressoTEEVerifier.verify(quote, reportDataHash, IEspressoTEEVerifier.TeeType.SGX);
         emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (
