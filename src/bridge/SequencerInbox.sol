@@ -466,7 +466,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
@@ -480,8 +480,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             quote
         );
         // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash, IEspressoTEEVerifier.TeeType.SGX);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         (
             bytes32 dataHash,
