@@ -465,12 +465,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
         bytes32[] memory dataHashes = reader4844.getDataHashes();
+
         if (dataHashes.length == 0) revert MissingDataHashes();
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
         // take keccak2256 hash of all the function arguments and encode packed blob hashes
         // except the quote
         bytes32 reportDataHash = keccak256(
@@ -480,12 +485,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 address(gasRefunder),
                 prevMessageCount,
                 newMessageCount,
-                abi.encode(dataHashes)
+                abi.encode(dataHashes),
+                hotshotHeight
             )
         );
         // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash, IEspressoTEEVerifier.TeeType.SGX);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         (
             bytes32 dataHash,
