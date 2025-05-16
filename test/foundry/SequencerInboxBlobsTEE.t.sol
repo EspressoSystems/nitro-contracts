@@ -7,7 +7,6 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {Reader4844} from "../../src/mocks/Reader4844.sol";
 import {IGasRefunder} from "../../src/libraries/IGasRefunder.sol";
-// import {EspressoTEEVerifierBlobsMock} from "../../src/mocks/EspressoTEEVerifierBlobsMock.sol";
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";

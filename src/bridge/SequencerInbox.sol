@@ -382,31 +382,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-
-        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-            espressoMetadata,
-            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        
+        // Verification
+        _verifyAttestation(
+            sequenceNumber,
+            data,
+            afterDelayedMessagesRead,
+            gasRefunder,
+            prevMessageCount,
+            newMessageCount,
+            espressoMetadata
         );
-
-        // take keccak2256 hash of all the function arguments
-        // along with the hotshot height
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                data,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount,
-                hotshotHeight
-            )
-        );
-        // verify the the reportDataHash was signed by the a registered ephemeral key
-        // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        // signature from a registered ephemeral key generated inside TEE
-        // was verified over the batch data hash
-        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -449,6 +435,38 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
+    function _verifyAttestation(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) private {
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                hotshotHeight
+            )
+        );
+        // verify the the reportDataHash was signed by the a registered ephemeral key
+        // generated inside a registered TEE
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        // signature from a registered ephemeral key generated inside TEE
+        // was verified over the batch data hash
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    }
+
     function addSequencerL2BatchFromBlobs(
         uint256 sequenceNumber,
         uint256 afterDelayedMessagesRead,
@@ -471,6 +489,83 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
         bytes32[] memory dataHashes = reader4844.getDataHashes();
 
+        // Verification logic extracted
+        _verifyBlobQuote(
+            sequenceNumber,
+            afterDelayedMessagesRead,
+            gasRefunder,
+            prevMessageCount,
+            newMessageCount,
+            espressoMetadata
+        );
+
+        (
+            bytes32 dataHash,
+            IBridge.TimeBounds memory timeBounds,
+            uint256 blobGas
+        ) = formBlobDataHash(afterDelayedMessagesRead);
+
+        // Reformat the stack to prevent "Stack too deep"
+        uint256 sequenceNumber_ = sequenceNumber;
+        bytes32 dataHash_ = dataHash;
+        uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
+        uint256 prevMessageCount_ = prevMessageCount;
+        uint256 newMessageCount_ = newMessageCount;
+        IBridge.TimeBounds memory timeBounds_ = timeBounds;
+
+        // we use addSequencerL2BatchImpl for submitting the message
+        // normally this would also submit a batch spending report but that is skipped if we pass
+        // an empty call data size, then we submit a separate batch spending report later
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash_,
+                afterDelayedMessagesRead_,
+                0,
+                prevMessageCount_,
+                newMessageCount_
+            );
+
+        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
+        if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
+        }
+
+        emit SequencerBatchDelivered(
+            sequenceNumber_,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds_,
+            IBridge.BatchDataLocation.Blob
+        );
+
+        // blobs are currently not supported on host arbitrum chains, when support is added it may
+        // consume gas in a different way to L1, so explicitly block host arb chains so that if support for blobs
+        // on arb is added it will need to explicitly turned on in the sequencer inbox
+        if (hostChainIsArbitrum) revert DataBlobsNotSupported();
+
+        // submit a batch spending report to refund the entity that produced the blob batch data
+        // same as using calldata, we only submit spending report if the caller is the origin and is codeless
+        // such that one cannot "double-claim" batch posting refund in the same tx
+        if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
+            submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
+        }
+    }
+
+    function _verifyBlobQuote(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) private {
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
         if (dataHashes.length == 0) revert MissingDataHashes();
         (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
             espressoMetadata,
@@ -489,60 +584,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 hotshotHeight
             )
         );
-        // verify the quote for the batch poster running in the TEE
+        // verify the signature over data hash for the batch poster running in the TEE
         espressoTEEVerifier.verify(signature, reportDataHash, teeType);
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
-
-        (
-            bytes32 dataHash,
-            IBridge.TimeBounds memory timeBounds,
-            uint256 blobGas
-        ) = formBlobDataHash(afterDelayedMessagesRead);
-
-        // we use addSequencerL2BatchImpl for submitting the message
-        // normally this would also submit a batch spending report but that is skipped if we pass
-        // an empty call data size, then we submit a separate batch spending report later
-        (
-            uint256 seqMessageIndex,
-            bytes32 beforeAcc,
-            bytes32 delayedAcc,
-            bytes32 afterAcc
-        ) = addSequencerL2BatchImpl(
-                dataHash,
-                afterDelayedMessagesRead,
-                0,
-                prevMessageCount,
-                newMessageCount
-            );
-
-        uint256 _sequenceNumber = sequenceNumber; // stack workaround
-
-        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
-        if (seqMessageIndex != _sequenceNumber && _sequenceNumber != ~uint256(0)) {
-            revert BadSequencerNumber(seqMessageIndex, _sequenceNumber);
-        }
-
-        emit SequencerBatchDelivered(
-            _sequenceNumber,
-            beforeAcc,
-            afterAcc,
-            delayedAcc,
-            totalDelayedMessagesRead,
-            timeBounds,
-            IBridge.BatchDataLocation.Blob
-        );
-
-        // blobs are currently not supported on host arbitrum chains, when support is added it may
-        // consume gas in a different way to L1, so explicitly block host arb chains so that if support for blobs
-        // on arb is added it will need to explicitly turned on in the sequencer inbox
-        if (hostChainIsArbitrum) revert DataBlobsNotSupported();
-
-        // submit a batch spending report to refund the entity that produced the blob batch data
-        // same as using calldata, we only submit spending report if the caller is the origin and is codeless
-        // such that one cannot "double-claim" batch posting refund in the same tx
-        if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
-            submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
-        }
     }
 
     /**
