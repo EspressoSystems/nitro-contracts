@@ -374,7 +374,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-
+        
         // Verification
         _verifyAttestation(
             sequenceNumber,
@@ -383,7 +383,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             gasRefunder,
             prevMessageCount,
             newMessageCount,
-            quote
+            espressoMetadata
         );
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
@@ -434,8 +434,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) private {
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -443,11 +447,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 afterDelayedMessagesRead,
                 address(gasRefunder),
                 prevMessageCount,
-                newMessageCount
+                newMessageCount,
+                hotshotHeight
             )
         );
-        espressoTEEVerifier.verify(quote, reportDataHash);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        // verify the the reportDataHash was signed by the a registered ephemeral key
+        // generated inside a registered TEE
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        // signature from a registered ephemeral key generated inside TEE
+        // was verified over the batch data hash
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     }
 
     function addSequencerL2BatchFromBlobs(
@@ -470,6 +479,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
+
         // Verification logic extracted
         _verifyBlobQuote(
             sequenceNumber,
@@ -477,11 +488,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             gasRefunder,
             prevMessageCount,
             newMessageCount,
-            quote
+            espressoMetadata
         );
-        // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         (
             bytes32 dataHash,
@@ -547,10 +555,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory quote
+        bytes memory espressoMetadata
     ) private {
         bytes32[] memory dataHashes = reader4844.getDataHashes();
         if (dataHashes.length == 0) revert MissingDataHashes();
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
+        // take keccak2256 hash of all the function arguments and encode packed blob hashes
+        // except the quote
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -558,11 +572,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 address(gasRefunder),
                 prevMessageCount,
                 newMessageCount,
-                abi.encode(dataHashes)
+                abi.encode(dataHashes),
+                hotshotHeight
             )
         );
-        espressoTEEVerifier.verify(quote, reportDataHash);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
+        // verify the signature over data hash for the batch poster running in the TEE
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     }
 
     /**
