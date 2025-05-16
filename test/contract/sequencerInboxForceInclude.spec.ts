@@ -364,6 +364,13 @@ describe('SequencerInboxForceInclude', async () => {
       '0x1010'
     )
 
+    const hotshotHeight = 42
+    const signature = '0x'
+    const batcherSignatureAndHotshotHeight =
+      ethers.utils.defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'uint8'],
+        [hotshotHeight, signature, 0]
+      )
     const messagesRead = await bridge.delayedMessageCount()
     const seqReportedMessageSubCount =
       await bridge.sequencerReportedSubMessageCount()
@@ -379,7 +386,7 @@ describe('SequencerInboxForceInclude', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount,
         seqReportedMessageSubCount.add(10),
-        '0x',
+        batcherSignatureAndHotshotHeight,
         { gasLimit: 10000000 }
       )
     ).wait()
@@ -420,6 +427,14 @@ describe('SequencerInboxForceInclude', async () => {
   it('can force-include-with-max-seqReportedCount', async () => {
     const { user, inbox, bridge, messageTester, batchPoster, sequencerInbox } =
       await setupSequencerInbox()
+    const hotshotHeight = 42
+    const signature = '0x'
+
+    const batcherSignatureAndHotshotHeight =
+      ethers.utils.defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'uint8'],
+        [hotshotHeight, signature, 0]
+      )
 
     await sequencerInbox
       .connect(batchPoster)
@@ -432,7 +447,7 @@ describe('SequencerInboxForceInclude', async () => {
       ethers.constants.AddressZero,
       0,
       ethers.constants.MaxUint256,
-      '0x'
+      batcherSignatureAndHotshotHeight
     )
 
     const delayedTx = await sendDelayedTx(

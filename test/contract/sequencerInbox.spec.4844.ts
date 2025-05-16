@@ -384,6 +384,14 @@ describe('SequencerInbox', async () => {
 
     const subMessageCount = await bridge.sequencerReportedSubMessageCount()
     const balBefore = await batchPoster.getBalance()
+    const hotshotHeight = 42
+    const signature = '0x'
+
+    const batcherSignatureAndHotshotHeight =
+      ethers.utils.defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'uint8'],
+        [hotshotHeight, signature, 0]
+      )
     await (
       await sequencerInbox
         .connect(batchPoster)
@@ -396,7 +404,7 @@ describe('SequencerInbox', async () => {
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          '0x'
+          batcherSignatureAndHotshotHeight
         )
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
