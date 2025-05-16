@@ -383,20 +383,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        // take keccak2256 hash of all the function arguments except the quote
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                data,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount
-            )
+        // Verification
+        _verifyAttestation(
+            sequenceNumber,
+            data,
+            afterDelayedMessagesRead,
+            gasRefunder,
+            prevMessageCount,
+            newMessageCount,
+            quote
         );
-        // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
@@ -439,6 +435,29 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
+    function _verifyAttestation(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) private {
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount
+            )
+        );
+        espressoTEEVerifier.verify(quote, reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
+    }
+
     function addSequencerL2BatchFromBlobs(
         uint256 sequenceNumber,
         uint256 afterDelayedMessagesRead,
@@ -459,29 +478,29 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        bytes32[] memory dataHashes = reader4844.getDataHashes();
-        if (dataHashes.length == 0) revert MissingDataHashes();
-        // take keccak2256 hash of all the function arguments and encode packed blob hashes
-        // except the quote
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount,
-                abi.encode(dataHashes)
-            )
+        // Verification logic extracted
+        _verifyBlobQuote(
+            sequenceNumber,
+            afterDelayedMessagesRead,
+            gasRefunder,
+            prevMessageCount,
+            newMessageCount,
+            quote
         );
-        // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(quote, reportDataHash);
-        emit TEEAttestationQuoteVerified(sequenceNumber);
 
         (
             bytes32 dataHash,
             IBridge.TimeBounds memory timeBounds,
             uint256 blobGas
         ) = formBlobDataHash(afterDelayedMessagesRead);
+
+        // Reformat the stack to prevent "Stack too deep"
+        uint256 sequenceNumber_ = sequenceNumber;
+        bytes32 dataHash_ = dataHash;
+        uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
+        uint256 prevMessageCount_ = prevMessageCount;
+        uint256 newMessageCount_ = newMessageCount;
+        IBridge.TimeBounds memory timeBounds_ = timeBounds;
 
         // we use addSequencerL2BatchImpl for submitting the message
         // normally this would also submit a batch spending report but that is skipped if we pass
@@ -492,27 +511,25 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             bytes32 delayedAcc,
             bytes32 afterAcc
         ) = addSequencerL2BatchImpl(
-                dataHash,
-                afterDelayedMessagesRead,
+                dataHash_,
+                afterDelayedMessagesRead_,
                 0,
-                prevMessageCount,
-                newMessageCount
+                prevMessageCount_,
+                newMessageCount_
             );
 
-        uint256 _sequenceNumber = sequenceNumber; // stack workaround
-
         // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
-        if (seqMessageIndex != _sequenceNumber && _sequenceNumber != ~uint256(0)) {
-            revert BadSequencerNumber(seqMessageIndex, _sequenceNumber);
+        if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
         }
 
         emit SequencerBatchDelivered(
-            _sequenceNumber,
+            sequenceNumber_,
             beforeAcc,
             afterAcc,
             delayedAcc,
             totalDelayedMessagesRead,
-            timeBounds,
+            timeBounds_,
             IBridge.BatchDataLocation.Blob
         );
 
@@ -527,6 +544,30 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
             submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
         }
+    }
+
+    function _verifyBlobQuote(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory quote
+    ) private {
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
+        if (dataHashes.length == 0) revert MissingDataHashes();
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                abi.encode(dataHashes)
+            )
+        );
+        espressoTEEVerifier.verify(quote, reportDataHash);
+        emit TEEAttestationQuoteVerified(sequenceNumber);
     }
 
     /**
