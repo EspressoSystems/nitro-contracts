@@ -366,7 +366,7 @@ describe('SequencerInboxForceInclude', async () => {
 
     const hotshotHeight = 42
     const signature = '0x'
-    const batcherSignatureAndHotshotHeight =
+    const espressoMetadata =
       ethers.utils.defaultAbiCoder.encode(
         ['uint256', 'bytes', 'uint8'],
         [hotshotHeight, signature, 0]
@@ -386,7 +386,7 @@ describe('SequencerInboxForceInclude', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount,
         seqReportedMessageSubCount.add(10),
-        batcherSignatureAndHotshotHeight,
+        espressoMetadata,
         { gasLimit: 10000000 }
       )
     ).wait()
@@ -430,7 +430,7 @@ describe('SequencerInboxForceInclude', async () => {
     const hotshotHeight = 42
     const signature = '0x'
 
-    const batcherSignatureAndHotshotHeight =
+    const espressoMetadata =
       ethers.utils.defaultAbiCoder.encode(
         ['uint256', 'bytes', 'uint8'],
         [hotshotHeight, signature, 0]
@@ -447,7 +447,7 @@ describe('SequencerInboxForceInclude', async () => {
       ethers.constants.AddressZero,
       0,
       ethers.constants.MaxUint256,
-      batcherSignatureAndHotshotHeight
+      espressoMetadata
     )
 
     const delayedTx = await sendDelayedTx(
