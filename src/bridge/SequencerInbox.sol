@@ -405,7 +405,6 @@ contract SequencerInbox is
         address(gasRefunder),
         prevMessageCount,
         newMessageCount,
-        newMessageCount,
         hotshotHeight
       )
     );

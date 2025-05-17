@@ -7,7 +7,6 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -16,6 +15,7 @@ import {
 } from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
 import {CertManager} from "@nitro-validator/CertManager.sol";
@@ -29,8 +29,6 @@ contract RollupMock {
 }
 
 contract SequencerInboxTest is Test {
-    event TEEAttestationQuoteVerified(uint256 indexed seqMessageIndex);
-    error InvalidReportDataHash();
 
     address rollupOwner = address(137);
     uint256 maxDataSize = 10000;
@@ -101,8 +99,13 @@ contract SequencerInboxTest is Test {
         string memory signaturePath = "/test/foundry/configs/sig-attestation.bin";
         string memory sigFile = string.concat(vm.projectRoot(), signaturePath);
         bytes memory signature = vm.readFileBinary(sigFile);
+        address signerAddr = address(0x5f0B0D79E7F051903b08E30a3d6eA50D80333932);
 
+        vm.expectEmit();
+        emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
         espressoTEEVerifier.registerSigner(attestation, signature, IEspressoTEEVerifier.TeeType.NITRO);
+        bool value = espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
+        vm.assertEq(value, true);
 
         rollupMock = new RollupMock(rollupOwner);
         bridgeImpl = new Bridge();
