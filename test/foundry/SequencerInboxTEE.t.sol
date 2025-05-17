@@ -7,15 +7,14 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {
-    TransparentUpgradeableProxy
-} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {
-    V3QuoteVerifier
-} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
+import {TransparentUpgradeableProxy} from
+    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {V3QuoteVerifier} from
+    "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from
+    "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
 import {CertManager} from "@nitro-validator/CertManager.sol";
@@ -23,34 +22,32 @@ import {CertManager} from "@nitro-validator/CertManager.sol";
 contract RollupMock {
     address public immutable owner;
 
-    constructor(address _owner) {
+    constructor(
+        address _owner
+    ) {
         owner = _owner;
     }
 }
 
 contract SequencerInboxTest is Test {
-
     address rollupOwner = address(137);
     uint256 maxDataSize = 10000;
-    ISequencerInbox.MaxTimeVariation maxTimeVariation =
-        ISequencerInbox.MaxTimeVariation({
-            delayBlocks: 10,
-            futureBlocks: 10,
-            delaySeconds: 100,
-            futureSeconds: 100
-        });
+    ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
+        delayBlocks: 10,
+        futureBlocks: 10,
+        delaySeconds: 100,
+        futureSeconds: 100
+    });
     address dummyInbox = address(139);
     address proxyAdmin = address(140);
     bytes32 enclaveHash =
         bytes32(0x01f7290cb6bbaa427eca3daeb25eecccb87c4b61259b1ae2125182c4d77169c0);
-    bytes32 pcr0Hash = 
-        bytes32(0xc980e59163ce244bb4bb6211f48c7b46f88a4f40943e84eb99bdc41e129bd293);
+    bytes32 pcr0Hash = bytes32(0xc980e59163ce244bb4bb6211f48c7b46f88a4f40943e84eb99bdc41e129bd293);
     IReader4844 dummyReader4844 = IReader4844(address(137));
     address batchPosterAddress = address(0xe2148eE53c0755215Df69b2616E552154EdC584f);
     uint256 batchPosterPrivateKey =
         0xcb5790da63720727af975f42c79f69918580209889225fa7128c92402a6d3a65;
-    uint256 awsNitroPrivateKey = 
-        0x43179a4cba1a7fa58e6faad5cda5036169320c1a0c17b9f9488fb17acecaa23d;
+    uint256 awsNitroPrivateKey = 0x43179a4cba1a7fa58e6faad5cda5036169320c1a0c17b9f9488fb17acecaa23d;
     uint256 public constant MAX_DATA_SIZE = 117964;
     address adminTEE = address(141);
     address fakeAddress = address(145);
@@ -82,7 +79,8 @@ contract SequencerInboxTest is Test {
 
         espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(enclaveHash, v3QuoteVerifier);
         espressoNitroTEEVerifier = new EspressoNitroTEEVerifier(pcr0Hash, new CertManager());
-        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
+        espressoTEEVerifier =
+            new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
 
         string memory quotePath = "/test/foundry/configs/attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
@@ -103,15 +101,17 @@ contract SequencerInboxTest is Test {
 
         vm.expectEmit();
         emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(attestation, signature, IEspressoTEEVerifier.TeeType.NITRO);
-        bool value = espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
+        espressoTEEVerifier.registerSigner(
+            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO
+        );
+        bool value =
+            espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
         vm.assertEq(value, true);
 
         rollupMock = new RollupMock(rollupOwner);
         bridgeImpl = new Bridge();
-        bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
-        );
+        bridge =
+            Bridge(address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, "")));
 
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
@@ -121,12 +121,14 @@ contract SequencerInboxTest is Test {
         seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-          BufferConfig memory bufferConfigDefault = BufferConfig({
-          threshold: type(uint64).max,
-          max: type(uint64).max,
-          replenishRateInBasis: 714
+        BufferConfig memory bufferConfigDefault = BufferConfig({
+            threshold: type(uint64).max,
+            max: type(uint64).max,
+            replenishRateInBasis: 714
         });
-        seqInbox.initialize(bridge, maxTimeVariation, bufferConfigDefault, address(espressoTEEVerifier));
+        seqInbox.initialize(
+            bridge, maxTimeVariation, bufferConfigDefault, address(espressoTEEVerifier)
+        );
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, true);
@@ -155,7 +157,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(batchPosterPrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         vm.prank(tx.origin);
         vm.expectRevert();
 
@@ -210,6 +213,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchFromOriginWithInvalidSignatureSGX() public {
@@ -234,7 +238,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
 
         vm.prank(tx.origin);
         vm.expectRevert(abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector));
@@ -247,6 +252,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchFromOriginWithInvalidSignatureNitro() public {
@@ -271,7 +277,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         vm.prank(tx.origin);
         vm.expectRevert(abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector));
@@ -284,6 +291,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchSGX() public {
@@ -307,7 +315,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(batchPosterPrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
 
         vm.prank(tx.origin);
         vm.expectRevert();
@@ -324,6 +333,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchNitro() public {
@@ -347,7 +357,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(awsNitroPrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         vm.prank(tx.origin);
         vm.expectRevert();
@@ -364,6 +375,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchWithIncorrectSignatureSGX() public {
@@ -388,7 +400,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         vm.prank(tx.origin);
         vm.expectRevert(abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector));
 
@@ -401,6 +414,7 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 
     function testAddSequencerL2BatchWithIncorrectSignatureNitro() public {
@@ -425,7 +439,8 @@ contract SequencerInboxTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         vm.prank(tx.origin);
         vm.expectRevert(abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector));
 
@@ -438,5 +453,6 @@ contract SequencerInboxTest is Test {
             nextSubMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 }

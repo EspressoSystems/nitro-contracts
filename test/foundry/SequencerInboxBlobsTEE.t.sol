@@ -11,7 +11,8 @@ import {IGasRefunder} from "../../src/libraries/IGasRefunder.sol";
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from
+    "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
 
 import {CertManager} from "@nitro-validator/CertManager.sol";
@@ -19,7 +20,9 @@ import {CertManager} from "@nitro-validator/CertManager.sol";
 contract RollupMock {
     address public immutable owner;
 
-    constructor(address _owner) {
+    constructor(
+        address _owner
+    ) {
         owner = _owner;
     }
 }
@@ -36,26 +39,27 @@ contract SequencerInboxBlobsTEE is Test {
     bytes32 pcr0Hash = bytes32(0xc980e59163ce244bb4bb6211f48c7b46f88a4f40943e84eb99bdc41e129bd293);
 
     uint256 maxDataSize = 10000;
-    ISequencerInbox.MaxTimeVariation maxTimeVariation =
-        ISequencerInbox.MaxTimeVariation({
-            delayBlocks: 10,
-            futureBlocks: 10,
-            delaySeconds: 100,
-            futureSeconds: 100
-        });
+    ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
+        delayBlocks: 10,
+        futureBlocks: 10,
+        delaySeconds: 100,
+        futureSeconds: 100
+    });
     bytes sampleQuote = hex"00";
     EspressoTEEVerifier espressoTEEVerifier;
     EspressoNitroTEEVerifier espressoNitroTEEVerifier;
     EspressoSGXTEEVerifier espressoSGXTEEVerifier;
-    
+
     address reader4844 = address(0xf6134C5849Fe8177163747288d41283B271B1624);
+
     function setUp() public {
         vm.createSelectFork(
             "https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923"
         );
         espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(enclaveHash, v3QuoteVerifier);
         espressoNitroTEEVerifier = new EspressoNitroTEEVerifier(pcr0Hash, new CertManager());
-        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
+        espressoTEEVerifier =
+            new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
         string memory quotePath = "/test/foundry/configs/blobs_attestation.bin";
         string memory inputFile = string.concat(vm.projectRoot(), quotePath);
 
@@ -72,19 +76,19 @@ contract SequencerInboxBlobsTEE is Test {
 
         vm.expectEmit();
         emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(attestation, signature, IEspressoTEEVerifier.TeeType.NITRO);
-        bool value = espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
+        espressoTEEVerifier.registerSigner(
+            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO
+        );
+        bool value =
+            espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
         vm.assertEq(value, true);
     }
 
     function deployRollup() internal returns (SequencerInbox, Bridge) {
         RollupMock rollupMock = new RollupMock(rollupOwner);
         Bridge bridgeImpl = new Bridge();
-        Bridge bridge = Bridge(
-          address(
-            new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, '')
-          )
-        );
+        Bridge bridge =
+            Bridge(address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, "")));
 
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
@@ -92,25 +96,15 @@ contract SequencerInboxBlobsTEE is Test {
         // we created a mock reader4844 which returns the data hashes related to the attestation we are using
         // for testing
         Reader4844 reader4844 = new Reader4844();
-        SequencerInbox seqInboxImpl = new SequencerInbox(
-          maxDataSize,
-          reader4844,
-          false,
-          false
-        );
-        SequencerInbox seqInboxProxy = SequencerInbox(
-          TestUtil.deployProxy(address(seqInboxImpl))
-        );
+        SequencerInbox seqInboxImpl = new SequencerInbox(maxDataSize, reader4844, false, false);
+        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(address(seqInboxImpl)));
         BufferConfig memory bufferConfigDefault = BufferConfig({
-          threshold: type(uint64).max,
-          max: type(uint64).max,
-          replenishRateInBasis: 714
+            threshold: type(uint64).max,
+            max: type(uint64).max,
+            replenishRateInBasis: 714
         });
         seqInboxProxy.initialize(
-          IBridge(bridge),
-          maxTimeVariation,
-          bufferConfigDefault,
-          address(espressoTEEVerifier)
+            IBridge(bridge), maxTimeVariation, bufferConfigDefault, address(espressoTEEVerifier)
         );
 
         vm.prank(rollupOwner);
@@ -148,12 +142,13 @@ contract SequencerInboxBlobsTEE is Test {
         vm.prank(tx.origin);
         vm.expectRevert();
 
-        uint256 awsNitroPrivateKey = 
+        uint256 awsNitroPrivateKey =
             0x43179a4cba1a7fa58e6faad5cda5036169320c1a0c17b9f9488fb17acecaa23d;
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(awsNitroPrivateKey, reportDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         vm.expectEmit();
         emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -165,5 +160,6 @@ contract SequencerInboxBlobsTEE is Test {
             newMessageCount,
             espressoMetadata
         );
+        vm.stopPrank();
     }
 }
