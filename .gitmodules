@@ -1,3 +1,4 @@
 [submodule "lib/espresso-tee-contracts"]
 	path = lib/espresso-tee-contracts
 	url = https://github.com/EspressoSystems/espresso-tee-contracts
+	branch = develop-aws-nitro
