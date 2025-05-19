@@ -487,8 +487,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        bytes32[] memory dataHashes = reader4844.getDataHashes();
-
         // Verification logic extracted
         _verifyBlobQuote(
             sequenceNumber,
@@ -573,6 +571,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
         // take keccak2256 hash of all the function arguments and encode packed blob hashes
         // except the quote
+
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
