@@ -133,12 +133,14 @@ contract DelayBufferableTest is Test {
         });
         uint64 updateBN = delayBuffer.prevBlockNumber + 10000;
         vm.roll(updateBN);
+        assertEq(block.number, updateBN, "block.number not set to updateBN");
 
         delayBuffer.update(updateBN);
         assertEq(delayBuffer.bufferBlocks, 10 + config.replenishRateInBasis);
 
         assertEq(delayBuffer.prevBlockNumber, updateBN);
         assertEq(delayBuffer.prevSequencedBlockNumber, updateBN);
+        vm.stopPrank();
     }
 
     function testPendingBufferUpdate() public {
