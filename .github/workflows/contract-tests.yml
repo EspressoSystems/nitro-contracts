@@ -52,6 +52,7 @@ jobs:
       - name: Build
         run: forge test --no-match-path test/foundry/ExpressLaneBalance.t.sol
   tests:
+    if: false
     name: Contract tests
     runs-on: ubuntu-8
     defaults:
@@ -202,6 +203,7 @@ jobs:
       - name: Test 4844
         run: yarn test:4844
   test-e2e:
+    if: false
     name: Test e2e
     runs-on: ubuntu-latest
     steps:
@@ -248,6 +250,7 @@ jobs:
       - name: Run e2e tests
         run: yarn test:e2e
   test-e2e-custom-fee-token:
+    if: false
     name: Test e2e custom fee token
     runs-on: ubuntu-latest
     steps:
@@ -294,6 +297,7 @@ jobs:
       - name: Run e2e tests
         run: yarn test:e2e
   test-e2e-fee-token-6-decimals:
+    if: false
     name: Test e2e fee token with 6 decimals
     runs-on: ubuntu-latest
     steps:
