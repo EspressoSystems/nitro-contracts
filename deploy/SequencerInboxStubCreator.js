@@ -4,7 +4,14 @@ module.exports = async hre => {
   const { deployments, getNamedAccounts, ethers } = hre
   const { deployer } = await getNamedAccounts()
 
-  const bridge = await deployments.get('BridgeStub')
+  const bridge = await ethers.getContract('BridgeStub')
+
+  const espressoTEEVerifierInboxFac = await ethers.getContractFactory(
+    'EspressoTEEVerifierMock'
+  )
+  const espressoTEEVerifier = await espressoTEEVerifierInboxFac.deploy()
+  await espressoTEEVerifier.deployed()
+
   const reader4844 = await Toolkit4844.deployReader4844(
     await ethers.getSigner(deployer)
   )
@@ -23,7 +30,7 @@ module.exports = async hre => {
       117964,
       reader4844.address,
       false,
-      true,
+      espressoTEEVerifier.address,
     ],
   })
 }

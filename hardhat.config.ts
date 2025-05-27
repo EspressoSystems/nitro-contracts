@@ -7,6 +7,7 @@ import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
+// import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -14,18 +15,19 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.17',
+      version: '0.8.25',
       settings: {
         optimizer: {
           enabled: true,
           runs: 2000,
         },
+        viaIR: true,
       },
     },
   ],
   overrides: {
     'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.17',
+      version: '0.8.20',
       settings: {
         optimizer: {
           enabled: true,
@@ -73,6 +75,7 @@ if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
         enabled: true,
         runs: 100,
       },
+      viaIR: true,
     },
   })
   solidity.overrides = {
@@ -237,14 +240,6 @@ module.exports = {
         urls: {
           apiURL: 'https://api-sepolia.arbiscan.io/api',
           browserURL: 'https://sepolia.arbiscan.io/',
-        },
-      },
-      {
-        network: 'custom',
-        chainId: process.env['CUSTOM_CHAINID'],
-        urls: {
-          apiURL: process.env['CUSTOM_ETHERSCAN_API_URL'],
-          browserURL: process.env['CUSTOM_ETHERSCAN_BROWSER_URL'],
         },
       },
     ],

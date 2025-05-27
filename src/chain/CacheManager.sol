@@ -8,7 +8,7 @@ import "../precompiles/ArbOwnerPublic.sol";
 import "../precompiles/ArbWasm.sol";
 import "../precompiles/ArbWasmCache.sol";
 import "../libraries/DelegateCallAware.sol";
-import "solady/src/utils/MinHeapLib.sol";
+import "solady/utils/MinHeapLib.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract CacheManager is Initializable, DelegateCallAware {

@@ -20,6 +20,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
 import {NoZeroTransferToken} from "./util/NoZeroTransferToken.sol";
+import { EspressoTEEVerifierMock } from '../../src/mocks/EspressoTEEVerifier.sol';
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -129,7 +130,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // prepare funds
@@ -154,8 +156,7 @@ contract RollupCreatorTest is Test {
             nativeToken: address(0),
             deployFactoriesToL2: true,
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0))
+            batchPosterManager: batchPosterManager
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
@@ -311,7 +312,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // approve fee token to pay for deployment of L2 factories
@@ -326,7 +328,6 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
             config: config,
@@ -336,15 +337,8 @@ contract RollupCreatorTest is Test {
             nativeToken: nativeToken,
             deployFactoriesToL2: true,
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: feeTokenPricer
+            batchPosterManager: batchPosterManager
         });
-
-        vm.mockCall(
-            address(feeTokenPricer),
-            abi.encodeWithSelector(IFeeTokenPricer.getExchangeRate.selector),
-            abi.encode(uint256(16.421e18))
-        );
 
         address rollupAddress = rollupCreator.createRollup(deployParams);
 
@@ -499,7 +493,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // prepare funds
@@ -523,8 +518,7 @@ contract RollupCreatorTest is Test {
             nativeToken: address(0),
             deployFactoriesToL2: true,
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0))
+            batchPosterManager: batchPosterManager
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);

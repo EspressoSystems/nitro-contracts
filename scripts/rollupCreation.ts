@@ -67,7 +67,8 @@ export async function createRollup(
   rollupCreatorAddress: string,
   feeToken: string,
   feeTokenPricer: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -106,12 +107,14 @@ export async function createRollup(
 
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
+
     const deployParams = isDevDeployment
       ? await _getDevRollupConfig(
           feeToken,
           feeTokenPricer,
           validatorWalletCreator,
-          stakeToken
+          stakeToken,
+          espressoTEEVerifierAddress
         )
       : {
           config: config.rollupConfig,
@@ -234,7 +237,8 @@ async function _getDevRollupConfig(
   feeToken: string,
   feeTokenPricer: string,
   validatorWalletCreator: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string
 ): Promise<RollupCreator.RollupDeploymentParamsStruct> {
   // set up owner address
   const ownerAddress =
@@ -318,7 +322,7 @@ async function _getDevRollupConfig(
   }
 
   const config: ConfigStruct = {
-    confirmPeriodBlocks: ethers.BigNumber.from('1'), // was 20
+    confirmPeriodBlocks: ethers.BigNumber.from('20'),
     stakeToken: stakeToken,
     baseStake: 8,
     wasmModuleRoot: wasmModuleRoot,
@@ -326,11 +330,15 @@ async function _getDevRollupConfig(
     loserStakeEscrow: ownerAddress,
     chainId: JSON.parse(chainConfig)['chainId'],
     chainConfig: chainConfig,
-    minimumAssertionPeriod: 1, // was 5
+    minimumAssertionPeriod: 5,
     validatorAfkBlocks: 201600,
     genesisAssertionState: genesisAssertionState,
     genesisInboxCount: 0,
-    miniStakeValues: [4, 2, 1],
+    miniStakeValues: [
+      4,
+      2,
+      1,
+    ],
     layerZeroBlockEdgeHeight: 2 ** 26,
     layerZeroBigStepEdgeHeight: 2 ** 19,
     layerZeroSmallStepEdgeHeight: 2 ** 23,
@@ -344,6 +352,7 @@ async function _getDevRollupConfig(
       futureSeconds: ethers.BigNumber.from('3600'),
     },
     anyTrustFastConfirmer: ethers.constants.AddressZero,
+    espressoTEEVerifier: espressoTEEVerifierAddress,
   }
 
   return {
@@ -355,7 +364,6 @@ async function _getDevRollupConfig(
     maxFeePerGasForRetryables: MAX_FER_PER_GAS,
     batchPosters: batchPosters,
     batchPosterManager: batchPosterManager,
-    feeTokenPricer: feeTokenPricer,
   }
 
   function _createValidatorAddress(

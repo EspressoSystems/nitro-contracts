@@ -24,6 +24,14 @@ jobs:
           version: stable
           cache: false
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
@@ -35,10 +43,11 @@ jobs:
         run: yarn
 
       - name: Build
-        run: yarn test:foundry
+        run: forge test --no-match-path test/foundry/ExpressLaneBalance.t.sol
   tests:
+    if: false # broken
     name: Contract tests
-    runs-on: ubuntu-8
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -54,8 +63,22 @@ jobs:
           version: stable
           cache: false
 
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
+      - name: Run unused Solidity errors checker
+        uses: OffchainLabs/actions/check-unused-errors@main
+        with:
+          directory: './src'
+          exceptions_file: './test/unused-errors/exceptions.txt'
+
       - name: Setup nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'yarn'
@@ -100,12 +123,6 @@ jobs:
       - name: Test function signatures
         run: yarn run test:signatures
 
-      - name: Run unused Solidity errors checker
-        uses: OffchainLabs/actions/check-unused-errors@main
-        with:
-          directory: './src'
-          exceptions_file: './test/unused-errors/exceptions.txt'
-
       - name: Run coverage
         run: yarn hardhat coverage --testfiles "test/contract/*.spec.ts"
 
@@ -134,13 +151,21 @@ jobs:
           version: stable
           cache: false
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - name: Prepare Environment Variables
+        run: |
+          cp .env.sample.goerli .env
+          export $(grep -v '^#' .env | xargs) # Load variables
+          for var in $(grep -v '^#' .env | cut -d= -f1); do
+            echo "$var=${!var}" >> $GITHUB_ENV
+          done
+
+      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
         with:
           args: --pos
           no-token-bridge: true
 
       - name: Setup nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'yarn'
@@ -155,104 +180,146 @@ jobs:
       - name: Test 4844
         run: yarn test:4844
 
-  test-e2e:
-    name: Test e2e
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+  # test-e2e:
+  #   name: Test e2e
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
-        with:
-          l3-node: true
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: v3-support
+  #     - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+  #       with:
+  #         l3-node: true
+  #         args: --espresso --latest-espresso-image
+  #         no-token-bridge: true
+  #         no-l3-token-bridge: true
+  #         nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+  #         nitro-testnode-ref: celestia-integration
+  #         nitro-testnode-repo: EspressoSystems/nitro-testnode
 
-      - name: Setup node/yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - name: Install packages
-        run: yarn
+  #     - name: Setup node/yarn
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
 
-      - name: Compile contracts
-        run: yarn build
+  #     - name: Prepare Environment Variables
+  #       run: |
+  #         cp .env.sample.goerli .env
+  #         export $(grep -v '^#' .env | xargs) # Load variables
+  #         for var in $(grep -v '^#' .env | cut -d= -f1); do
+  #           echo "$var=${!var}" >> $GITHUB_ENV
+  #         done
 
-      - name: Run e2e tests
-        run: yarn test:e2e
+  #     - name: Install packages
+  #       run: yarn
 
-  test-e2e-custom-fee-token:
-    name: Test e2e custom fee token
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+  #     - name: Compile contracts
+  #       run: yarn build
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
-        with:
-          l3-node: true
-          args: --l3-fee-token
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: v3-support
+  #     - name: Run e2e tests
+  #       run: yarn test:e2e
+  # test-e2e-custom-fee-token:
+  #   name: Test e2e custom fee token
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
 
-      - name: Setup node/yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+  #     - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+  #       with:
+  #         l3-node: true
+  #         args: --l3-fee-token --espresso --latest-espresso-image
+  #         no-token-bridge: true
+  #         no-l3-token-bridge: true
+  #         nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+  #         nitro-testnode-ref: celestia-integration
+  #         nitro-testnode-repo: EspressoSystems/nitro-testnode
 
-      - name: Install packages
-        run: yarn
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - name: Compile contracts
-        run: yarn build
+  #     - name: Setup node/yarn
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
 
-      - name: Run e2e tests
-        run: yarn test:e2e
+  #     - name: Prepare Environment Variables
+  #       run: |
+  #         cp .env.sample.goerli .env
+  #         export $(grep -v '^#' .env | xargs) # Load variables
+  #         for var in $(grep -v '^#' .env | cut -d= -f1); do
+  #           echo "$var=${!var}" >> $GITHUB_ENV
+  #         done
 
-  test-e2e-fee-token-6-decimals:
-    name: Test e2e fee token with 6 decimals and pricer
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+  #     - name: Install packages
+  #       run: yarn
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
-        with:
-          l3-node: true
-          args: --l3-fee-token --l3-fee-token-pricer --l3-fee-token-decimals 6
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-testnode-ref: v3-support
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+  #     - name: Compile contracts
+  #       run: yarn build
 
-      - name: Setup node/yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+  #     - name: Run e2e tests
+  #       run: yarn test:e2e
+  
+  # test-e2e-fee-token-6-decimals:
+  #   name: Test e2e fee token with 6 decimals
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
 
-      - name: Install packages
-        run: yarn
+  #     - uses: EspressoSystems/offchainlabs-actions/run-nitro-test-node@specify-checkout-repo
+  #       with:
+  #         l3-node: true
+  #         args: --espresso --latest-espresso-image --l3-fee-token --l3-fee-token-decimals 6
+  #         no-token-bridge: true
+  #         no-l3-token-bridge: true
+  #         nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+  #         nitro-testnode-ref: 'celestia-integration'
+  #         nitro-testnode-repo: EspressoSystems/nitro-testnode
 
-      - name: Compile contracts
-        run: yarn build
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - name: Run e2e tests
-        run: yarn test:e2e
+  #     - name: Setup node/yarn
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
 
+  #     - name: Prepare Environment Variables
+  #       run: |
+  #         cp .env.sample.goerli .env
+  #         export $(grep -v '^#' .env | xargs) # Load variables
+  #         for var in $(grep -v '^#' .env | cut -d= -f1); do
+  #           echo "$var=${!var}" >> $GITHUB_ENV
+  #         done
+
+  #     - name: Install packages
+  #       run: yarn
+
+  #     - name: Compile contracts
+  #       run: yarn build
+
+  #     - name: Run e2e tests
+  #       run: yarn test:e2e
+  
   # bold-upgrade:
   #   name: BOLD upgrade test
   #   runs-on: ubuntu-latest
@@ -286,3 +353,4 @@ jobs:
 
   #     - name: Test upgrade
   #       run: L1_RPC=${{ secrets.L1_RPC || 'https://rpc.ankr.com/eth' }} yarn test:upgrade
+

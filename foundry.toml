@@ -6,7 +6,9 @@ test = 'test/foundry'
 cache_path = 'forge-cache/sol'
 optimizer = true
 optimizer_runs = 2000
-via_ir = false
+allow_internal_expect_revert = true
+via_ir = true
+solc_version = '0.8.25'
 evm_version = 'cancun'
 remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
               'forge-std/=lib/forge-std/src/',

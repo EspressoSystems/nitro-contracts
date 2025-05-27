@@ -6,8 +6,12 @@ async function main() {
   const feeToken = ethers.constants.AddressZero
   const feeTokenPricer = ethers.constants.AddressZero
   const rollupCreatorAddress = process.env.ROLLUP_CREATOR_ADDRESS
+  const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
   if (!rollupCreatorAddress) {
     throw new Error('ROLLUP_CREATOR_ADDRESS not set')
+  }
+  if (!espressoTEEVerifierAddress) {
+    throw new Error('ESPRESSO_TEE_VERIFIER_ADDRESS not set')
   }
 
   const stakeTokenAddress = process.env.STAKE_TOKEN_ADDRESS
@@ -23,7 +27,8 @@ async function main() {
     rollupCreatorAddress,
     feeToken,
     feeTokenPricer,
-    stakeTokenAddress
+    stakeTokenAddress,
+    espressoTEEVerifierAddress
   )
 }
 
