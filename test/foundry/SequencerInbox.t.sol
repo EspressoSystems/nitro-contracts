@@ -64,6 +64,7 @@ contract SequencerInboxTest is Test {
   uint256 public constant MAX_DATA_SIZE = 117964;
   address adminTEE = address(141);
   address fakeAddress = address(145);
+  address batchPosterEphemeralAddress = address(0xe2148eE53c0755215Df69b2616E552154EdC584f);
 
   EspressoTEEVerifierMock espressoTEEVerifier;
   bytes sampleQuote;
@@ -313,6 +314,11 @@ contract SequencerInboxTest is Test {
     string memory inputFile = string.concat(vm.projectRoot(), quotePath);
     sampleQuote = vm.readFileBinary(inputFile);
 
+    // The mock contract doesnt really care about the signature and hotshotheight
+    uint256 hotshotHeight = 123;
+    bytes memory signature;
+    bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       data,
@@ -320,7 +326,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
   }
 
@@ -557,6 +563,9 @@ contract SequencerInboxTest is Test {
     expectEvents(bridge, seqInbox, data, true, false);
 
     vm.prank(tx.origin);
+    uint256 hotshotHeight = 123;
+    bytes memory signature;
+    bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       data,
@@ -564,7 +573,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
   }
 
@@ -596,6 +605,9 @@ contract SequencerInboxTest is Test {
     expectEvents(IBridge(address(bridge)), seqInbox, data, true, true);
 
     vm.prank(tx.origin);
+    uint256 hotshotHeight = 123;
+    bytes memory signature;
+    bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       data,
@@ -603,7 +615,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
   }
 
@@ -630,6 +642,10 @@ contract SequencerInboxTest is Test {
     uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
     vm.expectRevert(abi.encodeWithSelector(NotCodelessOrigin.selector));
+
+    uint256 hotshotHeight = 123;
+    bytes memory signature;
+    bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       data,
@@ -637,7 +653,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
 
     assertEq(rollupOwner.code.length, 0, 'rollupOwner is codeless');
@@ -651,7 +667,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
     vm.etch(rollupOwner, bytes(''));
 
@@ -667,7 +683,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
 
     vm.prank(rollupOwner);
@@ -692,7 +708,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
 
     bytes memory authenticatedData = bytes.concat(
@@ -710,7 +726,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
 
     vm.expectRevert(
@@ -728,7 +744,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(address(0)),
       subMessageCount,
       subMessageCount + 1,
-      sampleQuote
+      espressoMetadata
     );
   }
 
