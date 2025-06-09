@@ -110,8 +110,8 @@ contract InboxTest is AbsInboxTest {
         uint256 userEthBalanceBefore = address(user).balance;
 
         // deposit too many eth shall fail
-        // TODO: Fix test
         // vm.prank(user);
+        // TODO: Fix this test
         // uint256 invalidDepositAmount = 300 ether;
         // vm.expectRevert();
         // ethInbox.depositEth{value: invalidDepositAmount}();
