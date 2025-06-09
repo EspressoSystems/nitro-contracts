@@ -8,6 +8,7 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
 
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;

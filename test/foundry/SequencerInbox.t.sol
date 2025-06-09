@@ -612,6 +612,7 @@ contract SequencerInboxTest is Test {
             subMessageCount + 1
         );
     }
+    
 
     function testSetFeeTokenPricer() public {
         (SequencerInbox seqInbox,) = deployFeeTokenBasedRollup();

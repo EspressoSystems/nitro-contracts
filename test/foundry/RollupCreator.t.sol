@@ -20,6 +20,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
 import {NoZeroTransferToken} from "./util/NoZeroTransferToken.sol";
+import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
