@@ -378,6 +378,14 @@ describe('SequencerInbox', async () => {
 
     const subMessageCount = await bridge.sequencerReportedSubMessageCount()
     const balBefore = await batchPoster.getBalance()
+    const hotshotHeight = 42
+    const signature = '0x'
+
+    const espressoMetadata =
+      ethers.utils.defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'uint8'],
+        [hotshotHeight, signature, 0]
+      )
     await (
       await sequencerInbox
         .connect(batchPoster)
@@ -390,7 +398,7 @@ describe('SequencerInbox', async () => {
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          '0x'
+          espressoMetadata
         )
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
@@ -429,6 +437,14 @@ describe('SequencerInbox', async () => {
     const sequenceNumber = await bridge.sequencerMessageCount()
 
     const balBefore = await batchPoster.getBalance()
+    const hotshotHeight = 42
+    const signature = '0x'
+
+    const espressoMetadata =
+      ethers.utils.defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'uint8'],
+        [hotshotHeight, signature, 0]
+      )
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,
@@ -441,7 +457,7 @@ describe('SequencerInbox', async () => {
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          '0x'
+          espressoMetadata
         ]
       )
     )
