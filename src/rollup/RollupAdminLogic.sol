@@ -59,7 +59,6 @@ contract RollupAdminLogic is
     }
 
     if (connectedContracts.sequencerInbox.totalDelayedMessagesRead() == 0) {
-      bytes memory quote;
       connectedContracts.sequencerInbox.addSequencerL2Batch(
         0,
         '',
@@ -67,9 +66,8 @@ contract RollupAdminLogic is
         IGasRefunder(address(0)),
         0,
         1,
-        quote
+        0
       );
-      
     }
 
     validatorWalletCreator = connectedContracts.validatorWalletCreator;

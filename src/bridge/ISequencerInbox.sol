@@ -70,7 +70,10 @@ interface ISequencerInbox is IDelayedMessageProvider {
   event InvalidateKeyset(bytes32 indexed keysetHash);
 
   /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
-  event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
+  event TEESignatureVerified(
+    uint256 indexed sequenceNumber,
+    uint256 indexed hotshotHeight
+  );
 
   function totalDelayedMessagesRead() external view returns (uint256);
 
@@ -219,7 +222,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external;
 
   function addSequencerL2Batch(
@@ -238,7 +241,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external;
 
   function addSequencerL2BatchFromBlobs(
@@ -255,7 +258,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external;
 
   /// @dev    Proves message delays, updates delay buffers, and posts an L2 batch with blob data.

@@ -169,7 +169,7 @@ contract Simple {
         IGasRefunder(address(0)),
         0,
         0,
-        ''
+        0
       );
       sequenceNumber++;
     }
