@@ -151,7 +151,7 @@ module.exports = {
         : [],
     },
     arbSepolia: {
-      url: 'https://sepolia-rollup.arbitrum.io/rpc',
+      url: 'https://arb-sepolia.g.alchemy.com/v2/RN5yidAPVMtMcvdR7r6UVmGvU9l0FsqP',
       accounts: process.env['DEVNET_PRIVKEY']
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
@@ -182,6 +182,12 @@ module.exports = {
     },
     baseSepolia: {
       url: 'https://sepolia.base.org',
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
+    moltenDevnet: {
+      url: 'https://molten-test-3.rpc.dev.caldera.xyz',
       accounts: process.env['DEVNET_PRIVKEY']
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
@@ -235,6 +241,13 @@ module.exports = {
         urls: {
           apiURL: 'https://api-sepolia.basescan.org/api',
           browserURL: 'https://sepolia.basescan.org/',
+        },
+      },
+      {
+        network: 'moltenDevnet',
+        chainId: 3603,
+        urls: {
+          apiURL: 'https://molten-test-3.rpc.dev.caldera.xyz/http',
         },
       },
     ],
