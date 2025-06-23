@@ -96,6 +96,7 @@ contract RollupCreator is Ownable {
       )
     );
 
+<<<<<<< HEAD
     challengeManager.initialize({
       _assertionChain: IAssertionChain(rollupAddr),
       _challengePeriodBlocks: config.confirmPeriodBlocks,
@@ -183,6 +184,18 @@ contract RollupCreator is Ownable {
         deployParams.maxDataSize == erc20Inbox.maxDataSize(),
         'I_MAX_DATA_SIZE_MISMATCH'
       );
+=======
+    struct RollupDeploymentParams {
+        Config config;
+        address[] validators;
+        uint256 maxDataSize;
+        address nativeToken;
+        bool deployFactoriesToL2;
+        uint256 maxFeePerGasForRetryables;
+        address[] batchPosters;
+        address batchPosterManager;
+        IFeeTokenPricer feeTokenPricer;
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
     }
 
     // create proxy admin which will manage bridge contracts
@@ -346,9 +359,107 @@ contract RollupCreator is Ownable {
           l2FactoriesDeployer.NICK_CREATE2_VALUE() + gasCost,
           decimals
         );
+<<<<<<< HEAD
         uint256 erc2470Cost = _scaleDownToNativeDecimals(
           l2FactoriesDeployer.ERC2470_VALUE() + gasCost,
           decimals
+=======
+
+        challengeManager.initialize({
+            _assertionChain: IAssertionChain(rollupAddr),
+            _challengePeriodBlocks: config.confirmPeriodBlocks,
+            _oneStepProofEntry: osp,
+            layerZeroBlockEdgeHeight: config.layerZeroBlockEdgeHeight,
+            layerZeroBigStepEdgeHeight: config.layerZeroBigStepEdgeHeight,
+            layerZeroSmallStepEdgeHeight: config.layerZeroSmallStepEdgeHeight,
+            _stakeToken: IERC20(config.stakeToken),
+            _stakeAmounts: config.miniStakeValues,
+            _excessStakeReceiver: config.owner,
+            _numBigStepLevel: config.numBigStepLevel
+        });
+
+        return challengeManager;
+    }
+
+    /**
+     * @notice Create a new rollup
+     * @dev After this setup:
+     * @dev - UpgradeExecutor should be the owner of rollup
+     * @dev - UpgradeExecutor should be the owner of proxyAdmin which manages bridge contracts
+     * @dev - config.rollupOwner should have executor role on upgradeExecutor
+     * @dev - Bridge should have a single inbox and outbox
+     * @dev - Validators, batch posters and batch poster manager should be set if provided
+     * @param deployParams The parameters for the rollup deployment. It consists of:
+     *          - config        The configuration for the rollup
+     *          - validators    The list of validator addresses, not used when set to empty list
+     *          - maxDataSize   Max size of the calldata that can be posted
+     *          - nativeToken   Address of the custom fee token used by rollup. If rollup is ETH-based address(0) should be provided
+     *          - deployFactoriesToL2 Whether to deploy L2 factories using retryable tickets. If true, retryables need to be paid for in native currency.
+     *                          Deploying factories via retryable tickets at rollup creation time is the most reliable method to do it since it
+     *                          doesn't require paying the L1 gas. If deployment is not done as part of rollup creation TX, there is a risk that
+     *                          anyone can try to deploy factories and potentially burn the nonce 0 (ie. due to gas price spike when doing direct
+     *                          L2 TX). That would mean we permanently lost capability to deploy deterministic factory at expected address.
+     *          - maxFeePerGasForRetryables price bid for L2 execution.
+     *          - batchPosters  The list of batch poster addresses, not used when set to empty list
+     *          - batchPosterManager The address which has the ability to rotate batch poster keys
+     * @return The address of the newly created rollup
+     */
+    function createRollup(
+        RollupDeploymentParams memory deployParams
+    ) public payable returns (address) {
+        {
+            // Make sure the immutable maxDataSize is as expected
+            (
+                ,
+                ISequencerInbox ethSequencerInbox,
+                ISequencerInbox ethDelayBufferableSequencerInbox,
+                IInboxBase ethInbox,
+                ,
+            ) = bridgeCreator.ethBasedTemplates();
+            require(
+                deployParams.maxDataSize == ethSequencerInbox.maxDataSize(),
+                "SI_MAX_DATA_SIZE_MISMATCH"
+            );
+            require(
+                deployParams.maxDataSize == ethDelayBufferableSequencerInbox.maxDataSize(),
+                "SI_MAX_DATA_SIZE_MISMATCH"
+            );
+            require(deployParams.maxDataSize == ethInbox.maxDataSize(), "I_MAX_DATA_SIZE_MISMATCH");
+
+            (
+                ,
+                ISequencerInbox erc20SequencerInbox,
+                ISequencerInbox erc20DelayBufferableSequencerInbox,
+                IInboxBase erc20Inbox,
+                ,
+            ) = bridgeCreator.erc20BasedTemplates();
+            require(
+                deployParams.maxDataSize == erc20SequencerInbox.maxDataSize(),
+                "SI_MAX_DATA_SIZE_MISMATCH"
+            );
+            require(
+                deployParams.maxDataSize == erc20DelayBufferableSequencerInbox.maxDataSize(),
+                "SI_MAX_DATA_SIZE_MISMATCH"
+            );
+            require(
+                deployParams.maxDataSize == erc20Inbox.maxDataSize(), "I_MAX_DATA_SIZE_MISMATCH"
+            );
+        }
+
+        // create proxy admin which will manage bridge contracts
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
+
+        // Create the rollup proxy to figure out the address and initialize it later
+        RollupProxy rollup = new RollupProxy{salt: keccak256(abi.encode(deployParams))}();
+
+        BridgeCreator.BridgeContracts memory bridgeContracts = bridgeCreator.createBridge(
+            address(proxyAdmin),
+            address(rollup),
+            deployParams.nativeToken,
+            deployParams.config.sequencerInboxMaxTimeVariation,
+            deployParams.config.bufferConfig,
+            deployParams.feeTokenPricer
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
         );
         uint256 zoltuCreate2Cost = _scaleDownToNativeDecimals(
           l2FactoriesDeployer.ZOLTU_VALUE() + gasCost,

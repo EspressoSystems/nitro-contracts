@@ -170,7 +170,26 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
+<<<<<<< HEAD
     EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+=======
+        BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
+            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+        );
+        (
+            IBridge bridge,
+            ISequencerInbox seqInbox,
+            IInboxBase inbox,
+            IRollupEventInbox eventInbox,
+            IOutbox outbox
+        ) = (
+            contracts.bridge,
+            contracts.sequencerInbox,
+            contracts.inbox,
+            contracts.rollupEventInbox,
+            contracts.outbox
+        );
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -194,9 +213,22 @@ contract BridgeCreatorTest is Test {
         contracts.outbox
       );
 
+<<<<<<< HEAD
     // bridge
     assertEq(address(bridge.rollup()), rollup, 'Invalid rollup ref');
     assertEq(bridge.activeOutbox(), address(0), 'Invalid activeOutbox ref');
+=======
+        // seqInbox
+        assertEq(address(seqInbox.bridge()), address(bridge), "Invalid bridge ref");
+        assertEq(address(seqInbox.rollup()), rollup, "Invalid rollup ref");
+        (uint256 _delayBlocks, uint256 _futureBlocks, uint256 _delaySeconds, uint256 _futureSeconds)
+        = seqInbox.maxTimeVariation();
+        assertEq(_delayBlocks, timeVars.delayBlocks, "Invalid delayBlocks");
+        assertEq(_futureBlocks, timeVars.futureBlocks, "Invalid futureBlocks");
+        assertEq(_delaySeconds, timeVars.delaySeconds, "Invalid delaySeconds");
+        assertEq(_futureSeconds, timeVars.futureSeconds, "Invalid futureSeconds");
+        assertEq(address(seqInbox.feeTokenPricer()), address(0), "Invalid fee token pricer");
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     // seqInbox
     assertEq(address(seqInbox.bridge()), address(bridge), 'Invalid bridge ref');
@@ -234,6 +266,7 @@ contract BridgeCreatorTest is Test {
     assertEq(address(outbox.bridge()), address(bridge), 'Invalid bridge ref');
     assertEq(address(outbox.rollup()), rollup, 'Invalid rollup ref');
 
+<<<<<<< HEAD
     // revert fetching native token
     vm.expectRevert();
     IERC20Bridge(address(bridge)).nativeToken();
@@ -257,9 +290,35 @@ contract BridgeCreatorTest is Test {
       max: type(uint64).max,
       replenishRateInBasis: 0
     });
+=======
+    function test_createERC20Bridge() public {
+        address rollup = address(301);
+        address nativeToken =
+            address(new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000, address(this)));
+        ISequencerInbox.MaxTimeVariation memory timeVars =
+            ISequencerInbox.MaxTimeVariation(10, 20, 30, 40);
+        address feeTokenPricer = makeAddr("feeTokenPricer");
+        BufferConfig memory bufferConfig = BufferConfig({
+            threshold: type(uint64).max,
+            max: type(uint64).max,
+            replenishRateInBasis: 0
+        });
+
+        BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
+            address(300),
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(feeTokenPricer)
+        );
+        (IBridge bridge, IInboxBase inbox, IRollupEventInbox eventInbox, IOutbox outbox) =
+            (contracts.bridge, contracts.inbox, contracts.rollupEventInbox, contracts.outbox);
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
+<<<<<<< HEAD
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
       rollup,
@@ -290,6 +349,32 @@ contract BridgeCreatorTest is Test {
       'Invalid nativeToken ref'
     );
     assertEq(bridge.activeOutbox(), address(0), 'Invalid activeOutbox ref');
+=======
+        // seqInbox
+        assertEq(address(contracts.sequencerInbox.bridge()), address(bridge), "Invalid bridge ref");
+        assertEq(address(contracts.sequencerInbox.rollup()), rollup, "Invalid rollup ref");
+        (uint256 _delayBlocks, uint256 _futureBlocks, uint256 _delaySeconds, uint256 _futureSeconds)
+        = contracts.sequencerInbox.maxTimeVariation();
+        assertEq(_delayBlocks, timeVars.delayBlocks, "Invalid delayBlocks");
+        assertEq(_futureBlocks, timeVars.futureBlocks, "Invalid futureBlocks");
+        assertEq(_delaySeconds, timeVars.delaySeconds, "Invalid delaySeconds");
+        assertEq(_futureSeconds, timeVars.futureSeconds, "Invalid futureSeconds");
+        assertEq(
+            address(contracts.sequencerInbox.feeTokenPricer()),
+            feeTokenPricer,
+            "Invalid fee token pricer"
+        );
+
+        // inbox
+        assertEq(address(inbox.bridge()), address(bridge), "Invalid bridge ref");
+        assertEq(
+            address(inbox.sequencerInbox()),
+            address(contracts.sequencerInbox),
+            "Invalid seqInbox ref"
+        );
+        assertEq(inbox.allowListEnabled(), false, "Invalid allowListEnabled");
+        assertEq(AbsInbox(address(inbox)).paused(), false, "Invalid paused status");
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     // seqInbox
     assertEq(address(seqInbox.bridge()), address(bridge), 'Invalid bridge ref');
@@ -323,6 +408,7 @@ contract BridgeCreatorTest is Test {
     );
     assertEq(address(eventInbox.rollup()), rollup, 'Invalid rollup ref');
 
+<<<<<<< HEAD
     // outbox
     assertEq(address(outbox.bridge()), address(bridge), 'Invalid bridge ref');
     assertEq(address(outbox.rollup()), rollup, 'Invalid rollup ref');
@@ -380,4 +466,22 @@ contract BridgeCreatorTest is Test {
       address(espressoTEEVerifier)
     );
   }
+=======
+        creator.createBridge(
+            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+        );
+
+        // can only deploy once from the same address and config
+        vm.expectRevert();
+        creator.createBridge(
+            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+        );
+
+        // can deploy from a different address
+        vm.prank(address(101));
+        creator.createBridge(
+            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+        );
+    }
+>>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 }

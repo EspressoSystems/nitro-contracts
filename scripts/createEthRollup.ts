@@ -4,6 +4,7 @@ import { createRollup } from './rollupCreation'
 
 async function main() {
   const feeToken = ethers.constants.AddressZero
+  const feeTokenPricer = ethers.constants.AddressZero
   const rollupCreatorAddress = process.env.ROLLUP_CREATOR_ADDRESS
   const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
   if (!rollupCreatorAddress) {
@@ -24,9 +25,10 @@ async function main() {
     signer,
     false,
     rollupCreatorAddress,
+    feeToken,
+    feeTokenPricer,
     stakeTokenAddress,
     espressoTEEVerifierAddress,
-    feeToken
   )
 }
 

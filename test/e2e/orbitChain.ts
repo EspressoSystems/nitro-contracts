@@ -25,10 +25,17 @@ import {
   IInbox__factory,
   Inbox__factory,
   RollupCore__factory,
+  RollupCreator,
   RollupCreator__factory,
 } from '../../build/types'
 import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
+import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
+import {
+  l1Networks,
+  l2Networks,
+} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
+import { ConfigStruct } from '../../build/types/src/rollup/RollupCreator'
 
 const LOCALHOST_L2_RPC = 'http://127.0.0.1:8547'
 const LOCALHOST_L3_RPC = 'http://127.0.0.1:3347'
@@ -55,6 +62,7 @@ describe('Orbit Chain', () => {
     )
     l2Network = {
       ...coreL2Network,
+      isBold: true,
       tokenBridge: {
         l1CustomGateway: '',
         l1ERC20Gateway: '',
@@ -812,68 +820,81 @@ describe('Orbit Chain', () => {
   //     )
   //   }
 
-  //   const genesisAssertionState: AssertionStateStruct = {
-  //     globalState: {
-  //       bytes32Vals: [ethers.constants.HashZero, ethers.constants.HashZero],
-  //       u64Vals: [ethers.BigNumber.from('0'), ethers.BigNumber.from('0')],
-  //     },
-  //     machineStatus: 0,
-  //     endHistoryRoot: ethers.constants.HashZero,
-  //   }
+    const genesisAssertionState: AssertionStateStruct = {
+      globalState: {
+        bytes32Vals: [ethers.constants.HashZero, ethers.constants.HashZero],
+        u64Vals: [ethers.BigNumber.from('0'), ethers.BigNumber.from('0')],
+      },
+      machineStatus: 1, // FINISHED
+      endHistoryRoot: ethers.constants.HashZero,
+    }
 
-  //   const espressoTEEVerifierFac = (await hardhatEthers.getContractFactory(
-  //     'EspressoTEEVerifierMock'
-  //   )) as EspressoTEEVerifierMock__factory
-  //   const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    /// deploy params
+    const ownerAddr = '0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e'
+    const config: ConfigStruct = {
+      confirmPeriodBlocks: ethers.BigNumber.from('150'),
+      stakeToken: '0x000000000000000000000000000000000000dead',
+      baseStake: ethers.utils.parseEther('1'),
+      wasmModuleRoot:
+        '0xda4e3ad5e7feacb817c21c8d0220da7650fe9051ece68a3f0b1c5d38bbb27b21',
+      owner: ownerAddr,
+      loserStakeEscrow: ownerAddr,
+      chainId: ethers.BigNumber.from('433333'),
+      chainConfig:
+        '{"chainId":433333,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e","GenesisBlockNum":0}}',
+      minimumAssertionPeriod: 75,
+      validatorAfkBlocks: 201600,
+      genesisAssertionState: genesisAssertionState, // AssertionState
+      genesisInboxCount: 0,
+      miniStakeValues: [
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+      ],
+      layerZeroBlockEdgeHeight: 2 ** 5,
+      layerZeroBigStepEdgeHeight: 2 ** 5,
+      layerZeroSmallStepEdgeHeight: 2 ** 5,
+      anyTrustFastConfirmer: ethers.constants.AddressZero,
+      numBigStepLevel: 1,
+      challengeGracePeriodBlocks: 10,
+      bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
+      sequencerInboxMaxTimeVariation: {
+        delayBlocks: ethers.BigNumber.from('5760'),
+        futureBlocks: ethers.BigNumber.from('12'),
+        delaySeconds: ethers.BigNumber.from('86400'),
+        futureSeconds: ethers.BigNumber.from('3600'),
+      },
+    }
+    const batchPosters = [ethers.Wallet.createRandom().address]
+    const batchPosterManager = ethers.Wallet.createRandom().address
+    const validators = [ethers.Wallet.createRandom().address]
+    const maxDataSize = 104857
+    const nativeTokenAddress = nativeToken
+      ? nativeToken.address
+      : ethers.constants.AddressZero
+    const deployFactoriesToL2 = true
+    const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
 
-  //   await espressoTEEVerifier.deployed()
+    const deployParams: RollupCreator.RollupDeploymentParamsStruct = {
+      config,
+      batchPosters,
+      batchPosterManager,
+      validators,
+      maxDataSize,
+      nativeToken: nativeTokenAddress,
+      deployFactoriesToL2,
+      maxFeePerGasForRetryables,
+      feeTokenPricer: ethers.constants.AddressZero,
+    }
 
-  //   /// deploy params
-  //   const config = {
-  //     confirmPeriodBlocks: ethers.BigNumber.from('150'),
-  //     extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
-  //     stakeToken: ethers.constants.AddressZero,
-  //     baseStake: ethers.utils.parseEther('1'),
-  //     wasmModuleRoot:
-  //       '0xda4e3ad5e7feacb817c21c8d0220da7650fe9051ece68a3f0b1c5d38bbb27b21',
-  //     owner: '0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e',
-  //     loserStakeEscrow: ethers.constants.AddressZero,
-  //     chainId: ethers.BigNumber.from('433333'),
-  //     chainConfig:
-  //       '{"chainId":433333,"homesteadBlock":0,"daoForkBlock":null,"daoForkSupport":true,"eip150Block":0,"eip150Hash":"0x0000000000000000000000000000000000000000000000000000000000000000","eip155Block":0,"eip158Block":0,"byzantiumBlock":0,"constantinopleBlock":0,"petersburgBlock":0,"istanbulBlock":0,"muirGlacierBlock":0,"berlinBlock":0,"londonBlock":0,"clique":{"period":0,"epoch":0},"arbitrum":{"EnableArbOS":true,"AllowDebugPrecompiles":false,"DataAvailabilityCommittee":false,"InitialArbOSVersion":10,"InitialChainOwner":"0x72f7EEedF02C522242a4D3Bdc8aE6A8583aD7c5e","GenesisBlockNum":0}}',
-  //     minimumAssertionPeriod: 75,
-  //     validatorAfkBlocks: 201600,
-  //     genesisAssertionState: genesisAssertionState, // AssertionState
-  //     genesisInboxCount: 0,
-  //     miniStakeValues: [
-  //       ethers.utils.parseEther('1'),
-  //       ethers.utils.parseEther('1'),
-  //       ethers.utils.parseEther('1'),
-  //     ],
-  //     layerZeroBlockEdgeHeight: 2 ** 5,
-  //     layerZeroBigStepEdgeHeight: 2 ** 5,
-  //     layerZeroSmallStepEdgeHeight: 2 ** 5,
-  //     anyTrustFastConfirmer: ethers.constants.AddressZero,
-  //     numBigStepLevel: 1,
-  //     challengeGracePeriodBlocks: 10,
-  //     bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
-  //     sequencerInboxMaxTimeVariation: {
-  //       delayBlocks: ethers.BigNumber.from('5760'),
-  //       futureBlocks: ethers.BigNumber.from('12'),
-  //       delaySeconds: ethers.BigNumber.from('86400'),
-  //       futureSeconds: ethers.BigNumber.from('3600'),
-  //     },
-  //     espressoTEEVerifier: espressoTEEVerifier.address,
-  //   }
-  //   const batchPosters = [ethers.Wallet.createRandom().address]
-  //   const batchPosterManager = ethers.Wallet.createRandom().address
-  //   const validators = [ethers.Wallet.createRandom().address]
-  //   const maxDataSize = 104857
-  //   const nativeTokenAddress = nativeToken
-  //     ? nativeToken.address
-  //     : ethers.constants.AddressZero
-  //   const deployFactoriesToL2 = true
-  //   const maxFeePerGasForRetryables = BigNumber.from('100000000') // 0.1 gwei
+    /// deploy it
+    const receipt = await (
+      await rollupCreator.connect(userL1Wallet).createRollup(deployParams, {
+        value: nativeToken ? BigNumber.from(0) : fee,
+      })
+    ).wait()
+
+    const l1TxReceipt = new L1TransactionReceipt(receipt)
 
   //   const deployParams = {
   //     config,
@@ -1204,7 +1225,7 @@ async function _getRollupCreatorFromLogs(
   const filter: Filter = {
     topics: [
       ethers.utils.id(
-        'RollupCreated(address,address,address,address,address,address,address,address,address,address,address,address)'
+        'RollupCreated(address,address,address,address,address,address,address,address,address,address,address)'
       ),
     ],
   }
