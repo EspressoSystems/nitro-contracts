@@ -169,7 +169,6 @@ contract RollupCreatorTest is Test {
     vm.deal(deployer, factoryDeploymentFunds);
     uint256 balanceBefore = deployer.balance;
 
-<<<<<<< HEAD
     /// deploy rollup
     address[] memory batchPosters = new address[](1);
     batchPosters[0] = makeAddr('batch poster 1');
@@ -177,22 +176,6 @@ contract RollupCreatorTest is Test {
     address[] memory validators = new address[](2);
     validators[0] = makeAddr('validator1');
     validators[1] = makeAddr('validator2');
-=======
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0))
-        });
-        address rollupAddress =
-            rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
       .RollupDeploymentParams({
@@ -203,7 +186,8 @@ contract RollupCreatorTest is Test {
         nativeToken: address(0),
         deployFactoriesToL2: true,
         maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-        batchPosterManager: batchPosterManager
+        batchPosterManager: batchPosterManager,
+        feeTokenPricer: IFeeTokenPricer(address(0))
       });
     address rollupAddress = rollupCreator.createRollup{
       value: factoryDeploymentFunds
@@ -424,7 +408,6 @@ contract RollupCreatorTest is Test {
       espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
-<<<<<<< HEAD
     // approve fee token to pay for deployment of L2 factories
     uint256 expectedCost = 0.1247 ether +
       4 *
@@ -438,30 +421,7 @@ contract RollupCreatorTest is Test {
     address[] memory validators = new address[](2);
     validators[0] = makeAddr('validator1');
     validators[1] = makeAddr('validator2');
-=======
-        IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: nativeToken,
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: feeTokenPricer
-        });
-
-        vm.mockCall(
-            address(feeTokenPricer),
-            abi.encodeWithSelector(IFeeTokenPricer.getExchangeRate.selector),
-            abi.encode(uint256(16.421e18))
-        );
-
-        address rollupAddress = rollupCreator.createRollup(deployParams);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
-
+    IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
     RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
       .RollupDeploymentParams({
         config: config,
@@ -471,8 +431,15 @@ contract RollupCreatorTest is Test {
         nativeToken: nativeToken,
         deployFactoriesToL2: true,
         maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-        batchPosterManager: batchPosterManager
+        batchPosterManager: batchPosterManager,
+        feeTokenPricer: feeTokenPricer
       });
+      
+      vm.mockCall(
+          address(feeTokenPricer),
+          abi.encodeWithSelector(IFeeTokenPricer.getExchangeRate.selector),
+          abi.encode(uint256(16.421e18))
+      );
 
     address rollupAddress = rollupCreator.createRollup(deployParams);
 
@@ -680,26 +647,9 @@ contract RollupCreatorTest is Test {
       espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
-<<<<<<< HEAD
     // prepare funds
     uint256 factoryDeploymentFunds = 0.2 ether;
     vm.deal(deployer, factoryDeploymentFunds);
-=======
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0))
-        });
-        address rollupAddress =
-            rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     /// deploy rollup
     address[] memory batchPosters = new address[](1);
@@ -718,7 +668,8 @@ contract RollupCreatorTest is Test {
         nativeToken: address(0),
         deployFactoriesToL2: true,
         maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-        batchPosterManager: batchPosterManager
+        batchPosterManager: batchPosterManager,
+        feeTokenPricer: IFeeTokenPricer(address(0))
       });
     address rollupAddress = rollupCreator.createRollup{
       value: factoryDeploymentFunds

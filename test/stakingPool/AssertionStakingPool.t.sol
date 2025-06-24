@@ -241,7 +241,8 @@ contract AssertionPoolTest is Test {
         deployFactoriesToL2: false,
         maxFeePerGasForRetryables: 0,
         batchPosters: new address[](0),
-        batchPosterManager: address(0)
+        batchPosterManager: address(0),
+        feeTokenPricer: IFeeTokenPricer(address(0))
       });
 
     rollupAddr = rollupCreator.createRollup(param);
@@ -256,39 +257,11 @@ contract AssertionPoolTest is Test {
     adminRollup.sequencerInbox().setIsBatchPoster(sequencer, true);
     vm.stopPrank();
 
-<<<<<<< HEAD
     firstState.machineStatus = MachineStatus.FINISHED;
     firstState.globalState.bytes32Vals[0] = FIRST_ASSERTION_BLOCKHASH; // blockhash
     firstState.globalState.bytes32Vals[1] = FIRST_ASSERTION_SENDROOT; // sendroot
     firstState.globalState.u64Vals[0] = 1; // inbox count
     firstState.globalState.u64Vals[1] = 0; // pos in msg
-=======
-        vm.expectEmit(false, false, false, false);
-        emit RollupCreated(
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0),
-            address(0)
-        );
-        RollupCreator.RollupDeploymentParams memory param = RollupCreator.RollupDeploymentParams({
-            config: config,
-            validators: new address[](0),
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: false,
-            maxFeePerGasForRetryables: 0,
-            batchPosters: new address[](0),
-            batchPosterManager: address(0),
-            feeTokenPricer: IFeeTokenPricer(address(0))
-        });
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     vm.roll(block.number + 75);
 

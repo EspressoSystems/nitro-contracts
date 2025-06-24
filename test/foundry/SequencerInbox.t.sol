@@ -40,6 +40,7 @@ contract SequencerInboxTest is Test {
     IBridge.TimeBounds timeBounds,
     IBridge.BatchDataLocation dataLocation
   );
+  event OwnerFunctionCalled(uint256 indexed id);
 
   Random RAND = new Random();
   address rollupOwner = address(137);
@@ -92,8 +93,6 @@ contract SequencerInboxTest is Test {
         new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, '')
       )
     );
-    event OwnerFunctionCalled(uint256 indexed id);
-
     bridge.initialize(IOwnable(address(rollupMock)));
     vm.prank(rollupOwner);
     bridge.setDelayedInbox(dummyInbox, true);
@@ -113,6 +112,7 @@ contract SequencerInboxTest is Test {
       bridge,
       maxTimeVariation,
       bufferConfig,
+      IFeeTokenPricer(address(0)),
       address(espressoTEEVerifier)
     );
 
@@ -122,21 +122,8 @@ contract SequencerInboxTest is Test {
     vm.prank(rollupOwner);
     bridge.setSequencerInbox(address(seqInbox));
 
-<<<<<<< HEAD
     return (seqInbox, bridge, address(seqInboxImpl));
   }
-=======
-        SequencerInbox seqInboxImpl = new SequencerInbox(
-            maxDataSize,
-            isArbHosted ? IReader4844(address(0)) : dummyReader4844,
-            false,
-            isDelayBufferable
-        );
-        SequencerInbox seqInbox = SequencerInbox(
-            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
-        );
-        seqInbox.initialize(bridge, maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0)));
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
   function deployFeeTokenBasedRollup()
     internal
@@ -178,6 +165,7 @@ contract SequencerInboxTest is Test {
       bridge,
       maxTimeVariation,
       bufferConfigDefault,
+      IFeeTokenPricer(makeAddr("feeTokenPricer")),
       address(espressoTEEVerifier)
     );
 
@@ -195,7 +183,8 @@ contract SequencerInboxTest is Test {
     SequencerInbox seqInbox,
     bytes memory data,
     bool hostChainIsArbitrum,
-    bool isUsingFeeToken
+    bool isUsingFeeToken,
+    uint256 exchangeRate
   ) internal {
     uint256 delayedMessagesRead = bridge.delayedMessageCount();
     uint256 sequenceNumber = bridge.sequencerMessageCount();
@@ -205,7 +194,6 @@ contract SequencerInboxTest is Test {
         block.timestamp - maxTimeVariation.delaySeconds
       );
     }
-<<<<<<< HEAD
     timeBounds.maxTimestamp = uint64(
       block.timestamp + maxTimeVariation.futureSeconds
     );
@@ -213,46 +201,6 @@ contract SequencerInboxTest is Test {
       timeBounds.minBlockNumber = uint64(
         block.number - maxTimeVariation.delayBlocks
       );
-=======
-
-    function deployFeeTokenBasedRollup() internal returns (SequencerInbox, ERC20Bridge) {
-        RollupMock rollupMock = new RollupMock(rollupOwner);
-        ERC20Bridge bridgeImpl = new ERC20Bridge();
-        ERC20Bridge bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
-        );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
-
-        bridge.initialize(IOwnable(address(rollupMock)), nativeToken);
-        vm.prank(rollupOwner);
-        bridge.setDelayedInbox(dummyInbox, true);
-
-        /// this will result in 'hostChainIsArbitrum = true'
-        vm.mockCall(
-            address(100),
-            abi.encodeWithSelector(ArbSys.arbOSVersion.selector),
-            abi.encode(uint256(11))
-        );
-        SequencerInbox seqInboxImpl =
-            new SequencerInbox(maxDataSize, IReader4844(address(0)), true, false);
-        SequencerInbox seqInbox = SequencerInbox(
-            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
-        );
-        seqInbox.initialize(
-            bridge,
-            maxTimeVariation,
-            bufferConfigDefault,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
-        );
-
-        vm.prank(rollupOwner);
-        seqInbox.setIsBatchPoster(tx.origin, true);
-
-        vm.prank(rollupOwner);
-        bridge.setSequencerInbox(address(seqInbox));
-
-        return (seqInbox, bridge);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
     }
     timeBounds.maxBlockNumber = uint64(
       block.number + maxTimeVariation.futureBlocks
@@ -270,55 +218,7 @@ contract SequencerInboxTest is Test {
       )
     );
 
-<<<<<<< HEAD
-    bytes32 beforeAcc = bytes32(0);
-    bytes32 delayedAcc = bridge.delayedInboxAccs(delayedMessagesRead - 1);
-    bytes32 afterAcc = keccak256(
-      abi.encodePacked(beforeAcc, dataHash, delayedAcc)
-    );
-
-    if (!isUsingFeeToken) {
-      uint256 expectedReportedExtraGas = 0;
-      if (hostChainIsArbitrum) {
-        // set 0.1 gwei basefee
-        uint256 basefee = 100000000;
-        vm.fee(basefee);
-        // 30 gwei TX L1 fees
-        uint256 l1Fees = 30000000000;
-=======
-    function expectEvents(
-        IBridge bridge,
-        SequencerInbox seqInbox,
-        bytes memory data,
-        bool hostChainIsArbitrum,
-        bool isUsingFeeToken,
-        uint256 exchangeRate
-    ) internal {
-        uint256 delayedMessagesRead = bridge.delayedMessageCount();
-        uint256 sequenceNumber = bridge.sequencerMessageCount();
-        IBridge.TimeBounds memory timeBounds;
-        if (block.timestamp > maxTimeVariation.delaySeconds) {
-            timeBounds.minTimestamp = uint64(block.timestamp - maxTimeVariation.delaySeconds);
-        }
-        timeBounds.maxTimestamp = uint64(block.timestamp + maxTimeVariation.futureSeconds);
-        if (block.number > maxTimeVariation.delayBlocks) {
-            timeBounds.minBlockNumber = uint64(block.number - maxTimeVariation.delayBlocks);
-        }
-        timeBounds.maxBlockNumber = uint64(block.number + maxTimeVariation.futureBlocks);
-        bytes32 dataHash = keccak256(
-            bytes.concat(
-                abi.encodePacked(
-                    timeBounds.minTimestamp,
-                    timeBounds.maxTimestamp,
-                    timeBounds.minBlockNumber,
-                    timeBounds.maxBlockNumber,
-                    uint64(delayedMessagesRead)
-                ),
-                data
-            )
-        );
-
-        // calculate expected spending report message
+ // calculate expected spending report message
         bytes memory expectedSpendingReportMsg = "";
         {
             uint256 expectedReportedExtraGas = 0;
@@ -383,228 +283,6 @@ contract SequencerInboxTest is Test {
             timeBounds,
             IBridge.BatchDataLocation.TxInput
         );
-    }
-
-    bytes biggerData =
-        hex"00a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890";
-
-    function testAddSequencerL2BatchFromOrigin(
-        BufferConfig memory bufferConfig
-    ) public {
-        (SequencerInbox seqInbox, Bridge bridge,) = deployRollup(false, false, bufferConfig);
-        address delayedInboxSender = address(140);
-        uint8 delayedInboxKind = 3;
-        bytes32 messageDataHash = RAND.Bytes32();
-        bytes memory data = biggerData; // 00 is BROTLI_MESSAGE_HEADER_FLAG
-
-        vm.prank(dummyInbox);
-        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
-
-        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-        uint256 sequenceNumber = bridge.sequencerMessageCount();
-        uint256 delayedMessagesRead = bridge.delayedMessageCount();
-
-        // set 60 gwei basefee
-        uint256 basefee = 60000000000;
-        vm.fee(basefee);
-        expectEvents(bridge, seqInbox, data, false, false, 0);
-
-        vm.prank(tx.origin);
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1
-        );
-    }
-
-    /* solhint-disable func-name-mixedcase */
-    function testConstructor() public {
-        SequencerInbox seqInboxLogic =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false);
-        assertEq(seqInboxLogic.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
-        assertEq(seqInboxLogic.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
-
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(address(seqInboxLogic)));
-        assertEq(seqInboxProxy.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
-        assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
-
-        SequencerInbox seqInboxLogicFeeToken =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false);
-        assertEq(seqInboxLogicFeeToken.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
-        assertEq(seqInboxLogicFeeToken.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
-
-        SequencerInbox seqInboxProxyFeeToken =
-            SequencerInbox(TestUtil.deployProxy(address(seqInboxLogicFeeToken)));
-        assertEq(seqInboxProxyFeeToken.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
-        assertEq(seqInboxProxyFeeToken.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
-    }
-
-    function testInitialize(
-        BufferConfig memory bufferConfig
-    ) public {
-        Bridge _bridge =
-            Bridge(address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, "")));
-        _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
-
-        address seqInboxLogic =
-            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-        seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
-        );
-
-        assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
-        assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
-        assertEq(address(seqInboxProxy.rollup()), address(_bridge.rollup()), "Invalid rollup");
-        assertEq(address(seqInboxProxy.feeTokenPricer()), address(0), "Invalid feeTokenPricer");
-    }
-
-    function testInitialize_FeeTokenBased(
-        BufferConfig memory bufferConfig
-    ) public {
-        ERC20Bridge _bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), proxyAdmin, ""))
-        );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
-        _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
-
-        address seqInboxLogic =
-            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false));
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-        IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, bufferConfig, feeTokenPricer);
-
-        assertEq(seqInboxProxy.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
-        assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
-        assertEq(address(seqInboxProxy.rollup()), address(_bridge.rollup()), "Invalid rollup");
-        assertEq(
-            address(seqInboxProxy.feeTokenPricer()),
-            address(feeTokenPricer),
-            "Invalid feeTokenPricer"
-        );
-    }
-
-    function testInitialize_revert_NativeTokenMismatch_EthFeeToken(
-        BufferConfig memory bufferConfig
-    ) public {
-        Bridge _bridge =
-            Bridge(address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, "")));
-        _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
-
-        address seqInboxLogic =
-            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false));
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-
-        vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
-        seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
-        );
-    }
-
-    function testInitialize_revert_NativeTokenMismatch_FeeTokenEth(
-        BufferConfig memory bufferConfig
-    ) public {
-        ERC20Bridge _bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), proxyAdmin, ""))
-        );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
-        _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
-
-        address seqInboxLogic =
-            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-
-        vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
-        seqInboxProxy.initialize(
-            IBridge(_bridge),
-            maxTimeVariation,
-            bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
-        );
-    }
-
-    function testInitialize_revert_CannotSetFeeTokenPricer() public {
-        address bridge = address(new Bridge());
-        address seqInboxLogic =
-            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-        IFeeTokenPricer pricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        vm.expectRevert(abi.encodeWithSelector(CannotSetFeeTokenPricer.selector));
-        seqInboxProxy.initialize(IBridge(bridge), maxTimeVariation, bufferConfigDefault, pricer);
-    }
-
-    function testAddSequencerL2BatchFromOrigin_ArbitrumHosted(
-        BufferConfig memory bufferConfig
-    ) public {
-        // this will result in 'hostChainIsArbitrum = true'
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
-        vm.mockCall(
-          address(0x6c),
-          abi.encodeWithSignature('getCurrentTxL1GasFees()'),
-          abi.encode(l1Fees)
-        );
-        expectedReportedExtraGas = l1Fees / basefee;
-      }
-
-      bytes memory spendingReportMsg = abi.encodePacked(
-        block.timestamp,
-        msg.sender,
-        dataHash,
-        sequenceNumber,
-        block.basefee,
-        uint64(expectedReportedExtraGas)
-      );
-
-      // spending report
-      vm.expectEmit(true, false, false, false);
-      emit MessageDelivered(
-        delayedMessagesRead,
-        delayedAcc,
-        address(seqInbox),
-        L1MessageType_batchPostingReport,
-        tx.origin,
-        keccak256(spendingReportMsg),
-        block.basefee,
-        uint64(block.timestamp)
-      );
-
-<<<<<<< HEAD
-      // spending report event in seq inbox
-      vm.expectEmit(true, false, false, false);
-      emit InboxMessageDelivered(delayedMessagesRead, spendingReportMsg);
-=======
-        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-        uint256 sequenceNumber = bridge.sequencerMessageCount();
-        uint256 delayedMessagesRead = bridge.delayedMessageCount();
-
-        expectEvents(bridge, seqInbox, data, true, false, 0);
-
-        vm.prank(tx.origin);
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1
-        );
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
-    }
-
-    // sequencer batch delivered
-    vm.expectEmit(true, false, false, false);
-    emit SequencerBatchDelivered(
-      sequenceNumber,
-      beforeAcc,
-      afterAcc,
-      delayedAcc,
-      delayedMessagesRead,
-      timeBounds,
-      IBridge.BatchDataLocation.TxInput
-    );
   }
 
   bytes biggerData =
@@ -630,7 +308,6 @@ contract SequencerInboxTest is Test {
       messageDataHash
     );
 
-<<<<<<< HEAD
     uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
     uint256 sequenceNumber = bridge.sequencerMessageCount();
     uint256 delayedMessagesRead = bridge.delayedMessageCount();
@@ -638,7 +315,7 @@ contract SequencerInboxTest is Test {
     // set 60 gwei basefee
     uint256 basefee = 60000000000;
     vm.fee(basefee);
-    expectEvents(bridge, seqInbox, data, false, false);
+    expectEvents(bridge, seqInbox, data, false, false, 0);
 
     vm.prank(tx.origin);
     string memory quotePath = '/test/foundry/configs/attestation.bin';
@@ -736,6 +413,7 @@ contract SequencerInboxTest is Test {
       IBridge(_bridge),
       maxTimeVariation,
       bufferConfig,
+      IFeeTokenPricer(address(0)),
       address(espressoTEEVerifier)
     );
 
@@ -750,6 +428,7 @@ contract SequencerInboxTest is Test {
       address(_bridge.rollup()),
       'Invalid rollup'
     );
+    assertEq(address(seqInboxProxy.feeTokenPricer()), address(0), "Invalid feeTokenPricer");
   }
 
   function testInitialize_FeeTokenBased(
@@ -778,10 +457,12 @@ contract SequencerInboxTest is Test {
     SequencerInbox seqInboxProxy = SequencerInbox(
       TestUtil.deployProxy(seqInboxLogic)
     );
+    IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
     seqInboxProxy.initialize(
       IBridge(_bridge),
       maxTimeVariation,
       bufferConfig,
+      feeTokenPricer,
       address(espressoTEEVerifier)
     );
 
@@ -795,6 +476,11 @@ contract SequencerInboxTest is Test {
       address(seqInboxProxy.rollup()),
       address(_bridge.rollup()),
       'Invalid rollup'
+    );
+    assertEq(
+      address(seqInboxProxy.feeTokenPricer()),
+      address(feeTokenPricer),
+      "Invalid feeTokenPricer"
     );
   }
 
@@ -820,6 +506,7 @@ contract SequencerInboxTest is Test {
       IBridge(_bridge),
       maxTimeVariation,
       bufferConfig,
+      IFeeTokenPricer(address(0)),
       address(espressoTEEVerifier)
     );
   }
@@ -856,8 +543,19 @@ contract SequencerInboxTest is Test {
       IBridge(_bridge),
       maxTimeVariation,
       bufferConfig,
+      IFeeTokenPricer(makeAddr("feeTokenPricer")),
       address(espressoTEEVerifier)
     );
+  }
+
+   function testInitialize_revert_CannotSetFeeTokenPricer() public {
+    address bridge = address(new Bridge());
+    address seqInboxLogic =
+        address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
+    SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
+    IFeeTokenPricer pricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
+    vm.expectRevert(abi.encodeWithSelector(CannotSetFeeTokenPricer.selector));
+    seqInboxProxy.initialize(IBridge(bridge), maxTimeVariation, bufferConfigDefault, pricer, address(0));
   }
 
   function testAddSequencerL2BatchFromOrigin_ArbitrumHosted(
@@ -891,7 +589,7 @@ contract SequencerInboxTest is Test {
     uint256 sequenceNumber = bridge.sequencerMessageCount();
     uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
-    expectEvents(bridge, seqInbox, data, true, false);
+    expectEvents(bridge, seqInbox, data, true, false, 0);
 
     vm.prank(tx.origin);
     uint256 hotshotHeight = 123;
@@ -933,8 +631,14 @@ contract SequencerInboxTest is Test {
     uint256 basefee = 40000000000;
     vm.fee(basefee);
 
-    expectEvents(IBridge(address(bridge)), seqInbox, data, true, true);
-
+    expectEvents(IBridge(address(bridge)), seqInbox, data, true, true, 1e18);
+    
+    address feeTokenPricer = address(seqInbox.feeTokenPricer());
+    vm.mockCall(
+        feeTokenPricer,
+        abi.encodeWithSelector(IFeeTokenPricer.getExchangeRate.selector),
+        abi.encode(uint256(1e18))
+    );
     vm.prank(tx.origin);
     uint256 hotshotHeight = 123;
     bytes memory signature;
@@ -1079,42 +783,6 @@ contract SequencerInboxTest is Test {
     );
   }
 
-  function testPostUpgradeInitAlreadyInitBuffer(
-    BufferConfig memory bufferConfig
-  ) public returns (SequencerInbox, SequencerInbox) {
-    vm.assume(DelayBuffer.isValidBufferConfig(bufferConfig));
-    (SequencerInbox seqInbox, , ) = deployRollup(
-      false,
-      false,
-      bufferConfigDefault
-    );
-    SequencerInbox seqInboxImpl = new SequencerInbox(
-      maxDataSize,
-      dummyReader4844,
-      false,
-      true
-    );
-    vm.prank(proxyAdmin);
-    TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-      address(seqInboxImpl),
-      abi.encodeWithSelector(
-        SequencerInbox.postUpgradeInit.selector,
-        bufferConfig
-      )
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
-    vm.prank(proxyAdmin);
-    TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-      address(seqInboxImpl),
-      abi.encodeWithSelector(
-        SequencerInbox.postUpgradeInit.selector,
-        bufferConfig
-      )
-    );
-    return (seqInbox, seqInboxImpl);
-  }
-
   function testPostUpgradeInitBuffer(BufferConfig memory bufferConfig) public {
     vm.assume(DelayBuffer.isValidBufferConfig(bufferConfig));
 
@@ -1161,25 +829,6 @@ contract SequencerInboxTest is Test {
       assertEq(threshold, bufferConfig.threshold);
       assertEq(replenishRateInBasis, bufferConfig.replenishRateInBasis);
       assertEq(bufferBlocks, bufferConfig.max);
-=======
-        expectEvents(IBridge(address(bridge)), seqInbox, data, true, true, 1e18);
-
-        address feeTokenPricer = address(seqInbox.feeTokenPricer());
-        vm.mockCall(
-            feeTokenPricer,
-            abi.encodeWithSelector(IFeeTokenPricer.getExchangeRate.selector),
-            abi.encode(uint256(1e18))
-        );
-        vm.prank(tx.origin);
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1
-        );
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
     }
     vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
     vm.prank(proxyAdmin);
@@ -1264,7 +913,6 @@ contract SequencerInboxTest is Test {
       vm.expectRevert(abi.encodeWithSelector(BadMaxTimeVariation.selector));
       checkValue = false;
     }
-<<<<<<< HEAD
     vm.prank(rollupOwner);
     seqInbox.setMaxTimeVariation(
       ISequencerInbox.MaxTimeVariation({
@@ -1285,7 +933,8 @@ contract SequencerInboxTest is Test {
       assertEq(_futureBlocks, futureBlocks);
       assertEq(_delaySeconds, delaySeconds);
       assertEq(_futureSeconds, futureSeconds);
-=======
+    }
+  }
 
     function testFuzz_addSequencerBatch_FeeToken(
         uint256 exchangeRate
@@ -1390,8 +1039,6 @@ contract SequencerInboxTest is Test {
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
         );
         return (seqInbox, seqInboxImpl);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
-    }
   }
 
   function test_updateRollupAddress() public {

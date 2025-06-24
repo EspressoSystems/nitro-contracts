@@ -64,7 +64,6 @@ contract BridgeCreator is Ownable {
     emit ERC20TemplatesUpdated();
   }
 
-<<<<<<< HEAD
   function _createBridge(
     bytes32 create2Salt,
     address adminProxy,
@@ -85,77 +84,6 @@ contract BridgeCreator is Ownable {
       address(
         new TransparentUpgradeableProxy{ salt: create2Salt }(
           address(
-=======
-    function _createBridge(
-        bytes32 create2Salt,
-        address adminProxy,
-        BridgeTemplates memory templates,
-        bool isDelayBufferable
-    ) internal returns (BridgeContracts memory) {
-        BridgeContracts memory frame;
-        frame.bridge = IBridge(
-            address(
-                new TransparentUpgradeableProxy{salt: create2Salt}(
-                    address(templates.bridge), adminProxy, ""
-                )
-            )
-        );
-        frame.sequencerInbox = ISequencerInbox(
-            address(
-                new TransparentUpgradeableProxy{salt: create2Salt}(
-                    address(
-                        isDelayBufferable
-                            ? templates.delayBufferableSequencerInbox
-                            : templates.sequencerInbox
-                    ),
-                    adminProxy,
-                    ""
-                )
-            )
-        );
-        frame.inbox = IInboxBase(
-            address(
-                new TransparentUpgradeableProxy{salt: create2Salt}(
-                    address(templates.inbox), adminProxy, ""
-                )
-            )
-        );
-        frame.rollupEventInbox = IRollupEventInbox(
-            address(
-                new TransparentUpgradeableProxy{salt: create2Salt}(
-                    address(templates.rollupEventInbox), adminProxy, ""
-                )
-            )
-        );
-        frame.outbox = IOutbox(
-            address(
-                new TransparentUpgradeableProxy{salt: create2Salt}(
-                    address(templates.outbox), adminProxy, ""
-                )
-            )
-        );
-        return frame;
-    }
-
-    function createBridge(
-        address adminProxy,
-        address rollup,
-        address nativeToken,
-        ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
-        BufferConfig calldata bufferConfig,
-        IFeeTokenPricer feeTokenPricer
-    ) external returns (BridgeContracts memory) {
-        // use create2 salt to ensure deterministic addresses
-        bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
-        // create delay bufferable sequencer inbox if threshold is non-zero
-        bool isDelayBufferable = bufferConfig.threshold != 0;
-
-        // create ETH-based bridge if address zero is provided for native token, otherwise create ERC20-based bridge
-        BridgeContracts memory frame = _createBridge(
-            create2Salt,
-            adminProxy,
-            nativeToken == address(0) ? ethBasedTemplates : erc20BasedTemplates,
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
             isDelayBufferable
               ? templates.delayBufferableSequencerInbox
               : templates.sequencerInbox
@@ -195,33 +123,19 @@ contract BridgeCreator is Ownable {
     return frame;
   }
 
-<<<<<<< HEAD
   function createBridge(
     address adminProxy,
     address rollup,
     address nativeToken,
     ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
     BufferConfig calldata bufferConfig,
+    IFeeTokenPricer feeTokenPricer,
     address espressoTEEVerifier
   ) external returns (BridgeContracts memory) {
     // use create2 salt to ensure deterministic addresses
     bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
     // create delay bufferable sequencer inbox if threshold is non-zero
     bool isDelayBufferable = bufferConfig.threshold != 0;
-=======
-        // init contracts
-        if (nativeToken == address(0)) {
-            IEthBridge(address(frame.bridge)).initialize(IOwnable(rollup));
-        } else {
-            IERC20Bridge(address(frame.bridge)).initialize(IOwnable(rollup), nativeToken);
-        }
-        frame.sequencerInbox.initialize(
-            IBridge(frame.bridge), maxTimeVariation, bufferConfig, feeTokenPricer
-        );
-        frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
-        frame.rollupEventInbox.initialize(frame.bridge);
-        frame.outbox.initialize(frame.bridge);
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
     // create ETH-based bridge if address zero is provided for native token, otherwise create ERC20-based bridge
     BridgeContracts memory frame = _createBridge(
@@ -244,6 +158,7 @@ contract BridgeCreator is Ownable {
       IBridge(frame.bridge),
       maxTimeVariation,
       bufferConfig,
+      feeTokenPricer,
       espressoTEEVerifier
     );
     frame.inbox.initialize(frame.bridge, frame.sequencerInbox);

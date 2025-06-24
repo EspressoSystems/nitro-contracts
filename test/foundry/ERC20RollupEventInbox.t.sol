@@ -235,7 +235,8 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
                 futureSeconds: 100
             }),
             bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            address(0)
         );
 
         vm.prank(rollup);
