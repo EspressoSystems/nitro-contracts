@@ -450,8 +450,6 @@ contract SequencerInbox is
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
 
-    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
-
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -475,8 +473,6 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
-
-    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -661,8 +657,6 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
-
-    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
