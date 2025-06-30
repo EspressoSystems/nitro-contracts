@@ -14,7 +14,6 @@ import './Messages.sol';
 import '../precompiles/ArbGasInfo.sol';
 import '../precompiles/ArbSys.sol';
 import '../libraries/CallerChecker.sol';
-import '../libraries/IReader4844.sol';
 
 import { L1MessageType_batchPostingReport } from '../libraries/MessageTypes.sol';
 import '../libraries/DelegateCallAware.sol';
@@ -24,6 +23,7 @@ import '../libraries/ArbitrumChecker.sol';
 import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
 import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
+import { IReader4844 } from '../libraries/IReader4844.sol';
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -387,6 +387,8 @@ contract SequencerInbox is
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,
@@ -424,6 +426,8 @@ contract SequencerInbox is
     bytes32[] memory dataHashes = reader4844.getDataHashes();
     if (dataHashes.length == 0) revert MissingDataHashes();
 
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
+
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -445,6 +449,9 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
+    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
+
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -468,6 +475,9 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
+    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,
@@ -651,6 +661,9 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
+    emit LastHotshotHeight(sequenceNumber, delayProof.hotshotHeight);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,

@@ -70,7 +70,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
   event InvalidateKeyset(bytes32 indexed keysetHash);
 
   /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
-  event TEESignatureVerified(
+  event LastHotshotHeight(
     uint256 indexed sequenceNumber,
     uint256 indexed hotshotHeight
   );
