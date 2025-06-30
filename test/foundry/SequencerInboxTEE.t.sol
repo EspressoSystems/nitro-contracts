@@ -200,9 +200,6 @@ contract SequencerInboxTest is Test {
     uint256 delayedMessagesRead = 10;
     uint256 hotshotHeight = 123;
 
-    vm.prank(tx.origin);
-    vm.expectRevert();
-
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
     emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
@@ -295,9 +292,6 @@ contract SequencerInboxTest is Test {
     uint256 sequenceNumber = 1;
     uint256 delayedMessagesRead = 10;
     uint256 hotshotHeight = 123;
-
-    vm.prank(tx.origin);
-    vm.expectRevert();
 
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();

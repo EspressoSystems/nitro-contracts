@@ -632,6 +632,8 @@ contract SequencerInbox is
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,
