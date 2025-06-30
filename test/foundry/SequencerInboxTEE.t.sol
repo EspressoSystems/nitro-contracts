@@ -215,51 +215,7 @@ contract SequencerInboxTest is Test {
     vm.stopPrank();
   }
 
-  function testAddSequencerL2BatchFromOriginWithInvalidSignatureSGX() public {
-    uint256 subMessageCount = 1;
-    uint256 nextSubMessageCount = 18;
-    uint256 sequenceNumber = 1;
-    uint256 delayedMessagesRead = 10;
-    uint256 hotshotHeight = 123;
 
-    vm.prank(tx.origin);
-    vm.expectRevert(
-      abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
-    );
-    seqInbox.addSequencerL2Batch(
-      sequenceNumber,
-      l2TEEData,
-      delayedMessagesRead,
-      IGasRefunder(0x0000000000000000000000000000000000000000),
-      subMessageCount,
-      nextSubMessageCount,
-      hotshotHeight
-    );
-    vm.stopPrank();
-  }
-
-  function testAddSequencerL2BatchFromOriginWithInvalidSignatureNitro() public {
-    uint256 subMessageCount = 1;
-    uint256 nextSubMessageCount = 18;
-    uint256 sequenceNumber = 1;
-    uint256 delayedMessagesRead = 10;
-    uint256 hotshotHeight = 123;
-
-    vm.prank(tx.origin);
-    vm.expectRevert(
-      abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
-    );
-    seqInbox.addSequencerL2Batch(
-      sequenceNumber,
-      l2TEEData,
-      delayedMessagesRead,
-      IGasRefunder(0x0000000000000000000000000000000000000000),
-      subMessageCount,
-      nextSubMessageCount,
-      hotshotHeight
-    );
-    vm.stopPrank();
-  }
 
   function testAddSequencerL2BatchSGX() public {
     uint256 subMessageCount = 1;
@@ -296,54 +252,6 @@ contract SequencerInboxTest is Test {
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
     emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
-    seqInbox.addSequencerL2Batch(
-      sequenceNumber,
-      l2TEEData,
-      delayedMessagesRead,
-      IGasRefunder(0x0000000000000000000000000000000000000000),
-      subMessageCount,
-      nextSubMessageCount,
-      hotshotHeight
-    );
-    vm.stopPrank();
-  }
-
-  function testAddSequencerL2BatchWithIncorrectSignatureSGX() public {
-    uint256 subMessageCount = 1;
-    uint256 nextSubMessageCount = 18;
-    uint256 sequenceNumber = 1;
-    uint256 delayedMessagesRead = 10;
-    uint256 hotshotHeight = 123;
-
-    vm.prank(tx.origin);
-    vm.expectRevert(
-      abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
-    );
-
-    seqInbox.addSequencerL2Batch(
-      sequenceNumber,
-      l2TEEData,
-      delayedMessagesRead,
-      IGasRefunder(0x0000000000000000000000000000000000000000),
-      subMessageCount,
-      nextSubMessageCount,
-      hotshotHeight
-    );
-    vm.stopPrank();
-  }
-
-  function testAddSequencerL2BatchWithIncorrectSignatureNitro() public {
-    uint256 subMessageCount = 1;
-    uint256 nextSubMessageCount = 18;
-    uint256 sequenceNumber = 1;
-    uint256 delayedMessagesRead = 10;
-    uint256 hotshotHeight = 123;
-
-    vm.prank(tx.origin);
-    vm.expectRevert(
-      abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
-    );
-
     seqInbox.addSequencerL2Batch(
       sequenceNumber,
       l2TEEData,
