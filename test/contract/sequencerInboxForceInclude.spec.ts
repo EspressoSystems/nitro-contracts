@@ -365,12 +365,7 @@ describe('SequencerInboxForceInclude', async () => {
     )
 
     const hotshotHeight = 42
-    const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+
     const messagesRead = await bridge.delayedMessageCount()
     const seqReportedMessageSubCount =
       await bridge.sequencerReportedSubMessageCount()
@@ -378,7 +373,7 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,uint256)'
       ](
         0,
         data,
@@ -386,7 +381,7 @@ describe('SequencerInboxForceInclude', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount,
         seqReportedMessageSubCount.add(10),
-        espressoMetadata,
+        hotshotHeight,
         { gasLimit: 10000000 }
       )
     ).wait()
@@ -428,18 +423,11 @@ describe('SequencerInboxForceInclude', async () => {
     const { user, inbox, bridge, messageTester, batchPoster, sequencerInbox } =
       await setupSequencerInbox()
     const hotshotHeight = 42
-    const signature = '0x'
-
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
 
     await sequencerInbox
       .connect(batchPoster)
     [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,uint256)'
     ](
       0,
       '0x',
@@ -447,7 +435,7 @@ describe('SequencerInboxForceInclude', async () => {
       ethers.constants.AddressZero,
       0,
       ethers.constants.MaxUint256,
-      espressoMetadata
+      hotshotHeight
     )
 
     const delayedTx = await sendDelayedTx(
