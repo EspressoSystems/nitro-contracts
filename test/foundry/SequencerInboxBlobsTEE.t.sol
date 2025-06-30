@@ -161,7 +161,7 @@ contract SequencerInboxBlobsTEE is Test {
     vm.prank(tx.origin);
     vm.expectRevert();
     vm.expectEmit();
-    emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2BatchFromBlobs(
       sequenceNumber,
       afterDelayedMessagesRead,
