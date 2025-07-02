@@ -41,6 +41,24 @@ async function main() {
   if (!feeToken) {
     feeToken = ethers.constants.AddressZero
   }
+  let feeTokenPricer = process.env.FEE_TOKEN_PRICER_ADDRESS as string
+  if (!feeTokenPricer) {
+    feeTokenPricer = ethers.constants.AddressZero
+  }
+
+  /// get stake token address, if undefined deploy WETH and set it as stake token
+  let stakeToken = process.env.STAKE_TOKEN_ADDRESS as string
+  if (!stakeToken) {
+    console.log('Deploying WETH')
+    const wethFactory = (await ethers.getContractFactory('TestWETH9')).connect(
+      deployerWallet
+    )
+    const weth = await wethFactory.deploy('Wrapped Ether', 'WETH')
+    await weth.deployTransaction.wait()
+    await weth.deployed()
+    stakeToken = weth.address
+    console.log('WETH deployed at', stakeToken)
+  }
 
   /// deploy templates and rollup creator
   console.log('Deploy RollupCreator')
@@ -63,7 +81,6 @@ async function main() {
       contracts.rollupAdmin.address,
       contracts.rollupUser.address,
       contracts.upgradeExecutor.address,
-      contracts.validatorUtils.address,
       contracts.validatorWalletCreator.address,
       contracts.deployHelper.address,
       { gasLimit: BigNumber.from('300000') }
@@ -83,8 +100,10 @@ async function main() {
     deployerWallet,
     true,
     contracts.rollupCreator.address,
+    feeToken,
+    feeTokenPricer,
+    stakeToken,
     espressoTEEVerifierMock.address,
-    feeToken
   )
 
   if (!result) {

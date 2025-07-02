@@ -10,7 +10,7 @@ import "./IGasRefunder.sol";
 import "../libraries/CallerChecker.sol";
 
 abstract contract GasRefundEnabled {
-    uint256 internal immutable gasPerBlob = 2**17;
+    uint256 internal immutable gasPerBlob = 2 ** 17;
 
     /// @dev this refunds the sender for execution costs of the tx
     /// calldata costs are only refunded if `msg.sender == tx.origin` to guarantee the value refunded relates to charging
@@ -22,7 +22,7 @@ abstract contract GasRefundEnabled {
             uint256 calldataSize = msg.data.length;
             uint256 calldataWords = (calldataSize + 31) / 32;
             // account for the CALLDATACOPY cost of the proxy contract, including the memory expansion cost
-            startGasLeft += calldataWords * 6 + (calldataWords**2) / 512;
+            startGasLeft += calldataWords * 6 + (calldataWords ** 2) / 512;
             // if triggered in a contract call, the spender may be overrefunded by appending dummy data to the call
             // so we check if it is a top level call, which would mean the sender paid calldata as part of tx.input
             if (!CallerChecker.isCallerCodelessOrigin()) {
@@ -39,8 +39,7 @@ abstract contract GasRefundEnabled {
                         if (dataHashes.length != 0) {
                             uint256 blobBasefee = reader4844.getBlobBaseFee();
                             startGasLeft +=
-                                (dataHashes.length * gasPerBlob * blobBasefee) /
-                                block.basefee;
+                                (dataHashes.length * gasPerBlob * blobBasefee) / block.basefee;
                         }
                     } catch {}
                 }

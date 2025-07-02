@@ -50,7 +50,7 @@ import {
 import { Toolkit4844 } from './toolkit4844'
 import { SequencerInbox } from '../../build/types/src/bridge/SequencerInbox'
 import { InboxMessageDeliveredEvent } from '../../build/types/src/bridge/AbsInbox'
-import { SequencerBatchDeliveredEvent } from '../../build/types/src/bridge/ISequencerInbox'
+import { SequencerBatchDeliveredEvent } from '../../build/types/src/bridge/ISequencerInbox.sol/ISequencerInbox'
 
 describe('SequencerInbox', async () => {
   const findMatchingLogs = <TInterface extends Interface, TEvent extends Event>(
@@ -237,6 +237,7 @@ describe('SequencerInbox', async () => {
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
       reader4844.address,
+      false,
       false
     )
     const inboxFac = new Inbox__factory(deployer)
@@ -257,7 +258,6 @@ describe('SequencerInbox', async () => {
       adminAddr,
       '0x'
     )
-
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -276,17 +276,33 @@ describe('SequencerInbox', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
-
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
+    await (
+      await sequencerInbox.initialize(
+        bridgeProxy.address,
+        {
+          delayBlocks: maxDelayBlocks,
+          delaySeconds: maxDelayTime,
+          futureBlocks: 10,
+          futureSeconds: 3000,
+        },
+        {
+          threshold: 0,
+          max: 0,
+          replenishRateInBasis: 0,
+        },
+        constants.AddressZero
+      )
+    ).wait()
 
     await (
       await sequencerInbox
         .connect(user)
         .functions[
-          'initialize(address,(uint256,uint256,uint256,uint256),address)'
+          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
         ](
           bridgeProxy.address,
           {
@@ -295,10 +311,16 @@ describe('SequencerInbox', async () => {
             futureBlocks: 10,
             futureSeconds: 3000,
           },
+          {
+            threshold: 0,
+            max: 0,
+            replenishRateInBasis: 0,
+          },
           espressoTEEVerifier.address,
           { gasLimit: 10000000 }
         )
     ).wait()
+
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
     await (

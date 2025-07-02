@@ -14,14 +14,15 @@ jobs:
     name: Test unit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
+          cache: false
 
       - name: Prepare Environment Variables
         run: |
@@ -50,7 +51,7 @@ jobs:
         run: yarn
 
       - name: Build
-        run: forge test --no-match-path test/foundry/ExpressLaneBalance.t.sol
+        run: yarn test:foundry
   tests:
     if: false
     name: Contract tests
@@ -60,14 +61,15 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
+          cache: false
 
       - name: Prepare Environment Variables
         run: |
@@ -107,7 +109,11 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
+          cache: false
+
+      - name: Check Contracts Format
+        run: forge fmt --check
 
       - name: Install dependencies
         run: yarn install
@@ -157,14 +163,15 @@ jobs:
     name: 4844 tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
+          cache: false
 
       - name: Prepare Environment Variables
         run: |
@@ -174,15 +181,7 @@ jobs:
             echo "$var=${!var}" >> $GITHUB_ENV
           done
 
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           args: --pos
           no-token-bridge: true
@@ -202,12 +201,13 @@ jobs:
 
       - name: Test 4844
         run: yarn test:4844
+
   test-e2e:
     if: false
     name: Test e2e
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -249,12 +249,13 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
+
   test-e2e-custom-fee-token:
     if: false
     name: Test e2e custom fee token
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -296,12 +297,13 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
+
   test-e2e-fee-token-6-decimals:
     if: false
-    name: Test e2e fee token with 6 decimals
+    name: Test e2e fee token with 6 decimals and pricer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -343,3 +345,37 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
+
+  # bold-upgrade:
+  #   name: BOLD upgrade test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
+
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: stable
+  #         cache: false
+
+  #     - name: Setup node/yarn
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
+
+  #     - name: Install packages
+  #       run: yarn
+
+  #     - name: Compile contracts
+  #       run: yarn build:all
+
+  #     - name: Copy .env
+  #       run: |
+  #         cp ./.env-sample ./.env
+
+  #     - name: Test upgrade
+  #       run: L1_RPC=${{ secrets.L1_RPC || 'https://rpc.ankr.com/eth' }} yarn test:upgrade

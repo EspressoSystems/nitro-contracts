@@ -1,22 +1,39 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
 import { deployAllContracts, _isRunningOnArbitrum } from './deploymentUtils'
-import { maxDataSize } from './config'
+import fs from 'fs'
+import { maxDataSize as defaultMaxDataSize } from './config'
 
-import {
-  ArbSys__factory
-} from '../build/types'
+import { ArbSys__factory } from '../build/types'
 
 async function main() {
-  const [signer] = await ethers.getSigners()
-  
+  let signer
+  if (process.env.DEPLOYER_PRIVKEY !== undefined) {
+    signer = new ethers.Wallet(
+      process.env.DEPLOYER_PRIVKEY as string,
+      ethers.provider
+    )
+  } else {
+    const signers = await ethers.getSigners()
+    signer = signers[0]
+  }
+
+  const maxDataSize =
+    process.env.MAX_DATA_SIZE !== undefined
+      ? Number(process.env.MAX_DATA_SIZE)
+      : defaultMaxDataSize
+
   console.log('Deploying contracts with maxDataSize:', maxDataSize)
   if (process.env['IGNORE_MAX_DATA_SIZE_WARNING'] !== 'true') {
     let isArbitrum = await _isRunningOnArbitrum(signer)
-    if (isArbitrum && maxDataSize as any !== 104857) {
-      throw new Error('maxDataSize should be 104857 when the parent chain is Arbitrum (set IGNORE_MAX_DATA_SIZE_WARNING to ignore)')
-    } else if (!isArbitrum && maxDataSize as any !== 117964) {
-      throw new Error('maxDataSize should be 117964 when the parent chain is not Arbitrum (set IGNORE_MAX_DATA_SIZE_WARNING to ignore)')
+    if (isArbitrum && (maxDataSize as number) !== 104857) {
+      throw new Error(
+        'maxDataSize should be 104857 when the parent chain is Arbitrum (set IGNORE_MAX_DATA_SIZE_WARNING to ignore)'
+      )
+    } else if (!isArbitrum && (maxDataSize as number) !== 117964) {
+      throw new Error(
+        'maxDataSize should be 117964 when the parent chain is not Arbitrum (set IGNORE_MAX_DATA_SIZE_WARNING to ignore)'
+      )
     }
   } else {
     console.log('Ignoring maxDataSize warning')
@@ -30,6 +47,39 @@ async function main() {
       true
     )
 
+    const contractAddresses = {
+      EthBridge: contracts.bridgeCreator.address,
+      EthSequencerInbox: contracts.ethSequencerInbox.address,
+      EthInbox: contracts.ethInbox.address,
+      EthRollupEventInbox: contracts.ethRollupEventInbox.address,
+      EthOutbox: contracts.ethOutbox.address,
+      ERC20Bridge: contracts.erc20Bridge.address,
+      ERC20SequencerInbox: contracts.erc20SequencerInbox.address,
+      ERC20Inbox: contracts.erc20Inbox.address,
+      ERC20RollupEventInbox: contracts.erc20RollupEventInbox.address,
+      ERC20Outbox: contracts.erc20Outbox.address,
+      BridgeCreator: contracts.bridgeCreator.address,
+      OneStepProver0: contracts.prover0.address,
+      OneStepProverMemory: contracts.proverMem.address,
+      OneStepProverMath: contracts.proverMath.address,
+      OneStepProverHostIo: contracts.proverHostIo.address,
+      OneStepProofEntry: contracts.osp.address,
+      ChallengeManager: contracts.challengeManager.address,
+      RollupAdminLogic: contracts.rollupAdmin.address,
+      RollupUserLogic: contracts.rollupUser.address,
+      UpgradeExecutor: contracts.upgradeExecutor.address,
+      ValidatorUtils: contracts.validatorUtils.address,
+      ValidatorWalletCreator: contracts.validatorWalletCreator.address,
+      RollupCreator: contracts.rollupCreator.address,
+      DeployHelper: contracts.deployHelper.address,
+    }
+
+    // save the contract name to address mapping in a json file
+    fs.writeFileSync(
+      `./espresso-deployments/${network.name}.json`,
+      JSON.stringify(contractAddresses, null, 2)
+    )
+
     // Call setTemplates with the deployed contract addresses
     console.log('Waiting for the Template to be set on the Rollup Creator')
     await contracts.rollupCreator.setTemplates(
@@ -39,7 +89,6 @@ async function main() {
       contracts.rollupAdmin.address,
       contracts.rollupUser.address,
       contracts.upgradeExecutor.address,
-      contracts.validatorUtils.address,
       contracts.validatorWalletCreator.address,
       contracts.deployHelper.address
     )

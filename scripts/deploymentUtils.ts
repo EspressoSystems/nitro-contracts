@@ -30,7 +30,7 @@ export async function verifyContract(
   contractPathAndName?: string // optional
 ): Promise<void> {
   try {
-    if (process.env.DISABLE_VERIFICATION) return
+    if (process.env.DISABLE_VERIFICATION === 'true') return
     // Define the verification options with possible 'contract' property
     const verificationOptions: {
       contract?: string
@@ -131,7 +131,13 @@ export async function deployAllContracts(
   const ethSequencerInbox = await deployContract(
     'SequencerInbox',
     signer,
-    [maxDataSize, reader4844, false],
+    [maxDataSize, reader4844, false, false],
+    verify
+  )
+  const ethSequencerInboxDelayBufferable = await deployContract(
+    'SequencerInbox',
+    signer,
+    [maxDataSize, reader4844, false, true],
     verify
   )
 
@@ -148,7 +154,13 @@ export async function deployAllContracts(
   const erc20SequencerInbox = await deployContract(
     'SequencerInbox',
     signer,
-    [maxDataSize, reader4844, true],
+    [maxDataSize, reader4844, true, false],
+    verify
+  )
+  const erc20SequencerInboxDelayBufferable = await deployContract(
+    'SequencerInbox',
+    signer,
+    [maxDataSize, reader4844, true, true],
     verify
   )
   const erc20Inbox = await deployContract(
@@ -172,6 +184,7 @@ export async function deployAllContracts(
       [
         ethBridge.address,
         ethSequencerInbox.address,
+        ethSequencerInboxDelayBufferable.address,
         ethInbox.address,
         ethRollupEventInbox.address,
         ethOutbox.address,
@@ -179,6 +192,7 @@ export async function deployAllContracts(
       [
         erc20Bridge.address,
         erc20SequencerInbox.address,
+        erc20SequencerInboxDelayBufferable.address,
         erc20Inbox.address,
         erc20RollupEventInbox.address,
         erc20Outbox.address,
@@ -218,7 +232,7 @@ export async function deployAllContracts(
     verify
   )
   const challengeManager = await deployContract(
-    'ChallengeManager',
+    'EdgeChallengeManager',
     signer,
     [],
     verify
@@ -232,12 +246,6 @@ export async function deployAllContracts(
   const rollupUser = await deployContract('RollupUserLogic', signer, [], verify)
   const upgradeExecutor = await deployUpgradeExecutor(signer)
   await upgradeExecutor.deployTransaction.wait()
-  const validatorUtils = await deployContract(
-    'ValidatorUtils',
-    signer,
-    [],
-    verify
-  )
   const validatorWalletCreator = await deployContract(
     'ValidatorWalletCreator',
     signer,
@@ -253,12 +261,7 @@ export async function deployAllContracts(
   const deployHelper = await deployContract('DeployHelper', signer, [], verify)
   if (verify && !process.env.DISABLE_VERIFICATION) {
     // Deploy RollupProxy contract only for verification, should not be used anywhere else
-    await deployContract(
-      'RollupProxy',
-      signer,
-      [],
-      verify
-    )
+    await deployContract('RollupProxy', signer, [], verify)
   }
   return {
     bridgeCreator,
@@ -271,7 +274,6 @@ export async function deployAllContracts(
     rollupAdmin,
     rollupUser,
     upgradeExecutor,
-    validatorUtils,
     validatorWalletCreator,
     rollupCreator,
     deployHelper,

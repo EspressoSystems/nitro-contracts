@@ -10,5 +10,9 @@ scripts/config.ts
 forge-cache/
 out/
 .env
+<<<<<<< HEAD
+=======
+.DS_Store
+>>>>>>> 8b17454ca87e4aa0c66d70844e6fbdcf57f7c43c
 lcov.info
 output_directory
