@@ -200,7 +200,6 @@ contract SequencerInboxTest is Test {
     uint256 delayedMessagesRead = 10;
     uint256 hotshotHeight = 123;
 
-    //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
     emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2BatchFromOrigin(
@@ -214,7 +213,6 @@ contract SequencerInboxTest is Test {
     );
     vm.stopPrank();
   }
-
 
 
   function testAddSequencerL2BatchSGX() public {

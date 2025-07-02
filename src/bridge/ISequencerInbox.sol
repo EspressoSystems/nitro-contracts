@@ -315,6 +315,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
   function setIsBatchPoster(address addr, bool isBatchPoster_) external;
 
   /**
+   * @notice Register a batch-poster via TEE attestation **and** set the
+   *         isBatchPoster flag in a single call.
+   * @param espressoMetadata ABI-encoded attestation package.
+   */
+  function setIsBatchPoster(bytes calldata espressoMetadata) external;
+
+  /**
    * @notice Makes Data Availability Service keyset valid
    * @param keysetBytes bytes of the serialized keyset
    */

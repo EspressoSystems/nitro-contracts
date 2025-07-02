@@ -312,7 +312,7 @@ contract SequencerInbox is
     if (_totalDelayedMessagesRead > 1) {
       prevDelayedAcc = bridge.delayedInboxAccs(_totalDelayedMessagesRead - 2);
     }
-    if (
+    if ( 
       bridge.delayedInboxAccs(_totalDelayedMessagesRead - 1) !=
       Messages.accumulateInboxMessage(prevDelayedAcc, messageHash)
     ) revert IncorrectMessagePreimage();
@@ -980,6 +980,27 @@ contract SequencerInbox is
   ) external onlyRollupOwnerOrBatchPosterManager {
     isBatchPoster[addr] = isBatchPoster_;
     emit BatchPosterSet(addr, isBatchPoster_);
+    emit OwnerFunctionCalled(1);
+  }
+
+  function setIsBatchPoster(
+    bytes calldata espressoMetadata
+  ) external onlyRollupOwnerOrBatchPosterManager {
+    (
+      address batchPoster,
+      bool isBatchPoster_,
+      bytes memory attestation,
+      bytes memory auxData,
+      IEspressoTEEVerifier.TeeType teeType
+    ) = abi.decode(
+        espressoMetadata,
+        (address, bool, bytes, bytes, IEspressoTEEVerifier.TeeType)
+      );
+
+    espressoTEEVerifier.registerSigner(attestation, auxData, teeType);
+
+    isBatchPoster[batchPoster] = isBatchPoster_;
+    emit BatchPosterSet(batchPoster, isBatchPoster_);
     emit OwnerFunctionCalled(1);
   }
 
