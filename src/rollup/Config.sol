@@ -38,6 +38,7 @@ struct Config {
     uint8 numBigStepLevel;
     uint64 challengeGracePeriodBlocks;
     BufferConfig bufferConfig;
+    address espressoTEEVerifier;
 }
 
 struct ContractDependencies {

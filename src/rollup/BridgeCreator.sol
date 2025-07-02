@@ -121,7 +121,8 @@ contract BridgeCreator is Ownable {
         address nativeToken,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
         BufferConfig calldata bufferConfig,
-        IFeeTokenPricer feeTokenPricer
+        IFeeTokenPricer feeTokenPricer,
+        address espressoTEEVerifier
     ) external returns (BridgeContracts memory) {
         // use create2 salt to ensure deterministic addresses
         bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
@@ -143,7 +144,11 @@ contract BridgeCreator is Ownable {
             IERC20Bridge(address(frame.bridge)).initialize(IOwnable(rollup), nativeToken);
         }
         frame.sequencerInbox.initialize(
-            IBridge(frame.bridge), maxTimeVariation, bufferConfig, feeTokenPricer
+            IBridge(frame.bridge),
+            maxTimeVariation,
+            bufferConfig,
+            feeTokenPricer,
+            espressoTEEVerifier
         );
         frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
         frame.rollupEventInbox.initialize(frame.bridge);

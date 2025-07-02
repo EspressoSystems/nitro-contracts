@@ -15,6 +15,7 @@ import {
 import {INITIALIZATION_MSG_TYPE} from "../../src/libraries/MessageTypes.sol";
 import {ERC20PresetMinterPauser} from
     "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {EspressoTEEVerifierMock} from "../../src/mocks/EspressoTEEVerifier.sol";
 
 contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
     // 7 gwei basefee
@@ -22,6 +23,9 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
 
     // 80 gwei L1 basefee
     uint256 public constant L1_BASEFEE = 80_000_000_000;
+
+    EspressoTEEVerifierMock espressoTEEVerifier;
+    bytes sampleQuote;
 
     function setUp() public {
         rollupEventInbox =
@@ -34,6 +38,12 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
         bridge.setDelayedInbox(address(rollupEventInbox), true);
 
         rollupEventInbox.initialize(bridge);
+
+        espressoTEEVerifier = new EspressoTEEVerifierMock();
+
+        string memory quotePath = "/test/foundry/configs/attestation.bin";
+        string memory inputFile = string.concat(vm.projectRoot(), quotePath);
+        sampleQuote = vm.readFileBinary(inputFile);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -235,7 +245,8 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
                 futureSeconds: 100
             }),
             bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            address(espressoTEEVerifier)
         );
 
         vm.prank(rollup);

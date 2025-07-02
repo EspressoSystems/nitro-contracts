@@ -5,8 +5,8 @@ libs = ['node_modules', 'lib']
 test = 'test/foundry'
 cache_path = 'forge-cache/sol'
 optimizer = true
-optimizer_runs = 2000
-via_ir = false
+optimizer_runs = 3000
+via_ir = true
 evm_version = 'cancun'
 remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
               'forge-std/=lib/forge-std/src/',

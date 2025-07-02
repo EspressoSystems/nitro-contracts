@@ -9,8 +9,6 @@ import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {V3QuoteVerifier} from
-    "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
 import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
 import {IEspressoNitroTEEVerifier} from
@@ -55,7 +53,6 @@ contract SequencerInboxTest is Test {
     EspressoTEEVerifier espressoTEEVerifier;
     EspressoNitroTEEVerifier espressoNitroTEEVerifier;
     EspressoSGXTEEVerifier espressoSGXTEEVerifier;
-    V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
     SequencerInbox seqInboxImpl;
     SequencerInbox seqInbox;
@@ -127,7 +124,11 @@ contract SequencerInboxTest is Test {
             replenishRateInBasis: 714
         });
         seqInbox.initialize(
-            bridge, maxTimeVariation, bufferConfigDefault, address(espressoTEEVerifier)
+            bridge,
+            maxTimeVariation,
+            bufferConfigDefault,
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            address(espressoTEEVerifier)
         );
 
         vm.prank(rollupOwner);

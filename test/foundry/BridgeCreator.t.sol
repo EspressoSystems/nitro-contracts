@@ -16,6 +16,8 @@ contract BridgeCreatorTest is Test {
     uint256 public constant MAX_DATA_SIZE = 117_964;
     IReader4844 dummyReader4844 = IReader4844(address(137));
 
+    EspressoTEEVerifierMock espressoTEEVerifier;
+    bytes sampleQuote;
     BridgeCreator.BridgeTemplates ethBasedTemplates = BridgeCreator.BridgeTemplates({
         bridge: new Bridge(),
         sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false),
@@ -36,6 +38,11 @@ contract BridgeCreatorTest is Test {
     function setUp() public {
         vm.prank(owner);
         creator = new BridgeCreator(ethBasedTemplates, erc20BasedTemplates);
+        espressoTEEVerifier = new EspressoTEEVerifierMock();
+
+        string memory quotePath = "/test/foundry/configs/attestation.bin";
+        string memory inputFile = string.concat(vm.projectRoot(), quotePath);
+        sampleQuote = vm.readFileBinary(inputFile);
     }
 
     function getEthBasedTemplates() internal view returns (BridgeCreator.BridgeTemplates memory) {
@@ -137,7 +144,13 @@ contract BridgeCreatorTest is Test {
         });
 
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            address(espressoTEEVerifier)
         );
         (
             IBridge bridge,
@@ -206,7 +219,8 @@ contract BridgeCreatorTest is Test {
             nativeToken,
             timeVars,
             bufferConfig,
-            IFeeTokenPricer(feeTokenPricer)
+            IFeeTokenPricer(feeTokenPricer),
+            address(espressoTEEVerifier)
         );
         (IBridge bridge, IInboxBase inbox, IRollupEventInbox eventInbox, IOutbox outbox) =
             (contracts.bridge, contracts.inbox, contracts.rollupEventInbox, contracts.outbox);
@@ -268,19 +282,37 @@ contract BridgeCreatorTest is Test {
         });
 
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            address(espressoTEEVerifier)
         );
 
         // can only deploy once from the same address and config
         vm.expectRevert();
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            address(espressoTEEVerifier)
         );
 
         // can deploy from a different address
         vm.prank(address(101));
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            address(espressoTEEVerifier)
         );
     }
 }

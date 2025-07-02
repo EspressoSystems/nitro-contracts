@@ -130,7 +130,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // prepare funds
@@ -312,7 +313,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // approve fee token to pay for deployment of L2 factories
@@ -500,7 +502,8 @@ contract RollupCreatorTest is Test {
             anyTrustFastConfirmer: address(0),
             numBigStepLevel: 1,
             challengeGracePeriodBlocks: 10,
-            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500})
+            bufferConfig: BufferConfig({threshold: 600, max: 14400, replenishRateInBasis: 500}),
+            espressoTEEVerifier: address(new EspressoTEEVerifierMock())
         });
 
         // prepare funds

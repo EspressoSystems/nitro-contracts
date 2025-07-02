@@ -61,6 +61,7 @@ import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTE
  *         in the delayed inbox (Bridge.sol). If items in the delayed inbox are not included by a
  *         sequencer within a time limit they can be force included into the rollup inbox by anyone.
  */
+
 contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox {
     using DelayBuffer for BufferData;
 
@@ -103,7 +104,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     mapping(bytes32 => DasKeySetInfo) public dasKeySetInfo;
 
     modifier onlyRollupOwner() {
-        if (msg.sender != rollup.owner()) revert NotOwner(msg.sender, rollup.owner());
+        if (msg.sender != rollup.owner()) {
+            revert NotOwner(msg.sender, rollup.owner());
+        }
         _;
     }
 
@@ -141,6 +144,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the SequencerInbox is delay bufferable
     bool public immutable isDelayBufferable;
 
+    IEspressoTEEVerifier public espressoTEEVerifier;
+
     constructor(
         uint256 _maxDataSize,
         IReader4844 reader4844_,
@@ -149,9 +154,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) {
         maxDataSize = _maxDataSize;
         if (hostChainIsArbitrum) {
-            if (reader4844_ != IReader4844(address(0))) revert DataBlobsNotSupported();
+            if (reader4844_ != IReader4844(address(0))) {
+                revert DataBlobsNotSupported();
+            }
         } else {
-            if (reader4844_ == IReader4844(address(0))) revert InitParamZero("Reader4844");
+            if (reader4844_ == IReader4844(address(0))) {
+                revert InitParamZero("Reader4844");
+            }
         }
         reader4844 = reader4844_;
         isUsingFeeToken = _isUsingFeeToken;
@@ -180,7 +189,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IBridge bridge_,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig memory bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        address _espressoTEEVerifier
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -210,6 +220,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert CannotSetFeeTokenPricer();
         }
         feeTokenPricer = feeTokenPricer_;
+        espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -275,7 +286,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         address sender,
         bytes32 messageDataHash
     ) external {
-        if (_totalDelayedMessagesRead <= totalDelayedMessagesRead) revert DelayedBackwards();
+        if (_totalDelayedMessagesRead <= totalDelayedMessagesRead) {
+            revert DelayedBackwards();
+        }
         bytes32 messageHash = Messages.messageHash(
             kind,
             sender,
@@ -294,7 +307,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayBlocks_ = delayBufferableBlocks(buffer.bufferBlocks);
         }
         // Can only force-include after the Sequencer-only window has expired.
-        if (l1BlockAndTime[0] + delayBlocks_ >= block.number) revert ForceIncludeBlockTooSoon();
+        if (l1BlockAndTime[0] + delayBlocks_ >= block.number) {
+            revert ForceIncludeBlockTooSoon();
+        }
 
         // Verify that message hash represents the last message sequence of delayed message to be included
         bytes32 prevDelayedAcc = 0;
@@ -345,9 +360,47 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        revert Deprecated();
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-        if (isDelayProofRequired(afterDelayedMessagesRead)) revert DelayProofRequired();
+        if (isDelayProofRequired(afterDelayedMessagesRead)) {
+            revert DelayProofRequired();
+        }
+
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
+            abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
+
+        // take keccak2256 hash of all the function arguments
+        // along with the hotshot height
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                hotshotHeight
+            )
+        );
+        // verify the the reportDataHash was signed by the a registered ephemeral key
+        // generated inside a registered TEE
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        // signature from a registered ephemeral key generated inside TEE
+        // was verified over the batch data hash
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         addSequencerL2BatchFromCalldataImpl(
             sequenceNumber, data, afterDelayedMessagesRead, prevMessageCount, newMessageCount, true
@@ -362,8 +415,44 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, reader4844) {
+        revert Deprecated();
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function addSequencerL2BatchFromBlobs(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-        if (isDelayProofRequired(afterDelayedMessagesRead)) revert DelayProofRequired();
+        if (isDelayProofRequired(afterDelayedMessagesRead)) {
+            revert DelayProofRequired();
+        }
+
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
+        if (dataHashes.length == 0) revert MissingDataHashes();
+
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
+            abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
+        // take keccak2256 hash of all the function arguments and encode packed blob hashes
+        // except the quote
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                abi.encode(dataHashes),
+                hotshotHeight
+            )
+        );
+        // verify the quote for the batch poster running in the TEE
+        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
         addSequencerL2BatchFromBlobsImpl(
             sequenceNumber, afterDelayedMessagesRead, prevMessageCount, newMessageCount
@@ -503,8 +592,50 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
-        if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
-        if (isDelayProofRequired(afterDelayedMessagesRead)) revert DelayProofRequired();
+        revert Deprecated();
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
+        if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) {
+            revert NotBatchPoster();
+        }
+        if (isDelayProofRequired(afterDelayedMessagesRead)) {
+            revert DelayProofRequired();
+        }
+
+        // Only check the attestation quote if the batch has been posted by the
+        // batch poster
+        if (isBatchPoster[msg.sender]) {
+            (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
+                abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
+            // take keccak2256 hash of all the function arguments
+            // along with the hotshot height
+            bytes32 reportDataHash = keccak256(
+                abi.encode(
+                    sequenceNumber,
+                    data,
+                    afterDelayedMessagesRead,
+                    address(gasRefunder),
+                    prevMessageCount,
+                    newMessageCount,
+                    hotshotHeight
+                )
+            );
+
+            espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+            // signature from a registered ephemeral key generated inside a registered TEE
+            // was verified over the batch data hash
+            emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+        }
 
         addSequencerL2BatchFromCalldataImpl(
             sequenceNumber, data, afterDelayedMessagesRead, prevMessageCount, newMessageCount, false
@@ -521,7 +652,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         DelayProof calldata delayProof
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
-        if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
+        if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) {
+            revert NotBatchPoster();
+        }
         if (!isDelayBufferable) revert NotDelayBufferable();
 
         delayProofImpl(afterDelayedMessagesRead, delayProof);
@@ -612,7 +745,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 afterDelayedMessagesRead
     ) internal view returns (bytes32, IBridge.TimeBounds memory) {
         uint256 fullDataLen = HEADER_LENGTH + data.length;
-        if (fullDataLen > maxDataSize) revert DataTooLarge(fullDataLen, maxDataSize);
+        if (fullDataLen > maxDataSize) {
+            revert DataTooLarge(fullDataLen, maxDataSize);
+        }
 
         (bytes memory header, IBridge.TimeBounds memory timeBounds) =
             packHeader(afterDelayedMessagesRead);
@@ -631,7 +766,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             if (data[0] & DAS_MESSAGE_HEADER_FLAG != 0 && data.length >= 33) {
                 // we skip the first byte, then read the next 32 bytes for the keyset
                 bytes32 dasKeysetHash = bytes32(data[1:33]);
-                if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) revert NoSuchKeyset(dasKeysetHash);
+                if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) {
+                    revert NoSuchKeyset(dasKeysetHash);
+                }
             }
         }
         return (keccak256(bytes.concat(header, data)), timeBounds);
@@ -719,8 +856,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         internal
         returns (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 acc)
     {
-        if (afterDelayedMessagesRead < totalDelayedMessagesRead) revert DelayedBackwards();
-        if (afterDelayedMessagesRead > bridge.delayedMessageCount()) revert DelayedTooFar();
+        if (afterDelayedMessagesRead < totalDelayedMessagesRead) {
+            revert DelayedBackwards();
+        }
+        if (afterDelayedMessagesRead > bridge.delayedMessageCount()) {
+            revert DelayedTooFar();
+        }
 
         (seqMessageIndex, beforeAcc, delayedAcc, acc) = bridge.enqueueSequencerMessage(
             dataHash, afterDelayedMessagesRead, prevMessageCount, newMessageCount
@@ -766,7 +907,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         BufferConfig memory bufferConfig_
     ) internal {
         if (!isDelayBufferable) revert NotDelayBufferable();
-        if (!DelayBuffer.isValidBufferConfig(bufferConfig_)) revert BadBufferConfig();
+        if (!DelayBuffer.isValidBufferConfig(bufferConfig_)) {
+            revert BadBufferConfig();
+        }
 
         if (buffer.bufferBlocks == 0 || buffer.bufferBlocks > bufferConfig_.max) {
             buffer.bufferBlocks = bufferConfig_.max;
@@ -828,7 +971,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes32 ksHash = bytes32(ksWord ^ (1 << 255));
         if (keysetBytes.length >= 64 * 1024) revert KeysetTooLarge();
 
-        if (dasKeySetInfo[ksHash].isValidKeyset) revert AlreadyValidDASKeyset(ksHash);
+        if (dasKeySetInfo[ksHash].isValidKeyset) {
+            revert AlreadyValidDASKeyset(ksHash);
+        }
         uint256 creationBlock = block.number;
         if (hostChainIsArbitrum) {
             creationBlock = ArbSys(address(100)).arbBlockNumber();
@@ -889,6 +1034,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external onlyRollupOwner {
         _setBufferConfig(bufferConfig_);
         emit BufferConfigSet(bufferConfig_);
+    }
+
+    function setEspressoTEEVerifier(
+        address _espressoTEEVerifier
+    ) external onlyRollupOwner {
+        espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+        emit OwnerFunctionCalled(6);
     }
 
     function isValidKeysetHash(

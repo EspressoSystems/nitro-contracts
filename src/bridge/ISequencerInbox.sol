@@ -72,6 +72,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev Owner set the fee token pricer.
     event FeeTokenPricerSet(address feeTokenPricer);
 
+    /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
+    event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
+
     function totalDelayedMessagesRead() external view returns (uint256);
 
     function bridge() external view returns (IBridge);
@@ -231,9 +234,37 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
+    function addSequencerL2BatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external;
+
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external;
+
+    function addSequencerL2Batch(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external;
+
+    function addSequencerL2BatchFromBlobs(
+        uint256 sequenceNumber,
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
@@ -245,7 +276,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
     ) external;
 
     /// @dev    Proves message delays, updates delay buffers, and posts an L2 batch with blob data.
@@ -342,16 +374,31 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IFeeTokenPricer newFeeTokenPricer
     ) external;
 
+    /**
+     * @notice Updates the espressoTEEVerifier, the contract which is used to verify the TEE attestation quote
+     */
+    function setEspressoTEEVerifier(
+        address _espressoTEEVerifier
+    ) external;
+
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
 
     // ---------- initializer ----------
 
+    // function initialize(
+    //     IBridge bridge_,
+    //     MaxTimeVariation calldata maxTimeVariation_,
+    //     BufferConfig calldata bufferConfig_,
+    //     IFeeTokenPricer feeTokenPricer_
+    // ) external;
+
     function initialize(
         IBridge bridge_,
         MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig calldata bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        address _espressoTEEVerifier
     ) external;
 }
 

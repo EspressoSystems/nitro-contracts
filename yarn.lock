@@ -680,6 +680,13 @@
     deep-eql "^4.0.1"
     ordinal "^1.0.3"
 
+"@nomicfoundation/hardhat-foundry@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-foundry/-/hardhat-foundry-1.1.4.tgz#56b681ecb43410481ba37e9af37ca88689eaf187"
+  integrity sha512-jpKyOr8bYKJPCuxJIJGOJzzyQPLcLJYq+kLPx135dkgCXyHiFdbSaGA9AEwqsPf97wlwXkskXGn4a21XOkSOPg==
+  dependencies:
+    picocolors "^1.1.0"
+
 "@nomicfoundation/hardhat-verify@^2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-verify/-/hardhat-verify-2.0.13.tgz#41691adc32e01dc5cf6b725615f64958fba2100b"

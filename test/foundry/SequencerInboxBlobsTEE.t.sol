@@ -104,7 +104,11 @@ contract SequencerInboxBlobsTEE is Test {
             replenishRateInBasis: 714
         });
         seqInboxProxy.initialize(
-            IBridge(bridge), maxTimeVariation, bufferConfigDefault, address(espressoTEEVerifier)
+            IBridge(bridge),
+            maxTimeVariation,
+            bufferConfigDefault,
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            address(espressoTEEVerifier)
         );
 
         vm.prank(rollupOwner);

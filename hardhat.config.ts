@@ -8,18 +8,20 @@ import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
 import dotenv from 'dotenv'
+import '@nomicfoundation/hardhat-foundry'
 
 dotenv.config()
 
 const solidity = {
   compilers: [
     {
-      version: '0.8.17',
+      version: '0.8.25',
       settings: {
         optimizer: {
           enabled: true,
-          runs: 2000,
+          runs: 3000,
         },
+        viaIR: true,
       },
     },
   ],
@@ -30,6 +32,15 @@ const solidity = {
         optimizer: {
           enabled: true,
           runs: 20,
+        },
+      },
+    },
+    'src/stylus/StylusDeployer.sol': {
+      version: '0.8.17',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 2000,
         },
       },
     },
