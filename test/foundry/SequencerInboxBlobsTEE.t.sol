@@ -107,7 +107,7 @@ contract SequencerInboxBlobsTEE is Test {
             IBridge(bridge),
             maxTimeVariation,
             bufferConfigDefault,
-            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IFeeTokenPricer(address(0)),
             address(espressoTEEVerifier)
         );
 
