@@ -193,8 +193,6 @@ jobs:
           l3-node: true
           no-token-bridge: true
           no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: v3-support
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -234,8 +232,6 @@ jobs:
           args: --l3-fee-token
           no-token-bridge: true
           no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
-          nitro-testnode-ref: v3-support
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -267,8 +263,6 @@ jobs:
           args: --l3-fee-token --l3-fee-token-pricer --l3-fee-token-decimals 6
           no-token-bridge: true
           no-l3-token-bridge: true
-          nitro-testnode-ref: v3-support
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
