@@ -11,7 +11,7 @@ import './IDelayedMessageProvider.sol';
 import './IBridge.sol';
 import './Messages.sol';
 import './DelayBufferTypes.sol';
-import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
+import { IEspressoTEEVerifier } from '../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol';
 
 interface ISequencerInbox is IDelayedMessageProvider {
   /// @notice The maximum amount of time variatin between a message being posted on the L1 and being executed on the L2

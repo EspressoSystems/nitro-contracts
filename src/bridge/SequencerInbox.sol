@@ -22,7 +22,7 @@ import { GasRefundEnabled } from '../libraries/GasRefundEnabled.sol';
 import '../libraries/ArbitrumChecker.sol';
 import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
-import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
+import {IEspressoTEEVerifier} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
 import { IReader4844 } from '../libraries/IReader4844.sol';
 
 /**

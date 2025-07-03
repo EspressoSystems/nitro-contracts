@@ -12,12 +12,15 @@ solc_version = '0.8.25'
 evm_version = 'cancun'
 fs_permissions = [{ access = "read", path = "./" }]
 remappings = [
-    'ds-test/=lib/forge-std/lib/ds-test/src/',
-    'forge-std/=lib/forge-std/src/',
+    'ds-test/=lib/espresso-tee-contracts/lib/forge-std/lib/ds-test/src/',
+    'forge-std/=lib/espresso-tee-contracts/lib/forge-std/src/',
     '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
     '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
     '@offchainlabs/upgrade-executor/=node_modules/@offchainlabs/upgrade-executor/',
-    'espresso-tee-contracts/=lib/espresso-tee-contracts/src/'
+    'espresso-tee-contracts/=lib/espresso-tee-contracts/src/',
+    '@automata-network/dcap-attestation/contracts=lib/espresso-tee-contracts/lib/automata-dcap-attestation/contracts/',
+    '@automata-network/dcap-attestation/test=lib/espresso-tee-contracts/lib/automata-dcap-attestation/forge-test/',
+    '@automata-network/on-chain-pccs/=lib/espresso-tee-contracts/lib/automata-dcap-attestation/lib/automata-on-chain-pccs/src/'
 ]
 
 [profile.yul]
