@@ -370,6 +370,7 @@ contract BOLDUpgradeAction {
         // this isnt used during rollup creation, so we can pass in empty
         ISequencerInbox.MaxTimeVariation memory maxTimeVariation;
         BufferConfig memory bufferConfig;
+        address espressoTEEVerifier;
 
         return Config({
             confirmPeriodBlocks: CONFIRM_PERIOD_BLOCKS,
@@ -392,7 +393,8 @@ contract BOLDUpgradeAction {
             anyTrustFastConfirmer: address(0), // fast confirmer would be migrated from the old rollup if existed
             numBigStepLevel: NUM_BIGSTEP_LEVEL,
             challengeGracePeriodBlocks: CHALLENGE_GRACE_PERIOD_BLOCKS,
-            bufferConfig: bufferConfig
+            bufferConfig: bufferConfig,
+            espressoTEEVerifier: espressoTEEVerifier
         });
     }
 

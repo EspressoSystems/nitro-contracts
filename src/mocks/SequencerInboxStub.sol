@@ -16,7 +16,8 @@ contract SequencerInboxStub is SequencerInbox {
         uint256 maxDataSize_,
         IReader4844 reader4844_,
         bool isUsingFeeToken_,
-        bool isDelayBufferable_
+        bool isDelayBufferable_,
+        address espressoTEEVerifier_
     ) SequencerInbox(maxDataSize_, reader4844_, isUsingFeeToken_, isDelayBufferable_) {
         bridge = bridge_;
         rollup = IOwnable(msg.sender);

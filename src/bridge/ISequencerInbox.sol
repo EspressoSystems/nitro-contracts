@@ -389,7 +389,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge bridge_,
         MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig calldata bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        address espressoTEEVerifier_
     ) external;
 }
 

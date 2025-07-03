@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ds-test/=lib/espresso-tee-contracts/lib/forge-std/lib/ds-test/src/
 forge-std/=lib/espresso-tee-contracts/lib/forge-std/src/
 openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
@@ -6,10 +5,3 @@ openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
 solady/=node_modules/solady/src/
 espresso-tee-contracts/=lib/espresso-tee-contracts/src/
-=======
-ds-test/=lib/forge-std/lib/ds-test/src/
-forge-std/=lib/forge-std/src/
-openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
-@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
-@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
->>>>>>> 8b17454ca87e4aa0c66d70844e6fbdcf57f7c43c
