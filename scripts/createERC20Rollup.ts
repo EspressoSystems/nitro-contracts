@@ -50,13 +50,19 @@ async function main() {
     feeTokenPricer,
     'as fee token pricer'
   )
+  const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
+  if (!espressoTEEVerifierAddress) {
+    throw new Error('ESPRESSO_TEE_VERIFIER_ADDRESS not set')
+  }
+
   await createRollup(
     deployer,
     false,
     rollupCreatorAddress,
     customFeeTokenAddress,
     feeTokenPricer,
-    stakeTokenAddress
+    stakeTokenAddress,
+    espressoTEEVerifierAddress
   )
 }
 

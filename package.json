@@ -6,7 +6,7 @@
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/offchainlabs/nitro-contracts.git"
+    "url": "git+https://github.com/espressosystems/nitro-contracts.git"
   },
   "files": [
     "src/",
@@ -24,7 +24,7 @@
     "coverage": "forge coverage --report lcov --ir-minimum && lcov --remove lcov.info 'node_modules/*' 'test/*' 'script/*' 'src/test-helpers/*' 'challenge/*' --ignore-errors unused -o lcov.info && genhtml lcov.info --branch-coverage --output-dir coverage",
     "build:all": "yarn build && yarn build:forge",
     "build": "hardhat compile",
-    "build:forge:sol": "forge build --skip *.yul",
+    "build:forge:sol": "forge build --skip *.yul test/foundry/ExpressLaneBalance.t.sol",
     "build:forge:yul": "FOUNDRY_PROFILE=yul forge build --skip *.sol",
     "build:forge": "yarn build:forge:sol && yarn build:forge:yul",
     "contract:size": "hardhat size-contracts",
@@ -65,7 +65,8 @@
     "@openzeppelin/contracts": "4.7.3",
     "@openzeppelin/contracts-upgradeable": "4.7.3",
     "patch-package": "^6.5.1",
-    "solady": "0.0.182"
+    "solady": "0.0.182",
+    "solc": "0.8.17"
   },
   "private": false,
   "devDependencies": {

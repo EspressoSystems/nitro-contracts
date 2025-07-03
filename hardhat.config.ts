@@ -15,7 +15,7 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.27',
+      version: '0.8.17',
       settings: {
         optimizer: {
           enabled: true,
@@ -27,20 +27,11 @@ const solidity = {
   ],
   overrides: {
     'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.17',
+      version: '0.8.20',
       settings: {
         optimizer: {
           enabled: true,
           runs: 20,
-        },
-      },
-    },
-    'src/stylus/StylusDeployer.sol': {
-      version: '0.8.17',
-      settings: {
-        optimizer: {
-          enabled: true,
-          runs: 2000,
         },
       },
     },
@@ -84,6 +75,7 @@ if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
         enabled: true,
         runs: 100,
       },
+      viaIR: true,
     },
   })
   solidity.overrides = {

@@ -1,6 +1,5 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { run } from 'hardhat'
 import { abi as rollupCreatorAbi } from '../build/contracts/src/rollup/RollupCreator.sol/RollupCreator.json'
 import { config, maxDataSize } from './config'
 import { BigNumber, Event, Signer } from 'ethers'
@@ -67,7 +66,8 @@ export async function createRollup(
   rollupCreatorAddress: string,
   feeToken: string,
   feeTokenPricer: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -112,10 +112,11 @@ export async function createRollup(
             feeToken,
             feeTokenPricer,
             validatorWalletCreator,
-            stakeToken
+            stakeToken,
+            espressoTEEVerifierAddress
           )
         : {
-            config: config.config,
+            config: config.rollupConfig,
             validators: config.validators,
             maxDataSize: ethers.BigNumber.from(maxDataSize),
             nativeToken: feeToken,
@@ -235,7 +236,8 @@ async function _getDevRollupConfig(
   feeToken: string,
   feeTokenPricer: string,
   validatorWalletCreator: string,
-  stakeToken: string
+  stakeToken: string,
+  espressoTEEVerifierAddress: string
 ): Promise<RollupCreator.RollupDeploymentParamsStruct> {
   // set up owner address
   const ownerAddress =
@@ -345,6 +347,7 @@ async function _getDevRollupConfig(
       futureSeconds: ethers.BigNumber.from('3600'),
     },
     anyTrustFastConfirmer: ethers.constants.AddressZero,
+    espressoTEEVerifier: espressoTEEVerifierAddress,
   }
 
   return {

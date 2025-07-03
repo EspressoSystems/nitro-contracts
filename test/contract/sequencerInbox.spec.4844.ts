@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierMock__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -227,7 +228,11 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
-
+    const espressoTEEVerifierFac = new EspressoTEEVerifierMock__factory(
+      deployer
+    )
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    await espressoTEEVerifier.deployed()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
@@ -253,6 +258,7 @@ describe('SequencerInbox', async () => {
       adminAddr,
       '0x'
     )
+
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -271,10 +277,20 @@ describe('SequencerInbox', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
+
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
+
+    // Deploy espresso tee verifier mock
+    const espressoTEEVerifierMockFac = (await ethers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifierMock = await espressoTEEVerifierMockFac.deploy()
+
+    await espressoTEEVerifierMock.deployed()
+
     await (
       await sequencerInbox.initialize(
         bridgeProxy.address,
@@ -289,10 +305,34 @@ describe('SequencerInbox', async () => {
           max: 0,
           replenishRateInBasis: 0,
         },
-        constants.AddressZero
+        constants.AddressZero,
+        espressoTEEVerifierMock.address
       )
     ).wait()
 
+    await (
+      await sequencerInbox
+        .connect(user)
+        .functions[
+          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address, address)'
+        ](
+          bridgeProxy.address,
+          {
+            delayBlocks: maxDelayBlocks,
+            delaySeconds: maxDelayTime,
+            futureBlocks: 10,
+            futureSeconds: 3000,
+          },
+          {
+            threshold: 0,
+            max: 0,
+            replenishRateInBasis: 0,
+          },
+          constants.AddressZero,
+          espressoTEEVerifier.address,
+          { gasLimit: 10000000 }
+        )
+    ).wait()
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
     await (
@@ -383,7 +423,7 @@ describe('SequencerInbox', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
         ](
           await bridge.sequencerMessageCount(),
           '0x0042',
@@ -441,7 +481,7 @@ describe('SequencerInbox', async () => {
       sequencerInbox.address,
       ['0x0142', '0x0143'],
       sequencerInbox.interface.encodeFunctionData(
-        'addSequencerL2BatchFromBlobs',
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)',
         [
           sequenceNumber,
           afterDelayedMessagesRead,

@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts } from '../deploymentUtils'
+import { deployAllContracts, deployContract } from '../deploymentUtils'
 import { createRollup } from '../rollupCreation'
 import { promises as fs } from 'fs'
 import { BigNumber } from 'ethers'
@@ -64,6 +64,14 @@ async function main() {
   console.log('Deploy RollupCreator')
   const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
 
+  //  for local deployment, we use a mock address
+  const espressoTEEVerifierMock = await deployContract(
+    'EspressoTEEVerifierMock',
+    deployerWallet,
+    [],
+    false
+  )
+
   console.log('Set templates on the Rollup Creator')
   await (
     await contracts.rollupCreator.setTemplates(
@@ -87,13 +95,15 @@ async function main() {
     'using RollupCreator',
     contracts.rollupCreator.address
   )
+
   const result = await createRollup(
     deployerWallet,
     true,
     contracts.rollupCreator.address,
     feeToken,
     feeTokenPricer,
-    stakeToken
+    stakeToken,
+    espressoTEEVerifierMock.address
   )
 
   if (!result) {

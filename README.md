@@ -1,13 +1,13 @@
 # Arbitrum Nitro Rollup Contracts
 
-This is the package with the smart contract code that powers Arbitrum Nitro.
+This is the package with the smart contract code that powers Arbitrum Nitro and Espresso integration.
 It includes the rollup and fraud proof smart contracts, as well as interfaces for interacting with precompiles.
 
-For more information see https://developer.arbitrum.io/intro
+## Deploy contracts to Sepolia
 
 For the deployed addresses of these contracts for Arbitrum chains see [https://docs.arbitrum.io/for-devs/dev-tools-and-resources/chain-info#core-contracts](https://docs.arbitrum.io/for-devs/dev-tools-and-resources/chain-info#core-contracts)
 
-For the token bridge contracts see [https://github.com/OffchainLabs/token-bridge-contracts](https://github.com/OffchainLabs/token-bridge-contracts)
+### 1. Compile contracts
 
 Compile these contracts locally by running
 
@@ -16,7 +16,35 @@ git clone https://github.com/offchainlabs/nitro-contracts
 cd nitro-contracts
 yarn install
 yarn build
+yarn build:forge
 ```
+
+### 2. Setup environment variables and config files
+
+Copy `.env.sample.goerli` to `.env` and fill in the values. Add an [Etherscan api key](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics), [Infura api key](https://docs.infura.io/dashboard/create-api) and a private key which has some funds on sepolia.
+This private key will be used to deploy the rollup. We have already deployed a `ROLLUP_CREATOR_ADDRESS` which has all the associated espresso contracts initialized.
+
+If you want to deploy your own rollup creator, you can leave the `ROLLUP_CREATOR_ADDRESS` empty and follow the steps on step 3.
+
+If you want to use the already deployed `RollupCreator`, you can update the `ROLLUP_CREATOR_ADDRESS` with the address of the deployed rollup creator [here](espresso-deployments/sepolia.json) and follow the steps on step 4 to create the rollup.
+
+### 3. Deploy Rollup Creator and initialize the espresso contracts
+
+Run the following command to deploy the rollup creator and initialize the espresso contracts.
+
+`npx hardhat run scripts/deployment.ts --network sepolia`
+
+This will deploy the rollup creator and initialize the espresso contracts.
+
+### 4. Create the rollup
+
+Change the `config.ts.example` to `config.ts` and update the config specific to your rollup. Then run the following command to create the rollup if you haven't already done so.
+
+`npx hardhat run scripts/createEthRollup.ts --network sepolia`
+
+## Deployed contract addresses
+
+Deployed contract addresses can be found in the [espress-deployments folder](./espresso-deployments/).
 
 ## License
 

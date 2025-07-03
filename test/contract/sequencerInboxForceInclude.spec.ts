@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoTEEVerifierMock__factory,
   Inbox,
   Inbox__factory,
   MessageTester,
@@ -280,6 +281,14 @@ describe('SequencerInboxForceInclude', async () => {
       .connect(user)
     await bridge.initialize(rollup.address)
 
+    // Deploy espresso tee verifier mock
+    const espressoTEEVerifierMockFac = (await ethers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifierMock = await espressoTEEVerifierMockFac.deploy()
+
+    await espressoTEEVerifierMock.deployed()
+
     await sequencerInbox.initialize(
       bridgeProxy.address,
       {
@@ -293,7 +302,8 @@ describe('SequencerInboxForceInclude', async () => {
         max: 0,
         replenishRateInBasis: 0,
       },
-      constants.AddressZero
+      constants.AddressZero,
+      espressoTEEVerifierMock.address
     )
 
     await (
@@ -353,11 +363,10 @@ describe('SequencerInboxForceInclude', async () => {
 
     const hotshotHeight = 42
     const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
     const messagesRead = await bridge.delayedMessageCount()
     const seqReportedMessageSubCount =
       await bridge.sequencerReportedSubMessageCount()
@@ -365,17 +374,17 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        messagesRead,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        espressoMetadata,
-        { gasLimit: 10000000 }
-      )
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          messagesRead,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          espressoMetadata,
+          { gasLimit: 10000000 }
+        )
     ).wait()
   })
 
@@ -417,15 +426,13 @@ describe('SequencerInboxForceInclude', async () => {
     const hotshotHeight = 42
     const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
 
     await sequencerInbox
       .connect(batchPoster)
-<<<<<<< HEAD
       [
         'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
       ](
@@ -436,19 +443,6 @@ describe('SequencerInboxForceInclude', async () => {
         0,
         ethers.constants.MaxUint256
       )
-=======
-    [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-    ](
-      0,
-      '0x',
-      0,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.MaxUint256,
-      espressoMetadata
-    )
->>>>>>> 3b7a18d8 (AWS Nitro Develop (#78))
 
     const delayedTx = await sendDelayedTx(
       user,
