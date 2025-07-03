@@ -309,11 +309,18 @@ describe('SequencerInboxForceInclude', async () => {
       )
     ).wait()
 
-    await (
-      await sequencerInbox
-        .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
-    ).wait()
+    const sig = ethers.utils.hexlify(ethers.utils.randomBytes(64));
+    const posterAddr = await batchPoster.getAddress();
+    const aux = ethers.utils.hexZeroPad(posterAddr, 20);
+    await sequencerInbox
+      .connect(rollupOwner)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        sig,
+        aux
+      )
 
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
@@ -322,11 +329,17 @@ describe('SequencerInboxForceInclude', async () => {
     await bridgeAdmin.setDelayedInbox(inbox.address, true)
     await bridgeAdmin.setSequencerInbox(sequencerInbox.address)
 
-    await (
-      await sequencerInbox
-        .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
-    ).wait()
+    const sig2 = ethers.utils.hexlify(ethers.utils.randomBytes(64));
+    const aux2 = ethers.utils.hexZeroPad(posterAddr, 20);
+    await sequencerInbox
+      .connect(rollupOwner)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        sig2,
+        aux2
+      )
 
     const messageTester = (await (
       await ethers.getContractFactory('MessageTester')

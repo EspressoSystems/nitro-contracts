@@ -11,6 +11,7 @@ import './IDelayedMessageProvider.sol';
 import './IBridge.sol';
 import './Messages.sol';
 import './DelayBufferTypes.sol';
+import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
 
 interface ISequencerInbox is IDelayedMessageProvider {
   /// @notice The maximum amount of time variatin between a message being posted on the L1 and being executed on the L2
@@ -317,9 +318,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
   /**
    * @notice Register a batch-poster via TEE attestation **and** set the
    *         isBatchPoster flag in a single call.
-   * @param espressoMetadata ABI-encoded attestation package.
+   * @param addr The address of the batch poster
+   * @param isBatchPoster_ If the specified address should be authorized as a batch poster
+   * @param teeType The type of TEE
+   * @param attestation The attestation from the TEE
+   * @param auxData The aux data from the TEE
    */
-  function setIsBatchPoster(bytes calldata espressoMetadata) external;
+  function setIsBatchPoster(address addr, bool isBatchPoster_, IEspressoTEEVerifier.TeeType teeType, bytes calldata attestation, bytes calldata auxData) external;
 
   /**
    * @notice Makes Data Availability Service keyset valid

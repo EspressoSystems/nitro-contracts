@@ -307,10 +307,20 @@ describe('SequencerInbox', async () => {
     ).wait()
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
+    const posterAddr = await batchPoster.getAddress()
+    const auxData = ethers.utils.hexZeroPad(posterAddr, 20)
+    const attestation = ethers.utils.hexlify(ethers.utils.randomBytes(64))
+
     await (
       await sequencerInbox
         .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
+        .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+          posterAddr,
+          true,
+          0,
+          attestation,
+          auxData
+        )
     ).wait()
     await (
       await inbox.initialize(bridgeProxy.address, sequencerInbox.address)

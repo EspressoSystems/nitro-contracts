@@ -984,23 +984,17 @@ contract SequencerInbox is
   }
 
   function setIsBatchPoster(
-    bytes calldata espressoMetadata
+    address addr,
+    bool isBatchPoster_,
+    IEspressoTEEVerifier.TeeType teeType,
+    bytes memory attestation,
+    bytes memory auxData
   ) external onlyRollupOwnerOrBatchPosterManager {
-    (
-      address batchPoster,
-      bool isBatchPoster_,
-      bytes memory attestation,
-      bytes memory auxData,
-      IEspressoTEEVerifier.TeeType teeType
-    ) = abi.decode(
-        espressoMetadata,
-        (address, bool, bytes, bytes, IEspressoTEEVerifier.TeeType)
-      );
 
     espressoTEEVerifier.registerSigner(attestation, auxData, teeType);
 
-    isBatchPoster[batchPoster] = isBatchPoster_;
-    emit BatchPosterSet(batchPoster, isBatchPoster_);
+    isBatchPoster[addr] = isBatchPoster_;
+    emit BatchPosterSet(addr, isBatchPoster_);
     emit OwnerFunctionCalled(1);
   }
 
