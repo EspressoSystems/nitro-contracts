@@ -15,6 +15,7 @@ import '../precompiles/ArbSys.sol';
 import '../libraries/CallerChecker.sol';
 import '../libraries/IReader4844.sol';
 
+import { L1MessageType_batchPostingReport } from '../libraries/MessageTypes.sol';
 import '../libraries/DelegateCallAware.sol';
 import { IGasRefunder } from '../libraries/IGasRefunder.sol';
 import { GasRefundEnabled } from '../libraries/GasRefundEnabled.sol';
@@ -37,7 +38,7 @@ contract SequencerInbox is
   ISequencerInbox
 {
   using DelayBuffer for BufferData;
-
+  
   uint256 public totalDelayedMessagesRead;
 
   IBridge public bridge;
@@ -103,7 +104,7 @@ contract SequencerInbox is
 
   /// @inheritdoc ISequencerInbox
   address public batchPosterManager;
-
+  
   BufferData public buffer;
 
   /// @inheritdoc ISequencerInbox
@@ -160,14 +161,15 @@ contract SequencerInbox is
   }
 
   /**
-      Deprecated because we created another `initialize` function that accepts the `EspressoTEEVerifier` contract
-      address as a parameter which is used by the `SequencerInbox` contract to verify the TEE attestation quote.
-    */
+        Deprecated because we created another `initialize` function that accepts the `EspressoTEEVerifier` contract
+        address as a parameter which is used by the `SequencerInbox` contract to verify the TEE attestation quote.
+     */
   function initialize(
-      IBridge bridge_,
-      ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_
+    IBridge bridge_,
+    ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
+    BufferConfig memory bufferConfig_
   ) external onlyDelegated {
-      revert Deprecated();
+    revert Deprecated();
   }
 
   function initialize(
@@ -195,9 +197,9 @@ contract SequencerInbox is
     try IERC20Bridge(address(bridge_)).nativeToken() returns (
       address feeToken
     ) {
-      if (feeToken != address(0)) {
-        actualIsUsingFeeToken = true;
-      }
+        if (feeToken != address(0)) {
+            actualIsUsingFeeToken = true;
+        }
     } catch {}
     if (isUsingFeeToken != actualIsUsingFeeToken) {
       revert NativeTokenMismatch();
@@ -213,7 +215,7 @@ contract SequencerInbox is
     }
 
     if (!isUsingFeeToken && feeTokenPricer_ != IFeeTokenPricer(address(0))) {
-      revert CannotSetFeeTokenPricer();
+        revert CannotSetFeeTokenPricer();
     }
     feeTokenPricer = feeTokenPricer_;
 
@@ -378,9 +380,9 @@ contract SequencerInbox is
   }
 
   /**
-    Deprecated because we added a new method with TEE attestation quote
-    to verify that the batch is posted by the batch poster running in TEE.
-  */
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
   function addSequencerL2BatchFromOrigin(
     uint256 sequenceNumber,
     bytes calldata data,
@@ -392,19 +394,45 @@ contract SequencerInbox is
     revert Deprecated();
   }
 
+  /// @inheritdoc ISequencerInbox
   function addSequencerL2BatchFromOrigin(
-      uint256 sequenceNumber,
-      bytes calldata data,
-      uint256 afterDelayedMessagesRead,
-      IGasRefunder gasRefunder,
-      uint256 prevMessageCount,
-      uint256 newMessageCount,
-      bytes memory espressoMetadata
+    uint256 sequenceNumber,
+    bytes calldata data,
+    uint256 afterDelayedMessagesRead,
+    IGasRefunder gasRefunder,
+    uint256 prevMessageCount,
+    uint256 newMessageCount,
+    bytes memory espressoMetadata
   ) external refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
     if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
+
+    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+        espressoMetadata,
+        (uint256, bytes, IEspressoTEEVerifier.TeeType)
+    );
+
+    // take keccak2256 hash of all the function arguments
+    // along with the hotshot height
+    bytes32 reportDataHash = keccak256(
+      abi.encode(
+        sequenceNumber,
+        data,
+        afterDelayedMessagesRead,
+        address(gasRefunder),
+        prevMessageCount,
+        newMessageCount,
+        hotshotHeight
+      )
+    );
+    // verify the the reportDataHash was signed by the a registered ephemeral key
+    // generated inside a registered TEE
+    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+    // signature from a registered ephemeral key generated inside TEE
+    // was verified over the batch data hash
+    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -418,13 +446,13 @@ contract SequencerInbox is
 
   /// @inheritdoc ISequencerInbox
   function addSequencerL2BatchFromBlobs(
-      uint256 sequenceNumber,
-      uint256 afterDelayedMessagesRead,
-      IGasRefunder gasRefunder,
-      uint256 prevMessageCount,
-      uint256 newMessageCount
+    uint256 sequenceNumber,
+    uint256 afterDelayedMessagesRead,
+    IGasRefunder gasRefunder,
+    uint256 prevMessageCount,
+    uint256 newMessageCount
   ) external refundsGas(gasRefunder, reader4844) {
-      revert Deprecated();
+    revert Deprecated();
   }
 
   /// @inheritdoc ISequencerInbox
@@ -568,7 +596,7 @@ contract SequencerInbox is
     // submit a batch spending report to refund the entity that produced the blob batch data
     // same as using calldata, we only submit spending report if the caller is the origin and is codeless
     // such that one cannot "double-claim" batch posting refund in the same tx
-    if (CallerChecker.isCallerCodelessOrigin()) {
+    if (CallerChecker.isCallerCodelessOrigin() && !isUsingFeeToken) {
       submitBatchSpendingReport(
         dataHash,
         seqMessageIndex,
@@ -626,31 +654,31 @@ contract SequencerInbox is
   }
 
   /**
-      Deprecated because we added a new method with TEE attestation quote
-      to verify that the batch is posted by the batch poster running in TEE.
-    */
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
   function addSequencerL2Batch(
-      uint256,
-      bytes calldata,
-      uint256,
-      IGasRefunder gasRefunder,
-      uint256,
-      uint256
+    uint256,
+    bytes calldata,
+    uint256,
+    IGasRefunder gasRefunder,
+    uint256,
+    uint256
   ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
-      revert Deprecated();
+    revert Deprecated();
   }
 
   /*
-    * addSequencerL2Batch is called by either the rollup admin or batch poster
-    * running in TEE to add a new batch
-    * @param sequenceNumber - the sequence number of the batch
-    * @param data - the data of the batch
-    * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
-    * @param gasRefunder - the gas refunder contract
-    * @param prevMessageCount - the number of messages in the previous batch
-    * @param newMessageCount - the number of messages in the new batch
-    * @param espressoMetadata - the signature, the hotshot height, and TeeType
-    */
+   * addSequencerL2Batch is called by either the rollup admin or batch poster
+   * running in TEE to add a new batch
+   * @param sequenceNumber - the sequence number of the batch
+   * @param data - the data of the batch
+   * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
+   * @param gasRefunder - the gas refunder contract
+   * @param prevMessageCount - the number of messages in the previous batch
+   * @param newMessageCount - the number of messages in the new batch
+   * @param espressoMetadata - the signature, the hotshot height, and TeeType
+   */
   function addSequencerL2Batch(
     uint256 sequenceNumber,
     bytes calldata data,
@@ -664,6 +692,36 @@ contract SequencerInbox is
       revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
+
+    // Question for Espresso Team
+    // Same question as above
+
+    // Only check the attestation quote if the batch has been posted by the
+    // batch poster
+    if (isBatchPoster[msg.sender]) {
+      (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+          espressoMetadata,
+          (uint256, bytes, IEspressoTEEVerifier.TeeType)
+      );
+      // take keccak2256 hash of all the function arguments
+      // along with the hotshot height
+      bytes32 reportDataHash = keccak256(
+        abi.encode(
+          sequenceNumber,
+          data,
+          afterDelayedMessagesRead,
+          address(gasRefunder),
+          prevMessageCount,
+          newMessageCount,
+          hotshotHeight
+        )
+      );
+
+      espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+      // signature from a registered ephemeral key generated inside a registered TEE
+      // was verified over the batch data hash
+      emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    }
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -873,7 +931,7 @@ contract SequencerInbox is
     // If the pricer is not set, then we do not send batch reports and batch poster never gets reimbursed
     IFeeTokenPricer _feeTokenPricer = feeTokenPricer;
     if (isUsingFeeToken && address(_feeTokenPricer) == address(0)) {
-      return;
+        return;
     }
 
     // report the account who paid the gas (tx.origin) for the tx as batch poster
@@ -945,7 +1003,8 @@ contract SequencerInbox is
 
     totalDelayedMessagesRead = afterDelayedMessagesRead;
 
-    if (calldataLengthPosted > 0) {
+    if (calldataLengthPosted > 0 && !isUsingFeeToken) {
+      // only report batch poster spendings if chain is using ETH as native currency
       submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, 0);
     }
   }
