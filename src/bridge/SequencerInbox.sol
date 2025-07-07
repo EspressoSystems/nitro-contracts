@@ -978,9 +978,7 @@ contract SequencerInbox is
     address addr,
     bool isBatchPoster_
   ) external onlyRollupOwnerOrBatchPosterManager {
-    isBatchPoster[addr] = isBatchPoster_;
-    emit BatchPosterSet(addr, isBatchPoster_);
-    emit OwnerFunctionCalled(1);
+    revert Deprecated();
   }
 
   function setIsBatchPoster(
