@@ -8,12 +8,12 @@ import '../../src/bridge/SequencerInbox.sol';
 import { ERC20Bridge } from '../../src/bridge/ERC20Bridge.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
 import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
-import { V3QuoteVerifier } from '@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol';
-import { EspressoTEEVerifier } from 'espresso-tee-contracts/EspressoTEEVerifier.sol';
-import { EspressoSGXTEEVerifier } from 'espresso-tee-contracts/EspressoSGXTEEVerifier.sol';
-import { IEspressoNitroTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol';
-import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
-import { EspressoNitroTEEVerifier } from 'espresso-tee-contracts/EspressoNitroTEEVerifier.sol';
+import { V3QuoteVerifier } from '../../lib/espresso-tee-contracts/lib/automata-dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol';
+import { EspressoTEEVerifier } from '../../lib/espresso-tee-contracts/src/EspressoTEEVerifier.sol';
+import { EspressoSGXTEEVerifier } from '../../lib/espresso-tee-contracts/src/EspressoSGXTEEVerifier.sol';
+import { IEspressoNitroTEEVerifier } from '../../lib/espresso-tee-contracts/src/interface/IEspressoNitroTEEVerifier.sol';
+import { IEspressoTEEVerifier } from '../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol';
+import { EspressoNitroTEEVerifier } from '../../lib/espresso-tee-contracts/src/EspressoNitroTEEVerifier.sol';
 import { CertManager } from '@nitro-validator/CertManager.sol';
 
 contract RollupMock {

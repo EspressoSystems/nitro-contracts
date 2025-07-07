@@ -17,7 +17,6 @@ remappings = [
     '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
     '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
     '@offchainlabs/upgrade-executor/=node_modules/@offchainlabs/upgrade-executor/',
-    'espresso-tee-contracts/=lib/espresso-tee-contracts/src/',
     '@automata-network/dcap-attestation/contracts=lib/espresso-tee-contracts/lib/automata-dcap-attestation/contracts/',
     '@automata-network/dcap-attestation/test=lib/espresso-tee-contracts/lib/automata-dcap-attestation/forge-test/',
     '@automata-network/on-chain-pccs/=lib/espresso-tee-contracts/lib/automata-dcap-attestation/lib/automata-on-chain-pccs/src/'
