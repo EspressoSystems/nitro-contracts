@@ -14,7 +14,6 @@ import './Messages.sol';
 import '../precompiles/ArbGasInfo.sol';
 import '../precompiles/ArbSys.sol';
 import '../libraries/CallerChecker.sol';
-import '../libraries/IReader4844.sol';
 
 import { L1MessageType_batchPostingReport } from '../libraries/MessageTypes.sol';
 import '../libraries/DelegateCallAware.sol';
@@ -23,7 +22,8 @@ import { GasRefundEnabled } from '../libraries/GasRefundEnabled.sol';
 import '../libraries/ArbitrumChecker.sol';
 import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
-import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import { IReader4844 } from '../libraries/IReader4844.sol';
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -312,7 +312,7 @@ contract SequencerInbox is
     if (_totalDelayedMessagesRead > 1) {
       prevDelayedAcc = bridge.delayedInboxAccs(_totalDelayedMessagesRead - 2);
     }
-    if (
+    if ( 
       bridge.delayedInboxAccs(_totalDelayedMessagesRead - 1) !=
       Messages.accumulateInboxMessage(prevDelayedAcc, messageHash)
     ) revert IncorrectMessagePreimage();
@@ -380,40 +380,14 @@ contract SequencerInbox is
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
     if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
-    // Question for Espresso Team
-    // Should we check the quote here?
-
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-
-    // take keccak2256 hash of all the function arguments
-    // along with the hotshot height
-    bytes32 reportDataHash = keccak256(
-      abi.encode(
-        sequenceNumber,
-        data,
-        afterDelayedMessagesRead,
-        address(gasRefunder),
-        prevMessageCount,
-        newMessageCount,
-        hotshotHeight
-      )
-    );
-    // verify the the reportDataHash was signed by the a registered ephemeral key
-    // generated inside a registered TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-    // signature from a registered ephemeral key generated inside TEE
-    // was verified over the batch data hash
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -443,7 +417,7 @@ contract SequencerInbox is
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external refundsGas(gasRefunder, reader4844) {
     if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
@@ -452,26 +426,8 @@ contract SequencerInbox is
     bytes32[] memory dataHashes = reader4844.getDataHashes();
     if (dataHashes.length == 0) revert MissingDataHashes();
 
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-    // take keccak2256 hash of all the function arguments and encode packed blob hashes
-    // except the quote
-    bytes32 reportDataHash = keccak256(
-      abi.encode(
-        sequenceNumber,
-        afterDelayedMessagesRead,
-        address(gasRefunder),
-        prevMessageCount,
-        newMessageCount,
-        abi.encode(dataHashes),
-        hotshotHeight
-      )
-    );
-    // verify the quote for the batch poster running in the TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
+
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -493,6 +449,7 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -516,6 +473,7 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,
@@ -658,7 +616,7 @@ contract SequencerInbox is
    * @param gasRefunder - the gas refunder contract
    * @param prevMessageCount - the number of messages in the previous batch
    * @param newMessageCount - the number of messages in the new batch
-   * @param espressoMetadata - the signature, the hotshot height, and TeeType
+   * @param hotshotHeight - the hotshot height to replay from if starting after this batch
    */
   function addSequencerL2Batch(
     uint256 sequenceNumber,
@@ -667,42 +625,14 @@ contract SequencerInbox is
     IGasRefunder gasRefunder,
     uint256 prevMessageCount,
     uint256 newMessageCount,
-    bytes memory espressoMetadata
+    uint256 hotshotHeight
   ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!isBatchPoster[msg.sender] && msg.sender != address(rollup))
       revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
-    // Question for Espresso Team
-    // Same question as above
-
-    // Only check the attestation quote if the batch has been posted by the
-    // batch poster
-    if (isBatchPoster[msg.sender]) {
-      (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-          espressoMetadata,
-          (uint256, bytes, IEspressoTEEVerifier.TeeType)
-      );
-      // take keccak2256 hash of all the function arguments
-      // along with the hotshot height
-      bytes32 reportDataHash = keccak256(
-        abi.encode(
-          sequenceNumber,
-          data,
-          afterDelayedMessagesRead,
-          address(gasRefunder),
-          prevMessageCount,
-          newMessageCount,
-          hotshotHeight
-        )
-      );
-      
-      espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-      // signature from a registered ephemeral key generated inside a registered TEE
-      // was verified over the batch data hash
-      emit TEESignatureVerified(sequenceNumber, hotshotHeight);
-    }
+    emit LastHotshotHeight(sequenceNumber, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -729,6 +659,7 @@ contract SequencerInbox is
     if (!isDelayBufferable) revert NotDelayBufferable();
 
     delayProofImpl(afterDelayedMessagesRead, delayProof);
+
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
       data,
@@ -1047,6 +978,19 @@ contract SequencerInbox is
     address addr,
     bool isBatchPoster_
   ) external onlyRollupOwnerOrBatchPosterManager {
+    revert Deprecated();
+  }
+
+  function setIsBatchPoster(
+    address addr,
+    bool isBatchPoster_,
+    IEspressoTEEVerifier.TeeType teeType,
+    bytes memory attestation,
+    bytes memory auxData
+  ) external onlyRollupOwnerOrBatchPosterManager {
+
+    espressoTEEVerifier.registerSigner(attestation, auxData, teeType);
+
     isBatchPoster[addr] = isBatchPoster_;
     emit BatchPosterSet(addr, isBatchPoster_);
     emit OwnerFunctionCalled(1);

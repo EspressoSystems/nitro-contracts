@@ -307,10 +307,20 @@ describe('SequencerInbox', async () => {
     ).wait()
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
+    const posterAddr = await batchPoster.getAddress()
+    const auxData = ethers.utils.hexZeroPad(posterAddr, 20)
+    const attestation = ethers.utils.hexlify(ethers.utils.randomBytes(64))
+
     await (
       await sequencerInbox
         .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
+        .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+          posterAddr,
+          true,
+          0,
+          attestation,
+          auxData
+        )
     ).wait()
     await (
       await inbox.initialize(bridgeProxy.address, sequencerInbox.address)
@@ -385,18 +395,12 @@ describe('SequencerInbox', async () => {
     const subMessageCount = await bridge.sequencerReportedSubMessageCount()
     const balBefore = await batchPoster.getBalance()
     const hotshotHeight = 42
-    const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
     await (
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,uint256)'
         ](
           await bridge.sequencerMessageCount(),
           '0x0042',
@@ -404,7 +408,7 @@ describe('SequencerInbox', async () => {
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          espressoMetadata
+          hotshotHeight
         )
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
@@ -415,7 +419,6 @@ describe('SequencerInbox', async () => {
       'cb5790da63720727af975f42c79f69918580209889225fa7128c92402a6d3a65'
     const prov = new JsonRpcProvider('http://127.0.0.1:8545')
     const wallet = new Wallet(privKey).connect(prov)
-
     const {
       user,
       inbox,
@@ -444,25 +447,19 @@ describe('SequencerInbox', async () => {
 
     const balBefore = await batchPoster.getBalance()
     const hotshotHeight = 42
-    const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,
       ['0x0142', '0x0143'],
       sequencerInbox.interface.encodeFunctionData(
-        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)',
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,uint256)',
         [
           sequenceNumber,
           afterDelayedMessagesRead,
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          espressoMetadata,
+          hotshotHeight,
         ]
       )
     )

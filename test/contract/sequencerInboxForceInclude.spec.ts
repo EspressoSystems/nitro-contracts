@@ -309,11 +309,18 @@ describe('SequencerInboxForceInclude', async () => {
       )
     ).wait()
 
-    await (
-      await sequencerInbox
-        .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
-    ).wait()
+    const sig = ethers.utils.hexlify(ethers.utils.randomBytes(64));
+    const posterAddr = await batchPoster.getAddress();
+    const aux = ethers.utils.hexZeroPad(posterAddr, 20);
+    await sequencerInbox
+      .connect(rollupOwner)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        sig,
+        aux
+      )
 
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
@@ -322,11 +329,17 @@ describe('SequencerInboxForceInclude', async () => {
     await bridgeAdmin.setDelayedInbox(inbox.address, true)
     await bridgeAdmin.setSequencerInbox(sequencerInbox.address)
 
-    await (
-      await sequencerInbox
-        .connect(rollupOwner)
-        .setIsBatchPoster(await batchPoster.getAddress(), true)
-    ).wait()
+    const sig2 = ethers.utils.hexlify(ethers.utils.randomBytes(64));
+    const aux2 = ethers.utils.hexZeroPad(posterAddr, 20);
+    await sequencerInbox
+      .connect(rollupOwner)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        sig2,
+        aux2
+      )
 
     const messageTester = (await (
       await ethers.getContractFactory('MessageTester')
@@ -365,12 +378,7 @@ describe('SequencerInboxForceInclude', async () => {
     )
 
     const hotshotHeight = 42
-    const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+
     const messagesRead = await bridge.delayedMessageCount()
     const seqReportedMessageSubCount =
       await bridge.sequencerReportedSubMessageCount()
@@ -378,7 +386,7 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,uint256)'
       ](
         0,
         data,
@@ -386,7 +394,7 @@ describe('SequencerInboxForceInclude', async () => {
         ethers.constants.AddressZero,
         seqReportedMessageSubCount,
         seqReportedMessageSubCount.add(10),
-        espressoMetadata,
+        hotshotHeight,
         { gasLimit: 10000000 }
       )
     ).wait()
@@ -428,18 +436,11 @@ describe('SequencerInboxForceInclude', async () => {
     const { user, inbox, bridge, messageTester, batchPoster, sequencerInbox } =
       await setupSequencerInbox()
     const hotshotHeight = 42
-    const signature = '0x'
-
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
 
     await sequencerInbox
       .connect(batchPoster)
     [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,uint256)'
     ](
       0,
       '0x',
@@ -447,7 +448,7 @@ describe('SequencerInboxForceInclude', async () => {
       ethers.constants.AddressZero,
       0,
       ethers.constants.MaxUint256,
-      espressoMetadata
+      hotshotHeight
     )
 
     const delayedTx = await sendDelayedTx(

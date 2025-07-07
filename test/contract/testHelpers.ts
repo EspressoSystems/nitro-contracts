@@ -363,10 +363,19 @@ export const setupSequencerInbox = async (
     delayConfigDefault,
     espressoTEEVerifier.address
   )
+  const attestation = ethers.utils.hexlify(ethers.utils.randomBytes(64));
+  const posterAddr = await batchPoster.getAddress();
+  const auxData = ethers.utils.hexZeroPad(posterAddr, 20);
   await (
     await sequencerInbox
       .connect(rollupOwner)
-      .setIsBatchPoster(await batchPoster.getAddress(), true)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        attestation,
+        auxData
+      )
   ).wait()
 
   await (
@@ -382,10 +391,17 @@ export const setupSequencerInbox = async (
   await bridgeAdmin.setDelayedInbox(inbox.address, true)
   await bridgeAdmin.setSequencerInbox(sequencerInbox.address)
 
+  const auxData2 = ethers.utils.hexZeroPad(posterAddr, 20);
   await (
     await sequencerInbox
       .connect(rollupOwner)
-      .setIsBatchPoster(await batchPoster.getAddress(), true)
+      .functions['setIsBatchPoster(address,bool,uint8,bytes,bytes)'](
+        posterAddr,
+        true,
+        0,
+        ethers.utils.hexlify(ethers.utils.randomBytes(64)),
+        auxData2
+      )
   ).wait()
 
   const messageTester = (await (
