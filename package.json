@@ -1,5 +1,5 @@
 {
-  "name": "@arbitrum/nitro-contracts",
+  "name": "@espressosystems/nitro-contracts",
   "version": "3.1.0",
   "description": "Layer 2 precompiles and rollup for Arbitrum Nitro",
   "author": "Offchain Labs, Inc.",

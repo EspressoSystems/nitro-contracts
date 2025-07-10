@@ -434,14 +434,15 @@ describe('SequencerInboxForceInclude', async () => {
     await sequencerInbox
       .connect(batchPoster)
       [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
       ](
         0,
         '0x',
         0,
         ethers.constants.AddressZero,
         0,
-        ethers.constants.MaxUint256
+        ethers.constants.MaxUint256,
+        espressoMetadata
       )
 
     const delayedTx = await sendDelayedTx(

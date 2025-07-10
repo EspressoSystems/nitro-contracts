@@ -292,27 +292,23 @@ describe('SequencerInbox', async () => {
     await espressoTEEVerifierMock.deployed()
 
     await (
-      await sequencerInbox
-        .connect(user)
-        .functions[
-          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address,address)'
-        ](
-          bridgeProxy.address,
-          {
-            delayBlocks: maxDelayBlocks,
-            delaySeconds: maxDelayTime,
-            futureBlocks: 10,
-            futureSeconds: 3000,
-          },
-          {
-            threshold: 0,
-            max: 0,
-            replenishRateInBasis: 0,
-          },
-          constants.AddressZero,
-          espressoTEEVerifier.address,
-          { gasLimit: 10000000 }
-        )
+      await sequencerInbox.connect(user).initialize(
+        bridgeProxy.address,
+        {
+          delayBlocks: maxDelayBlocks,
+          delaySeconds: maxDelayTime,
+          futureBlocks: 10,
+          futureSeconds: 3000,
+        },
+        {
+          threshold: 0,
+          max: 0,
+          replenishRateInBasis: 0,
+        },
+        constants.AddressZero,
+        espressoTEEVerifier.address,
+        { gasLimit: 10000000 }
+      )
     ).wait()
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 

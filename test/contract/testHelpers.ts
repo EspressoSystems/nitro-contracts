@@ -361,9 +361,7 @@ export const setupSequencerInbox = async (
     .attach(bridgeProxy.address)
     .connect(rollupOwner)
   await bridge.initialize(rollup.address)
-  await sequencerInbox[
-    'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address, address)'
-  ](
+  await sequencerInbox.initialize(
     bridgeProxy.address,
     maxDelay,
     delayConfigDefault,
