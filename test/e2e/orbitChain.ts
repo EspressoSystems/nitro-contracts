@@ -6,14 +6,9 @@ import {
   L2TransactionReceipt,
   addCustomNetwork,
 } from '@arbitrum/sdk'
-import {
-  l1Networks,
-  l2Networks,
-} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
 import { getBaseFee } from '@arbitrum/sdk/dist/lib/utils/lib'
 import { Filter, JsonRpcProvider } from '@ethersproject/providers'
 import { expect } from 'chai'
-import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
 import {
   ArbSys__factory,
   DeployHelper__factory,
@@ -25,10 +20,17 @@ import {
   IInbox__factory,
   Inbox__factory,
   RollupCore__factory,
+  RollupCreator,
   RollupCreator__factory,
 } from '../../build/types'
 import { getLocalNetworks } from '../../scripts/testSetup'
 import { applyAlias } from '../contract/utils'
+import { BigNumber, ContractTransaction, Wallet, ethers } from 'ethers'
+import {
+  l1Networks,
+  l2Networks,
+} from '@arbitrum/sdk/dist/lib/dataEntities/networks'
+import { ConfigStruct } from '../../build/types/src/rollup/RollupCreator'
 
 const LOCALHOST_L2_RPC = 'http://127.0.0.1:8547'
 const LOCALHOST_L3_RPC = 'http://127.0.0.1:3347'
@@ -55,6 +57,7 @@ describe('Orbit Chain', () => {
     )
     l2Network = {
       ...coreL2Network,
+      isBold: true,
       tokenBridge: {
         l1CustomGateway: '',
         l1ERC20Gateway: '',
@@ -1204,7 +1207,7 @@ async function _getRollupCreatorFromLogs(
   const filter: Filter = {
     topics: [
       ethers.utils.id(
-        'RollupCreated(address,address,address,address,address,address,address,address,address,address,address,address)'
+        'RollupCreated(address,address,address,address,address,address,address,address,address,address,address)'
       ),
     ],
   }

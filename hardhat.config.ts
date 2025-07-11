@@ -1,4 +1,4 @@
-import '@nomiclabs/hardhat-waffle'
+import '@nomicfoundation/hardhat-chai-matchers'
 import 'hardhat-deploy'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-verify'
@@ -7,22 +7,21 @@ import 'solidity-coverage'
 import 'hardhat-gas-reporter'
 import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
-import '@nomicfoundation/hardhat-foundry'
-// import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
+import '@nomicfoundation/hardhat-foundry'
 
 dotenv.config()
 
 const solidity = {
   compilers: [
     {
-      version: '0.8.25',
+      version: '0.8.17',
       settings: {
         optimizer: {
           enabled: true,
           runs: 2000,
         },
-        viaIR: true,
+        viaIR: false,
       },
     },
   ],
@@ -46,6 +45,16 @@ const solidity = {
       },
     },
     'src/mocks/HostioTest.sol': {
+      version: '0.8.24',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 100,
+        },
+        evmVersion: 'cancun',
+      },
+    },
+    'src/mocks/ArbOS11To32UpgradeTest.sol': {
       version: '0.8.24',
       settings: {
         optimizer: {
@@ -83,6 +92,16 @@ if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
       },
     },
     'src/mocks/HostioTest.sol': {
+      version: '0.8.24',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 100,
+        },
+        evmVersion: 'cancun',
+      },
+    },
+    'src/mocks/ArbOS11To32UpgradeTest.sol': {
       version: '0.8.24',
       settings: {
         optimizer: {
@@ -187,6 +206,9 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    custom: {
+      url: process.env['CUSTOM_RPC_URL'] || 'N/A',
+    },
     geth: {
       url: 'http://localhost:8545',
     },
@@ -201,6 +223,7 @@ module.exports = {
       arbSepolia: process.env['ARBISCAN_API_KEY'],
       base: process.env['BASESCAN_API_KEY'],
       baseSepolia: process.env['BASESCAN_API_KEY'],
+      custom: process.env['CUSTOM_ETHERSCAN_API_KEY'],
     },
     customChains: [
       {
@@ -220,11 +243,11 @@ module.exports = {
         },
       },
       {
-        network: 'baseSepolia',
-        chainId: 84532,
+        network: 'custom',
+        chainId: process.env['CUSTOM_CHAINID'],
         urls: {
-          apiURL: 'https://api-sepolia.basescan.org/api',
-          browserURL: 'https://sepolia.basescan.org/',
+          apiURL: process.env['CUSTOM_ETHERSCAN_API_URL'],
+          browserURL: process.env['CUSTOM_ETHERSCAN_BROWSER_URL'],
         },
       },
     ],
@@ -241,5 +264,8 @@ module.exports = {
   },
   contractSizer: {
     strict: true,
+  },
+  sourcify: {
+    enabled: true,
   },
 }

@@ -1,9 +1,12 @@
 ds-test/=lib/espresso-tee-contracts/lib/forge-std/lib/ds-test/src/
 forge-std/=lib/espresso-tee-contracts/lib/forge-std/src/
 openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts/=lib/espresso-tee-contracts/lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
 solady/=node_modules/solady/src/
-
+solady/=lib/espresso-tee-contracts/lib/automata-dcap-attestation/lib/solady/
 espresso-tee-contracts/=lib/espresso-tee-contracts/src/
-espresso-tee-contracts-lib/=lib/espresso-tee-contracts/lib/
+@automata-network/dcap-attestation/=lib/espresso-tee-contracts/lib/automata-dcap-attestation/
+@automata-network=lib/espresso-tee-contracts/lib/automata-dcap-attestation
+@automata-network/on-chain-pccs=lib/espresso-tee-contracts/lib/automata-dcap-attestation/lib/automata-on-chain-pccs/src

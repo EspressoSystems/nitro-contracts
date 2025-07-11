@@ -25,7 +25,7 @@ import {
   SequencerBatchDeliveredEvent,
   SequencerInboxInterface,
 } from '../../build/types/src/bridge/SequencerInbox'
-import { ContractReceipt, Signer } from 'ethers'
+import { constants, ContractReceipt, Signer } from 'ethers'
 import {
   DelayedMsg,
   DelayedMsgDelivered,
@@ -38,6 +38,8 @@ import {
   InboxMessageDeliveredEvent,
 } from '../../build/types/src/bridge/Inbox'
 import { Toolkit4844 } from './toolkit4844'
+
+export const seqInterface = SequencerInbox__factory.createInterface()
 
 export const mineBlocks = async (count: number, timeDiffPerBlock = 14) => {
   const block = (await network.provider.send('eth_getBlockByNumber', [
@@ -245,7 +247,10 @@ export const forceIncludeMessages = async (
     delayedMessage.header.messageDataHash
   )
   if (expectedErrorType) {
-    await expect(forceInclusionTx).to.be.revertedWith(`${expectedErrorType}`)
+    await expect(forceInclusionTx).to.be.revertedWithCustomError(
+      { interface: seqInterface },
+      `${expectedErrorType}`
+    )
   } else {
     const txnReciept = await (await forceInclusionTx).wait()
     const totalDelayedMessagsReadAfter = (
@@ -279,7 +284,6 @@ const delayConfigDefault: DelayConfig = {
 export const getSequencerBatchDeliveredEvents = (
   receipt: TransactionReceipt
 ) => {
-  const seqInterface = SequencerInbox__factory.createInterface()
   return findMatchingLogs<
     SequencerInboxInterface,
     SequencerBatchDeliveredEvent
@@ -357,10 +361,11 @@ export const setupSequencerInbox = async (
     .attach(bridgeProxy.address)
     .connect(rollupOwner)
   await bridge.initialize(rollup.address)
-  await sequencerInbox['initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'](
+  await sequencerInbox.initialize(
     bridgeProxy.address,
     maxDelay,
     delayConfigDefault,
+    constants.AddressZero,
     espressoTEEVerifier.address
   )
   await (

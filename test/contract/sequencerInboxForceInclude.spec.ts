@@ -39,9 +39,10 @@ import {
   BridgeInterface,
   MessageDeliveredEvent,
 } from '../../build/types/src/bridge/Bridge'
-import { Signer } from 'ethers'
+import { constants, Signer } from 'ethers'
 import { Toolkit4844 } from './toolkit4844'
 import { data } from './batchData.json'
+import { seqInterface } from './testHelpers'
 
 const mineBlocks = async (count: number, timeDiffPerBlock = 14) => {
   const block = (await network.provider.send('eth_getBlockByNumber', [
@@ -197,7 +198,10 @@ describe('SequencerInboxForceInclude', async () => {
       messageDataHash
     )
     if (expectedErrorType) {
-      await expect(forceInclusionTx).to.be.revertedWith(expectedErrorType)
+      await expect(forceInclusionTx).to.be.revertedWithCustomError(
+        { interface: seqInterface },
+        expectedErrorType
+      )
     } else {
       await (await forceInclusionTx).wait()
 
@@ -249,13 +253,6 @@ describe('SequencerInboxForceInclude', async () => {
       'Bridge'
     )) as Bridge__factory
     const bridgeTemplate = await bridgeFac.deploy()
-
-    const espressoTEEVerifierInboxFac = (await ethers.getContractFactory(
-      'EspressoTEEVerifierMock'
-    )) as EspressoTEEVerifierMock__factory
-    const espressoTEEVerifier = await espressoTEEVerifierInboxFac.deploy()
-    await espressoTEEVerifier.deployed()
-
     const transparentUpgradeableProxyFac = (await ethers.getContractFactory(
       'TransparentUpgradeableProxy'
     )) as TransparentUpgradeableProxy__factory
@@ -265,7 +262,6 @@ describe('SequencerInboxForceInclude', async () => {
       adminAddr,
       '0x'
     )
-
     const sequencerInboxProxy = await transparentUpgradeableProxyFac.deploy(
       seqInboxTemplate.address,
       adminAddr,
@@ -280,34 +276,35 @@ describe('SequencerInboxForceInclude', async () => {
     const bridgeAdmin = await bridgeFac
       .attach(bridgeProxy.address)
       .connect(rollupOwner)
-
     const sequencerInbox = await sequencerInboxFac
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await bridge.initialize(rollup.address)
 
-    await (
-      await sequencerInbox
-        .connect(user)
-        .functions[
-        'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
-      ](
-        bridgeProxy.address,
-        {
-          delayBlocks: maxDelayBlocks,
-          delaySeconds: maxDelayTime,
-          futureBlocks: 10,
-          futureSeconds: 3000,
-        },
-        {
-          threshold: 0,
-          max: 0,
-          replenishRateInBasis: 0,
-        },
-        espressoTEEVerifier.address,
-        { gasLimit: 10000000 }
-      )
-    ).wait()
+    // Deploy espresso tee verifier mock
+    const espressoTEEVerifierMockFac = (await ethers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifierMock = await espressoTEEVerifierMockFac.deploy()
+
+    await espressoTEEVerifierMock.deployed()
+
+    await sequencerInbox.initialize(
+      bridgeProxy.address,
+      {
+        delayBlocks: maxDelayBlocks,
+        delaySeconds: maxDelayTime,
+        futureBlocks: 10,
+        futureSeconds: 3000,
+      },
+      {
+        threshold: 0,
+        max: 0,
+        replenishRateInBasis: 0,
+      },
+      constants.AddressZero,
+      espressoTEEVerifierMock.address
+    )
 
     await (
       await sequencerInbox
@@ -366,11 +363,10 @@ describe('SequencerInboxForceInclude', async () => {
 
     const hotshotHeight = 42
     const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
     const messagesRead = await bridge.delayedMessageCount()
     const seqReportedMessageSubCount =
       await bridge.sequencerReportedSubMessageCount()
@@ -378,17 +374,17 @@ describe('SequencerInboxForceInclude', async () => {
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        messagesRead,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        espressoMetadata,
-        { gasLimit: 10000000 }
-      )
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          messagesRead,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          espressoMetadata,
+          { gasLimit: 10000000 }
+        )
     ).wait()
   })
 
@@ -430,25 +426,24 @@ describe('SequencerInboxForceInclude', async () => {
     const hotshotHeight = 42
     const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
 
     await sequencerInbox
       .connect(batchPoster)
-    [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-    ](
-      0,
-      '0x',
-      0,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.MaxUint256,
-      espressoMetadata
-    )
+      [
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](
+        0,
+        '0x',
+        0,
+        ethers.constants.AddressZero,
+        0,
+        ethers.constants.MaxUint256,
+        espressoMetadata
+      )
 
     const delayedTx = await sendDelayedTx(
       user,
@@ -629,7 +624,7 @@ describe('SequencerInboxForceInclude', async () => {
         ethers.constants.AddressZero,
         '0x'
       )
-    ).to.revertedWith('NotForked')
+    ).to.revertedWithCustomError({ interface: seqInterface }, 'NotForked')
   })
 
   it('should fail to call sendUnsignedTransactionToFork', async function () {
@@ -643,14 +638,14 @@ describe('SequencerInboxForceInclude', async () => {
         0,
         '0x'
       )
-    ).to.revertedWith('NotForked')
+    ).to.revertedWithCustomError({ interface: seqInterface }, 'NotForked')
   })
 
   it('should fail to call sendWithdrawEthToFork', async function () {
     const { inbox } = await setupSequencerInbox()
     await expect(
       inbox.sendWithdrawEthToFork(0, 0, 0, 0, ethers.constants.AddressZero)
-    ).to.revertedWith('NotForked')
+    ).to.revertedWithCustomError({ interface: seqInterface }, 'NotForked')
   })
 
   it('can upgrade Inbox', async () => {

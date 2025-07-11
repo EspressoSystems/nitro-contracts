@@ -38,19 +38,31 @@ async function main() {
     throw new Error('STAKE_TOKEN_ADDRESS not set')
   }
 
+  let feeTokenPricer = process.env.FEE_TOKEN_PRICER_ADDRESS
+  if (!feeTokenPricer) {
+    feeTokenPricer = ethers.constants.AddressZero
+  }
+
+  console.log(
+    'Creating new rollup with',
+    customFeeTokenAddress,
+    'as fee token and',
+    feeTokenPricer,
+    'as fee token pricer'
+  )
   const espressoTEEVerifierAddress = process.env.ESPRESSO_TEE_VERIFIER_ADDRESS
   if (!espressoTEEVerifierAddress) {
     throw new Error('ESPRESSO_TEE_VERIFIER_ADDRESS not set')
   }
 
-  console.log('Creating new rollup with', customFeeTokenAddress, 'as fee token')
   await createRollup(
     deployer,
     false,
     rollupCreatorAddress,
+    customFeeTokenAddress,
+    feeTokenPricer,
     stakeTokenAddress,
-    espressoTEEVerifierAddress,
-    customFeeTokenAddress
+    espressoTEEVerifierAddress
   )
 }
 

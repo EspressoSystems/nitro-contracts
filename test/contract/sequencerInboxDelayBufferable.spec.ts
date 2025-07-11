@@ -9,6 +9,7 @@ import {
   setupSequencerInbox,
   mineBlocks,
   forceIncludeMessages,
+  seqInterface,
 } from './testHelpers'
 
 describe('SequencerInboxDelayBufferable', async () => {
@@ -32,18 +33,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -98,18 +99,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        2,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          2,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -165,7 +166,7 @@ describe('SequencerInboxDelayBufferable', async () => {
     const deadline2 = await sequencerInbox.forceInclusionDeadline(futureBlock)
     const calcBufferBlocks =
       depletedBufferBlocks - unexpectedDelayBlocks2 >
-        delayConfig.threshold.toNumber()
+      delayConfig.threshold.toNumber()
         ? depletedBufferBlocks - unexpectedDelayBlocks2 + replenishAmount2
         : delayConfig.threshold.toNumber()
     const delayBlocksDeadline2 =
@@ -186,18 +187,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -225,18 +226,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        2,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          2,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -245,19 +246,22 @@ describe('SequencerInboxDelayBufferable', async () => {
 
     const tx = sequencerInbox
       .connect(batchPoster)
-    [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-    ](
-      3,
-      data,
-      delayedMessageCount.add(1),
-      ethers.constants.AddressZero,
-      seqReportedMessageSubCount.add(10),
-      seqReportedMessageSubCount.add(20),
-      '0x',
-      { gasLimit: 10000000 }
+      [
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](
+        3,
+        data,
+        delayedMessageCount.add(1),
+        ethers.constants.AddressZero,
+        seqReportedMessageSubCount.add(10),
+        seqReportedMessageSubCount.add(20),
+        '0x',
+        { gasLimit: 10000000 }
+      )
+    await expect(tx).to.be.revertedWithCustomError(
+      { interface: seqInterface },
+      'DelayProofRequired'
     )
-    await expect(tx).to.be.revertedWith('DelayProofRequired')
 
     let nextDelayedMsg = delayedInboxPending.pop()
     await mineBlocks(delayConfig.threshold.toNumber() - 100, 12)
@@ -334,7 +338,7 @@ describe('SequencerInboxDelayBufferable', async () => {
       ((nextDelayedMsg!.delayedMessage.header.blockNumber -
         delayBufferData.prevBlockNumber.toNumber()) *
         delayConfig.replenishRateInBasis) /
-      10000
+        10000
     )
     expect(delayBufferData2.bufferBlocks.toNumber()).to.equal(
       delayBufferData.bufferBlocks.toNumber() + replenishBlocks
@@ -360,18 +364,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -432,18 +436,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        0,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount,
-        seqReportedMessageSubCount.add(10),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          0,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount,
+          seqReportedMessageSubCount.add(10),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -454,18 +458,18 @@ describe('SequencerInboxDelayBufferable', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-      [
-        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-      ](
-        1,
-        data,
-        delayedMessageCount,
-        ethers.constants.AddressZero,
-        seqReportedMessageSubCount.add(10),
-        seqReportedMessageSubCount.add(20),
-        '0x',
-        { gasLimit: 10000000 }
-      )
+        [
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+        ](
+          1,
+          data,
+          delayedMessageCount,
+          ethers.constants.AddressZero,
+          seqReportedMessageSubCount.add(10),
+          seqReportedMessageSubCount.add(20),
+          '0x',
+          { gasLimit: 10000000 }
+        )
     )
       .wait()
       .then(res => {
@@ -477,19 +481,22 @@ describe('SequencerInboxDelayBufferable', async () => {
 
     const txn = sequencerInbox
       .connect(batchPoster)
-    [
-      'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-    ](
-      2,
-      data,
-      delayedMessageCount.add(2),
-      ethers.constants.AddressZero,
-      seqReportedMessageSubCount.add(20),
-      seqReportedMessageSubCount.add(30),
-      '0x',
-      { gasLimit: 10000000 }
+      [
+        'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
+      ](
+        2,
+        data,
+        delayedMessageCount.add(2),
+        ethers.constants.AddressZero,
+        seqReportedMessageSubCount.add(20),
+        seqReportedMessageSubCount.add(30),
+        '0x',
+        { gasLimit: 10000000 }
+      )
+    await expect(txn).to.be.revertedWithCustomError(
+      { interface: seqInterface },
+      'DelayProofRequired'
     )
-    await expect(txn).to.be.revertedWith('DelayProofRequired')
 
     await (
       await sequencerInbox
@@ -600,7 +607,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           0,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -664,7 +673,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           2,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -724,7 +735,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     )
     const calcBufferBlocks =
       depletedBufferBlocks - unexpectedDelayBlocks2 >
-        delayConfig.threshold.toNumber()
+      delayConfig.threshold.toNumber()
         ? depletedBufferBlocks - unexpectedDelayBlocks2 + replenishAmount2
         : delayConfig.threshold.toNumber()
     const delayBlocksDeadline2 =
@@ -745,7 +756,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           0,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -781,7 +794,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           2,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -798,7 +813,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
 
     const tx = sequencerInbox
       .connect(batchPoster)
-      .addSequencerL2BatchFromBlobs(
+      [
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+      ](
         3,
         delayedMessageCount.add(1),
         ethers.constants.AddressZero,
@@ -807,7 +824,10 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
         '0x',
         { gasLimit: 10000000 }
       )
-    await expect(tx).to.be.revertedWith('DelayProofRequired')
+    await expect(tx).to.be.revertedWithCustomError(
+      { interface: seqInterface },
+      'DelayProofRequired'
+    )
 
     let nextDelayedMsg = delayedInboxPending.pop()
     await mineBlocks(delayConfig.threshold.toNumber() - 100, 12)
@@ -883,7 +903,7 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
       ((nextDelayedMsg!.delayedMessage.header.blockNumber -
         delayBufferData.prevBlockNumber.toNumber()) *
         delayConfig.replenishRateInBasis) /
-      10000
+        10000
     )
     expect(delayBufferData2.bufferBlocks.toNumber()).to.equal(
       delayBufferData.bufferBlocks.toNumber() + replenishBlocks
@@ -909,7 +929,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           0,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -928,7 +950,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           1,
           delayedMessageCount.add(1),
           ethers.constants.AddressZero,
@@ -964,7 +988,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           0,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -983,7 +1009,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
     await (
       await sequencerInbox
         .connect(batchPoster)
-        .addSequencerL2BatchFromBlobs(
+        [
+          'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+        ](
           1,
           delayedMessageCount,
           ethers.constants.AddressZero,
@@ -1003,7 +1031,9 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
 
     const txn = sequencerInbox
       .connect(batchPoster)
-      .addSequencerL2BatchFromBlobs(
+      [
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)'
+      ](
         2,
         delayedMessageCount.add(2),
         ethers.constants.AddressZero,
@@ -1012,7 +1042,10 @@ describe('SequencerInboxDelayBufferableBlobMock', async () => {
         '0x',
         { gasLimit: 10000000 }
       )
-    await expect(txn).to.be.revertedWith('DelayProofRequired')
+    await expect(txn).to.be.revertedWithCustomError(
+      { interface: seqInterface },
+      'DelayProofRequired'
+    )
 
     await (
       await sequencerInbox

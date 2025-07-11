@@ -458,19 +458,17 @@ contract RollupTest is Test {
     return (expectedAssertionHash, afterState, inboxcount);
   }
 
-  function testSuccessCreateAssertionUsingAddToDeposit()
-    public
-    returns (bytes32, AssertionState memory, uint64)
-  {
-    uint64 inboxcount = uint64(_createNewBatch());
-    AssertionState memory beforeState;
-    beforeState.machineStatus = MachineStatus.FINISHED;
-    AssertionState memory afterState;
-    afterState.machineStatus = MachineStatus.FINISHED;
-    afterState.globalState.bytes32Vals[0] = FIRST_ASSERTION_BLOCKHASH; // blockhash
-    afterState.globalState.bytes32Vals[1] = FIRST_ASSERTION_SENDROOT; // sendroot
-    afterState.globalState.u64Vals[0] = 1; // inbox count
-    afterState.globalState.u64Vals[1] = 0; // pos in msg
+        RollupCreator.RollupDeploymentParams memory param = RollupCreator.RollupDeploymentParams({
+            config: config,
+            validators: new address[](0),
+            maxDataSize: MAX_DATA_SIZE,
+            nativeToken: address(0),
+            deployFactoriesToL2: false,
+            maxFeePerGasForRetryables: 0,
+            batchPosters: new address[](0),
+            batchPosterManager: address(0),
+            feeTokenPricer: IFeeTokenPricer(address(0))
+        });
 
     bytes32 expectedAssertionHash = RollupLib.assertionHash({
       parentAssertionHash: genesisHash,

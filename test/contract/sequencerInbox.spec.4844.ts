@@ -50,7 +50,7 @@ import {
 import { Toolkit4844 } from './toolkit4844'
 import { SequencerInbox } from '../../build/types/src/bridge/SequencerInbox'
 import { InboxMessageDeliveredEvent } from '../../build/types/src/bridge/AbsInbox'
-import { SequencerBatchDeliveredEvent } from '../../build/types/src/bridge/ISequencerInbox'
+import { SequencerBatchDeliveredEvent } from '../../build/types/src/bridge/ISequencerInbox.sol/ISequencerInbox'
 
 describe('SequencerInbox', async () => {
   const findMatchingLogs = <TInterface extends Interface, TEvent extends Event>(
@@ -283,27 +283,32 @@ describe('SequencerInbox', async () => {
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
 
+    // Deploy espresso tee verifier mock
+    const espressoTEEVerifierMockFac = (await ethers.getContractFactory(
+      'EspressoTEEVerifierMock'
+    )) as EspressoTEEVerifierMock__factory
+    const espressoTEEVerifierMock = await espressoTEEVerifierMockFac.deploy()
+
+    await espressoTEEVerifierMock.deployed()
+
     await (
-      await sequencerInbox
-        .connect(user)
-        .functions[
-          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
-        ](
-          bridgeProxy.address,
-          {
-            delayBlocks: maxDelayBlocks,
-            delaySeconds: maxDelayTime,
-            futureBlocks: 10,
-            futureSeconds: 3000,
-          },
-          {
-            threshold: 0,
-            max: 0,
-            replenishRateInBasis: 0,
-          },
-          espressoTEEVerifier.address,
-          { gasLimit: 10000000 }
-        )
+      await sequencerInbox.connect(user).initialize(
+        bridgeProxy.address,
+        {
+          delayBlocks: maxDelayBlocks,
+          delaySeconds: maxDelayTime,
+          futureBlocks: 10,
+          futureSeconds: 3000,
+        },
+        {
+          threshold: 0,
+          max: 0,
+          replenishRateInBasis: 0,
+        },
+        constants.AddressZero,
+        espressoTEEVerifier.address,
+        { gasLimit: 10000000 }
+      )
     ).wait()
     const inbox = await inboxFac.attach(inboxProxy.address).connect(user)
 
@@ -387,11 +392,10 @@ describe('SequencerInbox', async () => {
     const hotshotHeight = 42
     const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
     await (
       await sequencerInbox
         .connect(batchPoster)
@@ -445,11 +449,10 @@ describe('SequencerInbox', async () => {
     const balBefore = await batchPoster.getBalance()
     const hotshotHeight = 42
     const signature = '0x'
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [hotshotHeight, signature, 0]
+    )
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,

@@ -7,7 +7,6 @@ pragma solidity ^0.8.0;
  * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
  *         to verify the quote. Along with some additional verification logic.
  */
-
 contract EspressoTEEVerifierMock {
     enum TeeType {
         SGX,
@@ -18,17 +17,19 @@ contract EspressoTEEVerifierMock {
 
     constructor() {}
 
-    function verify(bytes calldata signature, bytes32 userDataHash, TeeType teeType)
-        external
-        view
-        returns (bool)
-    {
+    function verify(
+        bytes calldata signature,
+        bytes32 userDataHash,
+        TeeType teeType
+    ) external view returns (bool) {
         return true;
     }
 
-    function registerSigner(bytes calldata attestation, bytes calldata data, TeeType teeType)
-        external
-    {
+    function registerSigner(
+        bytes calldata attestation,
+        bytes calldata data,
+        TeeType teeType
+    ) external {
         // data length should be 20 bytes
         require(data.length == 20, "Invalid data length");
 
