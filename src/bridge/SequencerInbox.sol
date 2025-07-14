@@ -4,24 +4,24 @@
 
 pragma solidity ^0.8.0;
 
-import { AlreadyInit, HadZeroInit, NotOrigin, DataTooLarge, DelayedBackwards, DelayedTooFar, ForceIncludeBlockTooSoon, IncorrectMessagePreimage, NotBatchPoster, BadSequencerNumber, AlreadyValidDASKeyset, NoSuchKeyset, NotForked, NotBatchPosterManager, NotCodelessOrigin, RollupNotChanged, DataBlobsNotSupported, InitParamZero, MissingDataHashes, NotOwner, InvalidHeaderFlag, NativeTokenMismatch, BadMaxTimeVariation, Deprecated, CannotSetFeeTokenPricer, NotDelayBufferable, InvalidDelayedAccPreimage, DelayProofRequired, BadBufferConfig, ExtraGasNotUint64, KeysetTooLarge, InvalidCelestiaBatch } from '../libraries/Error.sol';
-import './IBridge.sol';
-import './IInboxBase.sol';
-import './ISequencerInbox.sol';
-import '../rollup/IRollupLogic.sol';
-import './Messages.sol';
-import '../precompiles/ArbGasInfo.sol';
-import '../precompiles/ArbSys.sol';
-import '../libraries/CallerChecker.sol';
-import '../libraries/IReader4844.sol';
+import { AlreadyInit, HadZeroInit, DataTooLarge, DelayedBackwards, DelayedTooFar, ForceIncludeBlockTooSoon, IncorrectMessagePreimage, NotBatchPoster, BadSequencerNumber, AlreadyValidDASKeyset, NoSuchKeyset, NotForked, NotBatchPosterManager, NotCodelessOrigin, RollupNotChanged, DataBlobsNotSupported, InitParamZero, MissingDataHashes, NotOwner, InvalidHeaderFlag, NativeTokenMismatch, BadMaxTimeVariation, Deprecated, CannotSetFeeTokenPricer, NotDelayBufferable, InvalidDelayedAccPreimage, DelayProofRequired, BadBufferConfig, ExtraGasNotUint64, KeysetTooLarge, InvalidCelestiaBatch } from "../libraries/Error.sol";
+import "./IBridge.sol";
+import "./IInboxBase.sol";
+import "./ISequencerInbox.sol";
+import "../rollup/IRollupLogic.sol";
+import "./Messages.sol";
+import "../precompiles/ArbGasInfo.sol";
+import "../precompiles/ArbSys.sol";
+import "../libraries/CallerChecker.sol";
+import "../libraries/IReader4844.sol";
 
-import '../libraries/DelegateCallAware.sol';
-import { IGasRefunder } from '../libraries/IGasRefunder.sol';
-import { GasRefundEnabled } from '../libraries/GasRefundEnabled.sol';
-import '../libraries/ArbitrumChecker.sol';
-import { IERC20Bridge } from './IERC20Bridge.sol';
-import './DelayBuffer.sol';
-import { IEspressoTEEVerifier } from 'espresso-tee-contracts/interface/IEspressoTEEVerifier.sol';
+import "../libraries/DelegateCallAware.sol";
+import { IGasRefunder } from "../libraries/IGasRefunder.sol";
+import { GasRefundEnabled } from "../libraries/GasRefundEnabled.sol";
+import "../libraries/ArbitrumChecker.sol";
+import { IERC20Bridge } from "./IERC20Bridge.sol";
+import "./DelayBuffer.sol";
+import { IEspressoTEEVerifier } from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -133,7 +133,7 @@ contract SequencerInbox is
         revert DataBlobsNotSupported();
     } else {
       if (reader4844_ == IReader4844(address(0)))
-        revert InitParamZero('Reader4844');
+        revert InitParamZero("Reader4844");
     }
     reader4844 = reader4844_;
     isUsingFeeToken = _isUsingFeeToken;

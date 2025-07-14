@@ -4,13 +4,13 @@
 
 pragma solidity ^0.8.0;
 
-import './IRollupAdmin.sol';
-import './IRollupLogic.sol';
-import './RollupCore.sol';
-import '../bridge/IOutbox.sol';
-import '../bridge/ISequencerInbox.sol';
-import '../libraries/DoubleLogicUUPSUpgradeable.sol';
-import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
+import "./IRollupAdmin.sol";
+import "./IRollupLogic.sol";
+import "./RollupCore.sol";
+import "../bridge/IOutbox.sol";
+import "../bridge/ISequencerInbox.sol";
+import "../libraries/DoubleLogicUUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 contract RollupAdminLogic is
   RollupCore,
@@ -62,7 +62,7 @@ contract RollupAdminLogic is
       bytes memory espressoMetadata;
       connectedContracts.sequencerInbox.addSequencerL2Batch(
         0,
-        '',
+        "",
         1,
         IGasRefunder(address(0)),
         0,
@@ -88,7 +88,7 @@ contract RollupAdminLogic is
 
     // loser stake is now sent directly to loserStakeEscrow, it must not
     // be address(0) because some token do not allow transfers to address(0)
-    require(config.loserStakeEscrow != address(0), 'INVALID_ESCROW_0');
+    require(config.loserStakeEscrow != address(0), "INVALID_ESCROW_0");
     loserStakeEscrow = config.loserStakeEscrow;
 
     stakeToken = config.stakeToken;
@@ -161,7 +161,7 @@ contract RollupAdminLogic is
    * @param _outbox Outbox contract to remove
    */
   function removeOldOutbox(address _outbox) external override {
-    require(_outbox != address(outbox), 'CUR_OUTBOX');
+    require(_outbox != address(outbox), "CUR_OUTBOX");
     bridge.setOutbox(_outbox, false);
     emit OldOutboxRemoved(address(_outbox));
     // previously: emit OwnerFunctionCalled(1);
@@ -221,8 +221,8 @@ contract RollupAdminLogic is
     address[] calldata _validator,
     bool[] calldata _val
   ) external override {
-    require(_validator.length > 0, 'EMPTY_ARRAY');
-    require(_validator.length == _val.length, 'WRONG_LENGTH');
+    require(_validator.length > 0, "EMPTY_ARRAY");
+    require(_validator.length == _val.length, "WRONG_LENGTH");
 
     for (uint256 i = 0; i < _validator.length; i++) {
       if (_val[i]) validators.add(_validator[i]);
@@ -272,7 +272,7 @@ contract RollupAdminLogic is
    * @param newConfirmPeriod new number of blocks
    */
   function setConfirmPeriodBlocks(uint64 newConfirmPeriod) external override {
-    require(newConfirmPeriod > 0, 'INVALID_CONFIRM_PERIOD');
+    require(newConfirmPeriod > 0, "INVALID_CONFIRM_PERIOD");
     confirmPeriodBlocks = newConfirmPeriod;
     emit ConfirmPeriodBlocksSet(newConfirmPeriod);
     // previously: emit OwnerFunctionCalled(9);
@@ -290,7 +290,7 @@ contract RollupAdminLogic is
     // 2. The base stake is then reduced to S'
     // 3. The malicious party uses a different address to create a child of the malicious assertion, using stake size S'
     // 4. This allows the malicious party to withdraw the stake S, since assertions with children set the staker to "inactive"
-    require(newBaseStake > baseStake, 'BASE_STAKE_MUST_BE_INCREASED');
+    require(newBaseStake > baseStake, "BASE_STAKE_MUST_BE_INCREASED");
     baseStake = newBaseStake;
     emit BaseStakeSet(newBaseStake);
     // previously: emit OwnerFunctionCalled(12);
@@ -299,7 +299,7 @@ contract RollupAdminLogic is
   function forceRefundStaker(
     address[] calldata staker
   ) external override whenPaused {
-    require(staker.length > 0, 'EMPTY_ARRAY');
+    require(staker.length > 0, "EMPTY_ARRAY");
     for (uint256 i = 0; i < staker.length; i++) {
       requireInactiveStaker(staker[i]);
       reduceStakeTo(staker[i], 0);
@@ -347,7 +347,7 @@ contract RollupAdminLogic is
   function setLoserStakeEscrow(address newLoserStakerEscrow) external override {
     // loser stake is now sent directly to loserStakeEscrow, it must not
     // be address(0) because some token do not allow transfers to address(0)
-    require(newLoserStakerEscrow != address(0), 'INVALID_ESCROW_0');
+    require(newLoserStakerEscrow != address(0), "INVALID_ESCROW_0");
     loserStakeEscrow = newLoserStakerEscrow;
     emit LoserStakeEscrowSet(newLoserStakerEscrow);
     // previously: emit OwnerFunctionCalled(25);
