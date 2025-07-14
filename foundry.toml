@@ -6,13 +6,12 @@ test = 'test/foundry'
 cache_path = 'forge-cache/sol'
 optimizer = true
 optimizer_runs = 2000
-allow_internal_expect_revert = true
 via_ir = false
 evm_version = 'cancun'
 remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
               'forge-std/=lib/forge-std/src/',
-              '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/', 
-              '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/', 
+              '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
+              '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
               '@offchainlabs/upgrade-executor/=node_modules/@offchainlabs/upgrade-executor/',
               '@uniswap/v2-core/=node_modules/@uniswap/v2-core/contracts',
               '@uniswap/lib/=node_modules/@uniswap/lib/contracts']
@@ -43,7 +42,5 @@ ignore = []
 contract_new_lines = false
 sort_imports = false
 
-[fuzz]
-runs = 1000
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

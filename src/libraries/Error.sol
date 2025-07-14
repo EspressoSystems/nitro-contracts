@@ -92,16 +92,16 @@ error NotAllowedOrigin(address origin);
 /// @dev used to convey retryable tx data in eth calls without requiring a tx trace
 /// this follows a pattern similar to EIP-3668 where reverts surface call information
 error RetryableData(
-    address from,
-    address to,
-    uint256 l2CallValue,
-    uint256 deposit,
-    uint256 maxSubmissionCost,
-    address excessFeeRefundAddress,
-    address callValueRefundAddress,
-    uint256 gasLimit,
-    uint256 maxFeePerGas,
-    bytes data
+  address from,
+  address to,
+  uint256 l2CallValue,
+  uint256 deposit,
+  uint256 maxSubmissionCost,
+  address excessFeeRefundAddress,
+  address callValueRefundAddress,
+  uint256 gasLimit,
+  uint256 maxFeePerGas,
+  bytes data
 );
 
 /// @dev Thrown when a L1 chainId fork is detected
@@ -217,3 +217,6 @@ error ExtraGasNotUint64();
 
 /// @dev Thrown when keysetBytes is too large
 error KeysetTooLarge();
+
+/// @dev Thrown when Blobstream verification fails for a Celestia Data Root
+error InvalidCelestiaBatch();

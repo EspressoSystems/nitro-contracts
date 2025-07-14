@@ -102,6 +102,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
     function DAS_MESSAGE_HEADER_FLAG() external view returns (bytes1);
 
     /// @dev If the first data byte after the header has this bit set,
+    ///      then the batch data is a celestia message
+    ///      See: https://github.com/celestiaorg/nitro/blob/blobstream-v2.2.2/arbstate/das_reader.go
+    // solhint-disable-next-line func-name-mixedcase
+    function CELESTIA_MESSAGE_HEADER_FLAG() external view returns (bytes1);
+
+    /// @dev If the first data byte after the header has this bit set,
     ///      then the batch data is a das message that employs a merklesization strategy
     ///      See: https://github.com/OffchainLabs/nitro/blob/69de0603abf6f900a4128cab7933df60cad54ded/arbstate/das_reader.go
     // solhint-disable-next-line func-name-mixedcase

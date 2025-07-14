@@ -20,6 +20,8 @@ const ARB_OWNER_ADDRESS = '0x0000000000000000000000000000000000000070'
 const ARB_OWNER_PUBLIC_ADDRESS = '0x000000000000000000000000000000000000006b'
 const ARB_SYS_ADDRESS = '0x0000000000000000000000000000000000000064'
 
+// NOTE: maxDataSize is set for an L3, if deploying an L2 use "const maxDataSize = 117964"
+export const maxDataSize = 104857
 // Define a verification function
 export async function verifyContract(
   contractName: string,

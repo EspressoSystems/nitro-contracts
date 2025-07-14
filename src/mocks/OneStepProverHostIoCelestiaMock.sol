@@ -1,30 +1,26 @@
-// Copyright 2021-2024, Offchain Labs, Inc.
+// Copyright 2021-2022, Offchain Labs, Inc.
 // For license information, see https://github.com/OffchainLabs/nitro-contracts/blob/main/LICENSE
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.0;
 
-import "../state/Machine.sol";
-import "../state/MerkleProof.sol";
-import "../state/MultiStack.sol";
-import "../state/Deserialize.sol";
-import "../state/ModuleMemory.sol";
-import "../osp/IOneStepProver.sol";
-import "../bridge/Messages.sol";
-import "../bridge/IBridge.sol";
-import { IBlobstreamX } from "../celestia/IBlobstreamX.sol";
+import '../state/Value.sol';
+import '../state/Machine.sol';
+import '../state/Deserialize.sol';
+import '../state/ModuleMemory.sol';
+import '../osp/IOneStepProver.sol';
+import '../bridge/Messages.sol';
+import '../bridge/IBridge.sol';
+import { IBlobstreamX } from '../celestia/IBlobstreamX.sol';
 
-import "../celestia/BlobstreamVerifier.sol";
+import '../celestia/BlobstreamVerifier.sol';
 
-contract OneStepProverHostIo is IOneStepProver {
+contract OneStepProverHostIoCelestiaMock is IOneStepProver {
   using GlobalStateLib for GlobalState;
-  using MachineLib for Machine;
   using MerkleProofLib for MerkleProof;
   using ModuleMemoryLib for ModuleMemory;
-  using MultiStackLib for MultiStack;
   using ValueLib for Value;
   using ValueStackLib for ValueStack;
-  using StackFrameLib for StackFrameWindow;
   using CelestiaBatchVerifier for address;
 
   uint256 private constant LEAF_SIZE = 32;
@@ -35,16 +31,16 @@ contract OneStepProverHostIo is IOneStepProver {
   // Header Bytes
   bytes1 public constant CELESTIA_MESSAGE_HEADER_FLAG = 0x63;
 
-  // Blobstream contract (address on Arbitrum One Sepolia, MAKE SURE TO CHANGE FOR CORRESPONDING SETTLEMENT LAYER PRIOR TO DEPLOYMENT)
+  // Blobstream contract
   address public constant BLOBSTREAM =
-    0xc3e209eb245Fd59c8586777b499d6A665DF3ABD2;
+    0x8F0FEbB820C4858e3C815f87391bdE38E62b4A8a;
 
   function setLeafByte(
     bytes32 oldLeaf,
     uint256 idx,
     uint8 val
   ) internal pure returns (bytes32) {
-    require(idx < LEAF_SIZE, "BAD_SET_LEAF_BYTE_IDX");
+    require(idx < LEAF_SIZE, 'BAD_SET_LEAF_BYTE_IDX');
     // Take into account that we are casting the leaf to a big-endian integer
     uint256 leafShift = (LEAF_SIZE - 1 - idx) * 8;
     uint256 newLeaf = uint256(oldLeaf);
@@ -67,7 +63,7 @@ contract OneStepProverHostIo is IOneStepProver {
       mach.status = MachineStatus.ERRORED;
       return;
     }
-    if (!mod.moduleMemory.isValidLeaf(ptr)) {
+    if (ptr + 32 > mod.moduleMemory.size || ptr % LEAF_SIZE != 0) {
       mach.status = MachineStatus.ERRORED;
       return;
     }
@@ -90,7 +86,7 @@ contract OneStepProverHostIo is IOneStepProver {
     } else if (inst.opcode == Instructions.SET_GLOBAL_STATE_BYTES32) {
       state.bytes32Vals[idx] = startLeafContents;
     } else {
-      revert("BAD_GLOBAL_STATE_OPCODE");
+      revert('BAD_GLOBAL_STATE_OPCODE');
     }
   }
 
@@ -138,8 +134,8 @@ contract OneStepProverHostIo is IOneStepProver {
     (bool modexpSuccess, bytes memory modExpOutput) = address(0x05).staticcall(
       modExpInput
     );
-    require(modexpSuccess, "MODEXP_FAILED");
-    require(modExpOutput.length == 32, "MODEXP_WRONG_LENGTH");
+    require(modexpSuccess, 'MODEXP_FAILED');
+    require(modExpOutput.length == 32, 'MODEXP_WRONG_LENGTH');
     return uint256(bytes32(modExpOutput));
   }
 
@@ -181,7 +177,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
       if (proofType == 0) {
         bytes calldata preimage = proof[proofOffset:];
-        require(keccak256(preimage) == leafContents, "BAD_PREIMAGE");
+        require(keccak256(preimage) == leafContents, 'BAD_PREIMAGE');
 
         uint256 preimageEnd = preimageOffset + 32;
         if (preimageEnd > preimage.length) {
@@ -190,14 +186,14 @@ contract OneStepProverHostIo is IOneStepProver {
         extracted = preimage[preimageOffset:preimageEnd];
       } else {
         // TODO: support proving via an authenticated contract
-        revert("UNKNOWN_PREIMAGE_PROOF");
+        revert('UNKNOWN_PREIMAGE_PROOF');
       }
     } else if (inst.argumentData == 1) {
       // The machine is asking for a sha2-256 preimage
 
-      require(proofType == 0, "UNKNOWN_PREIMAGE_PROOF");
+      require(proofType == 0, 'UNKNOWN_PREIMAGE_PROOF');
       bytes calldata preimage = proof[proofOffset:];
-      require(sha256(preimage) == leafContents, "BAD_PREIMAGE");
+      require(sha256(preimage) == leafContents, 'BAD_PREIMAGE');
 
       uint256 preimageEnd = preimageOffset + 32;
       if (preimageEnd > preimage.length) {
@@ -207,13 +203,13 @@ contract OneStepProverHostIo is IOneStepProver {
     } else if (inst.argumentData == 2) {
       // The machine is asking for an Ethereum versioned hash preimage
 
-      require(proofType == 0, "UNKNOWN_PREIMAGE_PROOF");
+      require(proofType == 0, 'UNKNOWN_PREIMAGE_PROOF');
 
       // kzgProof should be a valid input to the EIP-4844 point evaluation precompile at address 0x0A.
       // It should prove the preimageOffset/32'th word of the machine's requested KZG commitment.
       bytes calldata kzgProof = proof[proofOffset:];
 
-      require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
+      require(bytes32(kzgProof[:32]) == leafContents, 'KZG_PROOF_WRONG_HASH');
 
       uint256 fieldElementsPerBlob;
       uint256 blsModulus;
@@ -221,8 +217,8 @@ contract OneStepProverHostIo is IOneStepProver {
         (bool success, bytes memory kzgParams) = address(0x0A).staticcall(
           kzgProof
         );
-        require(success, "INVALID_KZG_PROOF");
-        require(kzgParams.length > 0, "KZG_PRECOMPILE_MISSING");
+        require(success, 'INVALID_KZG_PROOF');
+        require(kzgParams.length > 0, 'KZG_PRECOMPILE_MISSING');
         (fieldElementsPerBlob, blsModulus) = abi.decode(
           kzgParams,
           (uint256, uint256)
@@ -232,7 +228,7 @@ contract OneStepProverHostIo is IOneStepProver {
       // With a hardcoded PRIMITIVE_ROOT_OF_UNITY, we can only support this BLS modulus.
       // It may be worth in the future supporting arbitrary BLS moduli, but we would likely need to
       // validate a user-supplied root of unity.
-      require(blsModulus == BLS_MODULUS, "UNKNOWN_BLS_MODULUS");
+      require(blsModulus == BLS_MODULUS, 'UNKNOWN_BLS_MODULUS');
 
       // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
       if (preimageOffset < fieldElementsPerBlob * 32) {
@@ -263,12 +259,12 @@ contract OneStepProverHostIo is IOneStepProver {
           rootOfUnityPower,
           blsModulus
         );
-        require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
+        require(bytes32(kzgProof[32:64]) == bytes32(z), 'KZG_PROOF_WRONG_Z');
 
         extracted = kzgProof[64:96];
       }
     } else {
-      revert("UNKNOWN_PREIMAGE_TYPE");
+      revert('UNKNOWN_PREIMAGE_TYPE');
     }
 
     for (uint256 i = 0; i < extracted.length; i++) {
@@ -290,7 +286,7 @@ contract OneStepProverHostIo is IOneStepProver {
   ) internal view returns (bool) {
     // need to check where exactly does proof offset usually land, see how we can get get rid of the length delimiter
     // also review delayed message inbox issue Ottersect reported.
-    require(message.length >= INBOX_HEADER_LEN, "BAD_SEQINBOX_PROOF");
+    require(message.length >= INBOX_HEADER_LEN, 'BAD_SEQINBOX_PROOF');
 
     uint64 afterDelayedMsg;
     (afterDelayedMsg, ) = Deserialize.u64(message, 32);
@@ -309,7 +305,7 @@ contract OneStepProverHostIo is IOneStepProver {
     );
     require(
       acc == execCtx.bridge.sequencerInboxAccs(msgIndex),
-      "BAD_SEQINBOX_MESSAGE"
+      'BAD_SEQINBOX_MESSAGE'
     );
     return true;
   }
@@ -319,7 +315,7 @@ contract OneStepProverHostIo is IOneStepProver {
     uint64 msgIndex,
     bytes calldata message
   ) internal view returns (bool) {
-    require(message.length >= DELAYED_HEADER_LEN, "BAD_DELAYED_PROOF");
+    require(message.length >= DELAYED_HEADER_LEN, 'BAD_DELAYED_PROOF');
 
     bytes32 beforeAcc;
 
@@ -344,7 +340,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
     require(
       acc == execCtx.bridge.delayedInboxAccs(msgIndex),
-      "BAD_DELAYED_MESSAGE"
+      'BAD_DELAYED_MESSAGE'
     );
     return true;
   }
@@ -364,7 +360,7 @@ contract OneStepProverHostIo is IOneStepProver {
       );
 
       if (result == CelestiaBatchVerifier.Result.UNDECIDED)
-        revert("BLOBSTREAM_UNDECIDED");
+        revert('BLOBSTREAM_UNDECIDED');
 
       // if its a counterfactual commitment, we replace the batch data with an empty batch
       if (result == CelestiaBatchVerifier.Result.COUNTERFACTUAL_COMMITMENT) {
@@ -417,7 +413,7 @@ contract OneStepProverHostIo is IOneStepProver {
     );
     {
       // TODO: support proving via an authenticated contract
-      require(proof[proofOffset] == 0, "UNKNOWN_INBOX_PROOF");
+      require(proof[proofOffset] == 0, 'UNKNOWN_INBOX_PROOF');
       proofOffset++;
 
       uint256 proofEnd = proof.length;
@@ -453,7 +449,7 @@ contract OneStepProverHostIo is IOneStepProver {
       }
     }
 
-    require(proof.length >= proofOffset, "BAD_MESSAGE_PROOF");
+    require(proof.length >= proofOffset, 'BAD_MESSAGE_PROOF');
     uint256 messageLength = proof.length - proofOffset;
 
     uint32 i = 0;
@@ -482,119 +478,6 @@ contract OneStepProverHostIo is IOneStepProver {
     mach.status = MachineStatus.FINISHED;
   }
 
-  function isPowerOfTwo(uint256 value) internal pure returns (bool) {
-    return value != 0 && (value & (value - 1) == 0);
-  }
-
-  function proveLastLeaf(
-    Machine memory mach,
-    uint256 offset,
-    bytes calldata proof
-  )
-    internal
-    pure
-    returns (
-      uint256 leaf,
-      MerkleProof memory leafProof,
-      MerkleProof memory zeroProof
-    )
-  {
-    string memory prefix = "Module merkle tree:";
-    bytes32 root = mach.modulesRoot;
-
-    {
-      Module memory leafModule;
-      uint32 leaf32;
-      (leafModule, offset) = Deserialize.module(proof, offset);
-      (leaf32, offset) = Deserialize.u32(proof, offset);
-      (leafProof, offset) = Deserialize.merkleProof(proof, offset);
-      leaf = uint256(leaf32);
-
-      bytes32 compRoot = leafProof.computeRootFromModule(leaf, leafModule);
-      require(compRoot == root, "WRONG_ROOT_FOR_LEAF");
-    }
-
-    // if tree is unbalanced, check that the next leaf is 0
-    bool balanced = isPowerOfTwo(leaf + 1);
-    if (balanced) {
-      require(1 << leafProof.counterparts.length == leaf + 1, "WRONG_LEAF");
-    } else {
-      (zeroProof, offset) = Deserialize.merkleProof(proof, offset);
-      bytes32 compRoot = zeroProof.computeRootUnsafe(leaf + 1, 0, prefix);
-      require(compRoot == root, "WRONG_ROOT_FOR_ZERO");
-    }
-
-    return (leaf, leafProof, zeroProof);
-  }
-
-  function executeLinkModule(
-    ExecutionContext calldata,
-    Machine memory mach,
-    Module memory mod,
-    Instruction calldata,
-    bytes calldata proof
-  ) internal pure {
-    string memory prefix = "Module merkle tree:";
-    bytes32 root = mach.modulesRoot;
-
-    uint256 pointer = mach.valueStack.pop().assumeI32();
-    if (!mod.moduleMemory.isValidLeaf(pointer)) {
-      mach.status = MachineStatus.ERRORED;
-      return;
-    }
-    (bytes32 userMod, uint256 offset, ) = mod.moduleMemory.proveLeaf(
-      pointer / LEAF_SIZE,
-      proof,
-      0
-    );
-
-    (uint256 leaf, , MerkleProof memory zeroProof) = proveLastLeaf(
-      mach,
-      offset,
-      proof
-    );
-
-    bool balanced = isPowerOfTwo(leaf + 1);
-    if (balanced) {
-      mach.modulesRoot = MerkleProofLib.growToNewRoot(
-        root,
-        leaf + 1,
-        userMod,
-        0,
-        prefix
-      );
-    } else {
-      mach.modulesRoot = zeroProof.computeRootUnsafe(leaf + 1, userMod, prefix);
-    }
-
-    mach.valueStack.push(ValueLib.newI32(uint32(leaf + 1)));
-  }
-
-  function executeUnlinkModule(
-    ExecutionContext calldata,
-    Machine memory mach,
-    Module memory,
-    Instruction calldata,
-    bytes calldata proof
-  ) internal pure {
-    string memory prefix = "Module merkle tree:";
-
-    (uint256 leaf, MerkleProof memory leafProof, ) = proveLastLeaf(
-      mach,
-      0,
-      proof
-    );
-
-    bool shrink = isPowerOfTwo(leaf);
-    if (shrink) {
-      mach.modulesRoot = leafProof.counterparts[
-        leafProof.counterparts.length - 1
-      ];
-    } else {
-      mach.modulesRoot = leafProof.computeRootUnsafe(leaf, 0, prefix);
-    }
-  }
-
   function executeGlobalStateAccess(
     ExecutionContext calldata,
     Machine memory mach,
@@ -607,7 +490,7 @@ contract OneStepProverHostIo is IOneStepProver {
     GlobalState memory state;
     uint256 proofOffset = 0;
     (state, proofOffset) = Deserialize.globalState(proof, proofOffset);
-    require(state.hash() == mach.globalStateHash, "BAD_GLOBAL_STATE");
+    require(state.hash() == mach.globalStateHash, 'BAD_GLOBAL_STATE');
 
     if (
       opcode == Instructions.GET_GLOBAL_STATE_BYTES32 ||
@@ -619,101 +502,10 @@ contract OneStepProverHostIo is IOneStepProver {
     } else if (opcode == Instructions.SET_GLOBAL_STATE_U64) {
       executeSetU64(mach, state);
     } else {
-      revert("INVALID_GLOBALSTATE_OPCODE");
+      revert('INVALID_GLOBALSTATE_OPCODE');
     }
 
     mach.globalStateHash = state.hash();
-  }
-
-  function executeNewCoThread(
-    ExecutionContext calldata,
-    Machine memory mach,
-    Module memory,
-    Instruction calldata,
-    bytes calldata
-  ) internal pure {
-    if (mach.recoveryPc != MachineLib.NO_RECOVERY_PC) {
-      // cannot create new cothread from inside cothread
-      mach.status = MachineStatus.ERRORED;
-      return;
-    }
-    mach.frameMultiStack.pushNew();
-    mach.valueMultiStack.pushNew();
-  }
-
-  function provePopCothread(
-    MultiStack memory multi,
-    bytes calldata proof
-  ) internal pure {
-    uint256 proofOffset = 0;
-    bytes32 newInactiveCoThread;
-    bytes32 newRemaining;
-    (newInactiveCoThread, proofOffset) = Deserialize.b32(proof, proofOffset);
-    (newRemaining, proofOffset) = Deserialize.b32(proof, proofOffset);
-    if (newInactiveCoThread == MultiStackLib.NO_STACK_HASH) {
-      require(newRemaining == bytes32(0), "WRONG_COTHREAD_EMPTY");
-      require(multi.remainingHash == bytes32(0), "WRONG_COTHREAD_EMPTY");
-    } else {
-      require(
-        keccak256(
-          abi.encodePacked("cothread:", newInactiveCoThread, newRemaining)
-        ) == multi.remainingHash,
-        "WRONG_COTHREAD_POP"
-      );
-    }
-    multi.remainingHash = newRemaining;
-    multi.inactiveStackHash = newInactiveCoThread;
-  }
-
-  function executePopCoThread(
-    ExecutionContext calldata,
-    Machine memory mach,
-    Module memory,
-    Instruction calldata,
-    bytes calldata proof
-  ) internal pure {
-    if (mach.recoveryPc != MachineLib.NO_RECOVERY_PC) {
-      // cannot pop cothread from inside cothread
-      mach.status = MachineStatus.ERRORED;
-      return;
-    }
-    if (mach.frameMultiStack.inactiveStackHash == MultiStackLib.NO_STACK_HASH) {
-      // cannot pop cothread if there isn't one
-      mach.status = MachineStatus.ERRORED;
-      return;
-    }
-    provePopCothread(mach.valueMultiStack, proof);
-    provePopCothread(mach.frameMultiStack, proof[64:]);
-  }
-
-  function executeSwitchCoThread(
-    ExecutionContext calldata,
-    Machine memory mach,
-    Module memory,
-    Instruction calldata inst,
-    bytes calldata
-  ) internal pure {
-    if (mach.frameMultiStack.inactiveStackHash == MultiStackLib.NO_STACK_HASH) {
-      // cannot switch cothread if there isn't one
-      mach.status = MachineStatus.ERRORED;
-      return;
-    }
-    if (inst.argumentData == 0) {
-      if (mach.recoveryPc == MachineLib.NO_RECOVERY_PC) {
-        // switching to main thread, from main thread
-        mach.status = MachineStatus.ERRORED;
-        return;
-      }
-      mach.recoveryPc = MachineLib.NO_RECOVERY_PC;
-    } else {
-      if (mach.recoveryPc != MachineLib.NO_RECOVERY_PC) {
-        // switching from cothread to cothread
-        mach.status = MachineStatus.ERRORED;
-        return;
-      }
-      mach.setRecoveryFromPc(uint32(inst.argumentData));
-    }
-    mach.switchCoThreadStacks();
   }
 
   function executeOneStep(
@@ -747,18 +539,8 @@ contract OneStepProverHostIo is IOneStepProver {
       impl = executeReadInboxMessage;
     } else if (opcode == Instructions.HALT_AND_SET_FINISHED) {
       impl = executeHaltAndSetFinished;
-    } else if (opcode == Instructions.LINK_MODULE) {
-      impl = executeLinkModule;
-    } else if (opcode == Instructions.UNLINK_MODULE) {
-      impl = executeUnlinkModule;
-    } else if (opcode == Instructions.NEW_COTHREAD) {
-      impl = executeNewCoThread;
-    } else if (opcode == Instructions.POP_COTHREAD) {
-      impl = executePopCoThread;
-    } else if (opcode == Instructions.SWITCH_COTHREAD) {
-      impl = executeSwitchCoThread;
     } else {
-      revert("INVALID_MEMORY_OPCODE");
+      revert('INVALID_MEMORY_OPCODE');
     }
 
     impl(execCtx, mach, mod, inst, proof);

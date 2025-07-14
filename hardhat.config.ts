@@ -15,13 +15,13 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.17',
+      version: '0.8.19',
       settings: {
         optimizer: {
           enabled: true,
-          runs: 2000,
+          runs: 1,
         },
-        viaIR: false,
+        viaIR: true,
       },
     },
   ],
@@ -62,6 +62,15 @@ const solidity = {
           runs: 100,
         },
         evmVersion: 'cancun',
+      },
+    },
+    'src/stylus/StylusDeployer.sol': {
+      version: '0.8.17',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 100,
+        },
       },
     },
   },
@@ -248,6 +257,12 @@ module.exports = {
         urls: {
           apiURL: process.env['CUSTOM_ETHERSCAN_API_URL'],
           browserURL: process.env['CUSTOM_ETHERSCAN_BROWSER_URL'],
+          network: 'baseSepolia',
+          chainId: 84532,
+          urls: {
+            apiURL: 'https://api-sepolia.basescan.org/api',
+            browserURL: 'https://sepolia.basescan.org/',
+          },
         },
       },
     ],
