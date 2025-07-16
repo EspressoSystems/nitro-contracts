@@ -87,6 +87,7 @@ export interface Config {
       threshold: number
       replenishRateInBasis: number
     }
+    espressoTEEVerifier: string
   }
   validators: string[]
 }
@@ -106,24 +107,31 @@ export const validateConfig = async (
   if ((await l1Rpc.getCode(config.contracts.rollup)).length <= 2) {
     throw new Error('rollup address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.bridge)).length <= 2) {
     throw new Error('bridge address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.sequencerInbox)).length <= 2) {
     throw new Error('sequencerInbox address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.rollupEventInbox)).length <= 2) {
     throw new Error('rollupEventInbox address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.outbox)).length <= 2) {
     throw new Error('outbox address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.inbox)).length <= 2) {
     throw new Error('inbox address is not a contract')
   }
+
   if ((await l1Rpc.getCode(config.contracts.upgradeExecutor)).length <= 2) {
     throw new Error('upgradeExecutor address is not a contract')
   }
+
   if (!isAddress(config.contracts.excessStakeReceiver)) {
     throw new Error('excessStakeReceiver is not a valid address')
   }
@@ -202,7 +210,6 @@ export const validateConfig = async (
       }
     }
   }
-
   // check delaybuffer settings
   if (config.settings.isDelayBufferable) {
     if (config.settings.bufferConfig.max === 0) {
