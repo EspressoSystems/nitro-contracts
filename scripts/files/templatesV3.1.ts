@@ -139,7 +139,7 @@ export const templates: {
   421614: {
     eth: {
       bridge: '0x860b23D7CD5797274D6BE385F6A629C734DFB448',
-      sequencerInbox: '0x72198537ffabDc70dc7a8c1A0B7532BA2eadCBEd',
+      sequencerInbox: '0xFedf426884f8713b5d7cE84F41e3acAe625Bf23a',
       delayBufferableSequencerInbox:
         '0x23Cb9fca677B5cf04D859D5d98aDc93016C97EC4',
       inbox: '0x476B0126252E56E103918FFf6eD7eb80Ad97Ddbb',
@@ -148,18 +148,18 @@ export const templates: {
     },
     erc20: {
       bridge: '0x646dE495dca9E006760a64D19Df01369B42f862a',
-      sequencerInbox: '0xd70Ee45dFe94CFDf7c05231cc87F77C541a32340',
+      sequencerInbox: '0x6220f0d597E224871E734c124199cC29Aa6FB463',
       delayBufferableSequencerInbox:
         '0x968306A79555234Fb796090479df3E0F805cD32A',
       inbox: '0x975c02Cd7d879602638068F3edB1bda092e43bfB',
       rollupEventInbox: '0x0b0731c4C66D5805b55d8BD0086546248510449B',
       outbox: '0xD5f920B14F5EDA221776F5FeE948e36DffE43c5D',
     },
-    rollupUserLogic: '0xe9F561c87E1289C5eA60814f522922a1619897AE',
-    rollupAdminLogic: '0x7FA087B469E26B653F3B495c537a8796B42AD883',
+    rollupUserLogic: '0x66BEd0aF80663A453d5019E0Bd30c646e8C53c89',
+    rollupAdminLogic: '0x2b464Da7f89A99b70E94aa5EDe66742712875687',
     challengeManagerTemplate: '0x22DD61cF5e1f19A4D98C08478E2f83DFb3FCe44C',
     osp: '0x61287c070a7281165666D367953f9A12c7616550',
-    rollupCreator: '0x5F45675AC8DDF7d45713b2c7D191B287475C16cF',
+    rollupCreator: '0x73FEaCB3EB0653D7DC208DB5424Df93a8CFf7604',
   },
 
   // Base

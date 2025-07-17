@@ -73,7 +73,6 @@ async function main() {
       RollupAdminLogic: contracts.rollupAdmin.address,
       RollupUserLogic: contracts.rollupUser.address,
       UpgradeExecutor: contracts.upgradeExecutor.address,
-      ValidatorUtils: contracts.validatorUtils.address,
       ValidatorWalletCreator: contracts.validatorWalletCreator.address,
       RollupCreator: contracts.rollupCreator.address,
       DeployHelper: contracts.deployHelper.address,

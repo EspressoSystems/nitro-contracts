@@ -266,6 +266,6 @@ module.exports = {
     strict: true,
   },
   sourcify: {
-    enabled: true,
+    enabled: false,
   },
 }

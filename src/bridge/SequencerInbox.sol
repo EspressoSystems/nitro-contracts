@@ -141,10 +141,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool internal immutable hostChainIsArbitrum = ArbitrumChecker.runningOnArbitrum();
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
+    IEspressoTEEVerifier public espressoTEEVerifier;
+
     // True if the SequencerInbox is delay bufferable
     bool public immutable isDelayBufferable;
 
-    IEspressoTEEVerifier public espressoTEEVerifier;
 
     constructor(
         uint256 _maxDataSize,
