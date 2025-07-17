@@ -408,7 +408,6 @@ contract BOLDUpgradeAction {
 
         TransparentUpgradeableProxy bridge = TransparentUpgradeableProxy(payable(BRIDGE));
         PROXY_ADMIN_BRIDGE.upgrade(bridge, IMPL_BRIDGE);
-
         IBridge(BRIDGE).updateRollupAddress(IOwnable(newRollupAddress));
 
         upgradeSequencerInbox();
@@ -423,7 +422,6 @@ contract BOLDUpgradeAction {
         TransparentUpgradeableProxy outbox = TransparentUpgradeableProxy(payable(OUTBOX));
         PROXY_ADMIN_OUTBOX.upgrade(outbox, IMPL_OUTBOX);
         IOutbox(OUTBOX).updateRollupAddress();
-
     }
 
     function upgradeSequencerInbox() private {
@@ -548,7 +546,6 @@ contract BOLDUpgradeAction {
             _numBigStepLevel: config.numBigStepLevel
         });
 
-
         RollupProxy rollup = new RollupProxy{salt: rollupSalt}();
         require(address(rollup) == _expectedRollupAddress, "UNEXPCTED_ROLLUP_ADDR");
 
@@ -558,7 +555,6 @@ contract BOLDUpgradeAction {
         config.owner = address(this);
 
         rollup.initializeProxy(config, connectedContracts);
-
 
         if (validators.length != 0) {
             bool[] memory _vals = new bool[](validators.length);
