@@ -58,27 +58,27 @@ export const templates: {
   11155111: {
     eth: {
       bridge: '0x331Edb39Eb823602484cD9F28bBC34cE4B9e76D9',
-      sequencerInbox: '0x9a4332b77d150AB19388e7F01B686De91a3Eadf1',
+      sequencerInbox: '0x79C5c3c8355daDC0d48D37eDC3Cb5ac73cB5b9d2',
       delayBufferableSequencerInbox:
-        '0x6F753199ebe6aAb140838185c7D5ef17b46f7f88',
+        '0xa9CF9009cF206f287a0DaB15BafA733D926Cd8D5',
       inbox: '0x10cf5c20F6b774dBDC68FAa58dE00406cfB07dc7',
       rollupEventInbox: '0x048506cA2683d137C25a34fE055339CE522Ddd00',
       outbox: '0x829856Cf500eA1cA32eB922b73c6872250682E28',
     },
     erc20: {
       bridge: '0xE46b560190Aa928fBCE2AF3060bC655EBD42C078',
-      sequencerInbox: '0xB3748F67a36C4e006935AB96bCcF48E0732b1626',
+      sequencerInbox: '0xBf7369FfA156112d5fD69809d9d522CDd6F6FF2b',
       delayBufferableSequencerInbox:
-        '0xfA93a2dcdE904fcF60233bA820336cbd71DB253B',
+        '0xbD354C43f413AE54B316eE174e032346FA3B4F79',
       inbox: '0xF3dF0Ed5B5a205df214d04DAEE9d9b5621AD83bA',
       rollupEventInbox: '0xfE91F555Ce6892C4D357Be2fBC6d2f485072a39f',
       outbox: '0x2f61CF4C5C57026AA74d41F254147e931b0b4314',
     },
-    rollupUserLogic: '0x8c7ff54b854E40b52192C7eE89235d41f2d7fC58',
-    rollupAdminLogic: '0xEC81CC24cebe8511CD1B742Ff910b447FeB9dF66',
+    rollupUserLogic: '0xBfBb290467d8bb057aAc85BA4Dace287D3BB996E',
+    rollupAdminLogic: '0xd0e617fb878533253F69C55E4a15aEBA7016FBac',
     challengeManagerTemplate: '0x6B21677CeAd8bF6526d4A27D144579c9eB46f0eB',
     osp: '0x1B9bd7B42516220f7A3e8a620Df7045b9b9A5ef1',
-    rollupCreator: '0x687Bc1D23390875a868Db158DA1cDC8998E31640',
+    rollupCreator: '0x0D7D6fB89f6a45d7c9F7dc3F2e6183445d14C8b1',
   },
 
   // Arbitrum One
@@ -139,7 +139,7 @@ export const templates: {
   421614: {
     eth: {
       bridge: '0x860b23D7CD5797274D6BE385F6A629C734DFB448',
-      sequencerInbox: '0x72198537ffabDc70dc7a8c1A0B7532BA2eadCBEd',
+      sequencerInbox: '0xFedf426884f8713b5d7cE84F41e3acAe625Bf23a',
       delayBufferableSequencerInbox:
         '0x23Cb9fca677B5cf04D859D5d98aDc93016C97EC4',
       inbox: '0x476B0126252E56E103918FFf6eD7eb80Ad97Ddbb',
@@ -148,18 +148,18 @@ export const templates: {
     },
     erc20: {
       bridge: '0x646dE495dca9E006760a64D19Df01369B42f862a',
-      sequencerInbox: '0xd70Ee45dFe94CFDf7c05231cc87F77C541a32340',
+      sequencerInbox: '0x6220f0d597E224871E734c124199cC29Aa6FB463',
       delayBufferableSequencerInbox:
         '0x968306A79555234Fb796090479df3E0F805cD32A',
       inbox: '0x975c02Cd7d879602638068F3edB1bda092e43bfB',
       rollupEventInbox: '0x0b0731c4C66D5805b55d8BD0086546248510449B',
       outbox: '0xD5f920B14F5EDA221776F5FeE948e36DffE43c5D',
     },
-    rollupUserLogic: '0xe9F561c87E1289C5eA60814f522922a1619897AE',
-    rollupAdminLogic: '0x7FA087B469E26B653F3B495c537a8796B42AD883',
+    rollupUserLogic: '0x66BEd0aF80663A453d5019E0Bd30c646e8C53c89',
+    rollupAdminLogic: '0x2b464Da7f89A99b70E94aa5EDe66742712875687',
     challengeManagerTemplate: '0x22DD61cF5e1f19A4D98C08478E2f83DFb3FCe44C',
     osp: '0x61287c070a7281165666D367953f9A12c7616550',
-    rollupCreator: '0x5F45675AC8DDF7d45713b2c7D191B287475C16cF',
+    rollupCreator: '0x73FEaCB3EB0653D7DC208DB5424Df93a8CFf7604',
   },
 
   // Base

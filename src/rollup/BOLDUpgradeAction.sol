@@ -171,6 +171,7 @@ contract BOLDUpgradeAction {
     uint256 public immutable BIGSTEP_LEAF_SIZE;
     uint256 public immutable SMALLSTEP_LEAF_SIZE;
     uint8 public immutable NUM_BIGSTEP_LEVEL;
+    address public immutable ESPRESSO_TEE_VERIFIER;
 
     address public immutable EXCESS_STAKE_RECEIVER;
     IOldRollup public immutable OLD_ROLLUP;
@@ -236,6 +237,7 @@ contract BOLDUpgradeAction {
         uint64 challengeGracePeriodBlocks;
         bool isDelayBufferable;
         BufferConfig bufferConfig;
+        address espressoTEEVerifier;
     }
 
     // Unfortunately these are not discoverable on-chain, so we need to supply them
@@ -318,6 +320,7 @@ contract BOLDUpgradeAction {
         MAX = settings.bufferConfig.max;
         THRESHOLD = settings.bufferConfig.threshold;
         REPLENISH_RATE_IN_BASIS = settings.bufferConfig.replenishRateInBasis;
+        ESPRESSO_TEE_VERIFIER = settings.espressoTEEVerifier;
     }
 
     /// @dev    Refund the existing stakers, pause and upgrade the current rollup to
@@ -393,8 +396,7 @@ contract BOLDUpgradeAction {
             numBigStepLevel: NUM_BIGSTEP_LEVEL,
             challengeGracePeriodBlocks: CHALLENGE_GRACE_PERIOD_BLOCKS,
             bufferConfig: bufferConfig,
-            // TODO: fix during migration
-            espressoTEEVerifier: address(0)
+            espressoTEEVerifier: ESPRESSO_TEE_VERIFIER
         });
     }
 

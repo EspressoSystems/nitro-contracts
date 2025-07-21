@@ -87,6 +87,7 @@ export interface Config {
       threshold: number
       replenishRateInBasis: number
     }
+    espressoTEEVerifier: string
   }
   validators: string[]
 }
@@ -202,7 +203,6 @@ export const validateConfig = async (
       }
     }
   }
-
   // check delaybuffer settings
   if (config.settings.isDelayBufferable) {
     if (config.settings.bufferConfig.max === 0) {
