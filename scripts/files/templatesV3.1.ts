@@ -31,27 +31,27 @@ export const templates: {
   1: {
     eth: {
       bridge: '0x677ECf96DBFeE1deFbDe8D2E905A39f73Aa27B89',
-      sequencerInbox: '0x93dCfC7E658050c80700a6eB7FAF12efaCF5BF76',
+      sequencerInbox: '0x58eD6C9546126BdA416efb42Ba8736DfeD68BA8C',
       delayBufferableSequencerInbox:
-        '0xE4bE5495054fE4fa4Ea5972219484984927681E3',
+        '0x4f317118F0DE034676F89C4F390737B7DEf637A8',
       inbox: '0x9C4ce5EF20F831F4e7fEcf58aAA0Cda8d3091c35',
       rollupEventInbox: '0x7b6784fbd233EDB47E11eA4e7205fC4229447662',
       outbox: '0x186267690cb723d72A7EDBC002476E23D694cB33',
     },
     erc20: {
       bridge: '0x81be1Bf06cB9B23e8EEDa3145c3366A912DAD9D6',
-      sequencerInbox: '0xe154a8d54e39Cd8edaEA85870Ea349B82B0E4eF4',
+      sequencerInbox: '0x360Ddf6b5aC838d1E4040963905B930CD4c0921e',
       delayBufferableSequencerInbox:
-        '0x6F2E7F9B5Db5e4e9B5B1181D2Eb0e4972500C324',
+        '0x1412b5173ab77565Ee06e61E96b7090bed89779c',
       inbox: '0xD210b64eD9D47Ef8Acf1A3284722FcC7Fc6A1f4e',
       rollupEventInbox: '0x0d079b22B0B4083b9b0bDc62Bf1a4EAF4a95bDEe',
       outbox: '0x17E0C5fE0dFF2AE4cfC9E96d9Ccd112DaF5c0386',
     },
-    rollupUserLogic: '0xA4892FFE3Deab25337D7D1A5b94b35dABa255451',
-    rollupAdminLogic: '0x16aD566aaa05fe6977A033DE2472c05C84CAB724',
+    rollupUserLogic: '0x184D4040C5066574F833A6f96891f2F463b1F172',
+    rollupAdminLogic: '0xA3a02A590824580284c8d36b9712bf62C96aF999',
     challengeManagerTemplate: '0x93069fFd7730733eCfd57A0D2D528CF686248524',
     osp: '0x91cB57F200Bd5F897E41C164425Ab4DB0991A64f',
-    rollupCreator: '0x43698080f40dB54DEE6871540037b8AB8fD0AB44',
+    rollupCreator: '0x76A20DC106B3233332620f2Bd9dfb97bb076C687',
   },
 
   // Sepolia
