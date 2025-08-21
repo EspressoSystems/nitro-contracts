@@ -339,7 +339,7 @@ async function _getDevRollupConfig(
     layerZeroSmallStepEdgeHeight: 2 ** 23,
     numBigStepLevel: 1,
     challengeGracePeriodBlocks: 10,
-    bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
+    bufferConfig: { threshold: 0 , max: 14400, replenishRateInBasis: 500 },
     sequencerInboxMaxTimeVariation: {
       delayBlocks: ethers.BigNumber.from('5760'),
       futureBlocks: ethers.BigNumber.from('12'),
