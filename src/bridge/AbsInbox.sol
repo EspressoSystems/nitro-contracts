@@ -55,8 +55,25 @@ abstract contract AbsInbox is DelegateCallAware, PausableUpgradeable, IInboxBase
     /// @inheritdoc IInboxBase
     mapping(address => bool) public isAllowed;
 
+    /// @dev mapping to whitelist contracts that do not need dusting check
+    mapping(address => bool) private l2AllowList;
+
     event AllowListAddressSet(address indexed user, bool val);
     event AllowListEnabledUpdated(bool isEnabled);
+    event L2AllowListAddressSet(address indexed user, bool val);
+    event L2AllowListInitialized();
+
+    error RefundAddressNotAllowed(address to, address excessFeeRefundAddress, address callValueRefundAddress);
+
+    /// @notice add or remove users from l2AllowList
+    function setL2AllowList(address[] memory addresses, bool[] memory values) external onlyRollupOrOwner {
+        require(addresses.length == values.length, "INVALID_INPUT");
+
+        for (uint256 i = 0; i < addresses.length; i++) {
+            l2AllowList[addresses[i]] = values[i];
+            emit L2AllowListAddressSet(addresses[i], values[i]);
+        }
+    }
 
     /// @inheritdoc IInboxBase
     function setAllowList(address[] memory user, bool[] memory val) external onlyRollupOrOwner {
@@ -82,6 +99,16 @@ abstract contract AbsInbox is DelegateCallAware, PausableUpgradeable, IInboxBase
     modifier onlyAllowed() {
         // solhint-disable-next-line avoid-tx-origin
         if (allowListEnabled && !isAllowed[tx.origin]) revert NotAllowedOrigin(tx.origin);
+        _;
+    }
+
+    /// @dev this modifier ensures that both `excessFeeRefundAddress` and `callValueRefundAddress` match the msg.sender
+    /// unless the `to` address is whitelisted.
+    /// This check prevents users from dusting others on the L2.
+    modifier whenRefundAddressAllowed(address to, address excessFeeRefundAddress, address callValueRefundAddress) {
+        if (!l2AllowList[to] && (excessFeeRefundAddress != msg.sender || callValueRefundAddress != msg.sender)) {
+            revert RefundAddressNotAllowed(to, excessFeeRefundAddress, callValueRefundAddress);
+        }
         _;
     }
 

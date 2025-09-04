@@ -282,7 +282,14 @@ contract Inbox is AbsInbox, IInbox {
         uint256 gasLimit,
         uint256 maxFeePerGas,
         bytes calldata data
-    ) external payable whenNotPaused onlyAllowed returns (uint256) {
+    )
+        external
+        payable
+        whenNotPaused
+        onlyAllowed
+        whenRefundAddressAllowed(to, excessFeeRefundAddress, callValueRefundAddress)
+        returns (uint256)
+    {
         return
             _createRetryableTicket(
                 to,
@@ -307,7 +314,14 @@ contract Inbox is AbsInbox, IInbox {
         uint256 gasLimit,
         uint256 maxFeePerGas,
         bytes calldata data
-    ) public payable whenNotPaused onlyAllowed returns (uint256) {
+    )
+        public
+        payable
+        whenNotPaused
+        onlyAllowed
+        whenRefundAddressAllowed(to, excessFeeRefundAddress, callValueRefundAddress)
+        returns (uint256)
+    {
         return
             _unsafeCreateRetryableTicket(
                 to,
