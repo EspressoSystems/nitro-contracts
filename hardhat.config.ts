@@ -186,24 +186,72 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      mainnet: process.env['ETHERSCAN_API_KEY'],
-      goerli: process.env['ETHERSCAN_API_KEY'],
-      sepolia: process.env['ETHERSCAN_API_KEY'],
-      holesky: process.env['ETHERSCAN_API_KEY'],
-      arbitrumOne: process.env['ARBISCAN_API_KEY'],
-      arbitrumTestnet: process.env['ARBISCAN_API_KEY'],
-      nova: process.env['NOVA_ARBISCAN_API_KEY'],
-      arbGoerliRollup: process.env['ARBISCAN_API_KEY'],
-      arbSepolia: process.env['ARBISCAN_API_KEY'],
-      base: process.env['BASESCAN_API_KEY'],
-      baseSepolia: process.env['BASESCAN_API_KEY'],
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      goerli: process.env.ETHERSCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
+      holesky: process.env.ETHERSCAN_API_KEY,
+      arbitrumOne: process.env.ETHERSCAN_API_KEY,
+      arbitrumTestnet: process.env.ETHERSCAN_API_KEY,
+      nova: process.env.ETHERSCAN_API_KEY,
+      arbGoerliRollup: process.env.ETHERSCAN_API_KEY,
+      arbSepolia: process.env.ETHERSCAN_API_KEY,
+      base: process.env.ETHERSCAN_API_KEY,
+      baseSepolia: process.env.ETHERSCAN_API_KEY,
     },
     customChains: [
+      {
+        network: 'mainnet',
+        chainId: 1,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=1',
+          browserURL: 'https://etherscan.io',
+        },
+      },
+      {
+        network: 'goerli',
+        chainId: 5,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=5',
+          browserURL: 'https://goerli.etherscan.io',
+        },
+      },
+      {
+        network: 'sepolia',
+        chainId: 11155111,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=11155111',
+          browserURL: 'https://sepolia.etherscan.io',
+        },
+      },
+      {
+        network: 'holesky',
+        chainId: 17000,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=17000',
+          browserURL: 'https://holesky.etherscan.io',
+        },
+      },
+      {
+        network: 'arbitrumOne',
+        chainId: 42161,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=42161',
+          browserURL: 'https://arbiscan.io',
+        },
+      },
+      {
+        network: 'arbitrumTestnet',
+        chainId: 421613,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=421613',
+          browserURL: 'https://goerli.arbiscan.io',
+        },
+      },
       {
         network: 'nova',
         chainId: 42170,
         urls: {
-          apiURL: 'https://api-nova.arbiscan.io/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=42170',
           browserURL: 'https://nova.arbiscan.io/',
         },
       },
@@ -211,7 +259,7 @@ module.exports = {
         network: 'arbGoerliRollup',
         chainId: 421613,
         urls: {
-          apiURL: 'https://api-goerli.arbiscan.io/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=421613',
           browserURL: 'https://goerli.arbiscan.io/',
         },
       },
@@ -219,15 +267,23 @@ module.exports = {
         network: 'arbSepolia',
         chainId: 421614,
         urls: {
-          apiURL: 'https://api-sepolia.arbiscan.io/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=421614',
           browserURL: 'https://sepolia.arbiscan.io/',
+        },
+      },
+      {
+        network: 'base',
+        chainId: 8453,
+        urls: {
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=8453',
+          browserURL: 'https://basescan.org',
         },
       },
       {
         network: 'baseSepolia',
         chainId: 84532,
         urls: {
-          apiURL: 'https://api-sepolia.basescan.org/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=84532',
           browserURL: 'https://sepolia.basescan.org/',
         },
       },
