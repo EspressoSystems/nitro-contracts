@@ -5,3 +5,4 @@ openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
 solady/=node_modules/solady/src/
 espresso-tee-contracts/=lib/espresso-tee-contracts/src/
+timeboost-contracts/=lib/timeboost-contracts/src/
