@@ -114,7 +114,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            decentralizedTimeboostKeyManager: address(espressoTEEVerifier)
         });
 
         // prepare funds
@@ -274,7 +274,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            decentralizedTimeboostKeyManager: address(espressoTEEVerifier)
         });
 
         // approve fee token to pay for deployment of L2 factories
@@ -432,7 +432,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            decentralizedTimeboostKeyManager: address(espressoTEEVerifier)
         });
 
         // prepare funds

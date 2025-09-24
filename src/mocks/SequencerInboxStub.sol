@@ -16,7 +16,7 @@ contract SequencerInboxStub is SequencerInbox {
         uint256 maxDataSize_,
         IReader4844 reader4844_,
         bool isUsingFeeToken_,
-        address espressoTEEVerifier_
+        address timeboostKeyManager_
     ) SequencerInbox(maxDataSize_, reader4844_, isUsingFeeToken_) {
         bridge = bridge_;
         rollup = IOwnable(msg.sender);
@@ -25,7 +25,7 @@ contract SequencerInboxStub is SequencerInbox {
         delaySeconds = uint64(maxTimeVariation_.delaySeconds);
         futureSeconds = uint64(maxTimeVariation_.futureSeconds);
         isBatchPoster[sequencer_] = true;
-        espressoTEEVerifier = IEspressoTEEVerifier(espressoTEEVerifier_);
+        timeboostKeyManager = KeyManager(timeboostKeyManager_);
     }
 
     function addInitMessage(uint256 chainId) external {
