@@ -50,6 +50,7 @@ import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {KeyManager} from "timeboost-contracts/KeyManager.sol";
+import {MockKeyManager} from "timeboost-contracts/MockKeyManager.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
