@@ -66,6 +66,7 @@ import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {KeyManager} from "timeboost-contracts/KeyManager.sol";
+import {MockKeyManager} from "timeboost-contracts/MockKeyManager.sol";
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
