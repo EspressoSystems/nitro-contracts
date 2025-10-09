@@ -320,7 +320,7 @@ async function _getDevRollupConfig(
         delaySeconds: ethers.BigNumber.from('86400'),
         futureSeconds: ethers.BigNumber.from('3600'),
       },
-      espressoTEEVerifier: espressoTEEVerifierAddress,
+      decentralizedTimeboostKeyManager: espressoTEEVerifierAddress,
     },
     validators: validators,
     maxDataSize: _maxDataSize,
