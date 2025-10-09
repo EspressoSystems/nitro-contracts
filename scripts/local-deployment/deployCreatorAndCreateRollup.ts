@@ -84,7 +84,7 @@ async function main() {
     deployerWallet,
     true,
     contracts.rollupCreator.address,
-    espressoTEEVerifierMock.address,
+    "0x2bbf15bc655c4cc157b769cfcb1ea9924b9e1a35",
     feeToken
   )
 
