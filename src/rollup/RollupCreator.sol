@@ -201,7 +201,7 @@ contract RollupCreator is Ownable {
         deployParams.config.sequencerInboxMaxTimeVariation,
         deployParams.config.bufferConfig,
         deployParams.feeTokenPricer,
-        deployParams.config.espressoTEEVerifier
+        deployParams.config.decentralizedTimeboostKeyManager
       );
 
     IEdgeChallengeManager challengeManager = createChallengeManager(

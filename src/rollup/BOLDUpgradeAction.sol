@@ -391,7 +391,7 @@ contract BOLDUpgradeAction {
     // this isnt used during rollup creation, so we can pass in empty
     ISequencerInbox.MaxTimeVariation memory maxTimeVariation;
     BufferConfig memory bufferConfig;
-    address espressoTEEVerifier;
+    address decentralizedTimeboostKeyManager;
     return
       Config({
         confirmPeriodBlocks: CONFIRM_PERIOD_BLOCKS,
@@ -416,7 +416,7 @@ contract BOLDUpgradeAction {
         numBigStepLevel: NUM_BIGSTEP_LEVEL,
         challengeGracePeriodBlocks: CHALLENGE_GRACE_PERIOD_BLOCKS,
         bufferConfig: bufferConfig,
-        espressoTEEVerifier: espressoTEEVerifier
+        decentralizedTimeboostKeyManager: decentralizedTimeboostKeyManager
       });
   }
 
