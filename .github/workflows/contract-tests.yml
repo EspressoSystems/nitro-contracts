@@ -24,14 +24,6 @@ jobs:
           version: stable
           cache: false
 
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
@@ -43,11 +35,10 @@ jobs:
         run: yarn
 
       - name: Build
-        run: forge test --no-match-path test/foundry/ExpressLaneBalance.t.sol
+        run: yarn test:foundry
   tests:
-    if: false # broken
     name: Contract tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-8
     defaults:
       run:
         shell: bash
@@ -62,20 +53,6 @@ jobs:
         with:
           version: stable
           cache: false
-
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
-      - name: Run unused Solidity errors checker
-        uses: OffchainLabs/actions/check-unused-errors@main
-        with:
-          directory: './src'
-          exceptions_file: './test/unused-errors/exceptions.txt'
 
       - name: Setup nodejs
         uses: actions/setup-node@v3
@@ -123,6 +100,12 @@ jobs:
       - name: Test function signatures
         run: yarn run test:signatures
 
+      - name: Run unused Solidity errors checker
+        uses: OffchainLabs/actions/check-unused-errors@main
+        with:
+          directory: './src'
+          exceptions_file: './test/unused-errors/exceptions.txt'
+
       - name: Run coverage
         run: yarn hardhat coverage --testfiles "test/contract/*.spec.ts"
 
@@ -151,15 +134,7 @@ jobs:
           version: stable
           cache: false
 
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           args: --pos
           no-token-bridge: true
@@ -188,17 +163,7 @@ jobs:
         with:
           submodules: recursive
 
-<<<<<<< HEAD
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
-        with:
-          args: --l3node
-          no-token-bridge: true
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-=======
       - uses: OffchainLabs/actions/run-nitro-test-node@main
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
         with:
           l3-node: true
           no-token-bridge: true
@@ -213,14 +178,6 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
       - name: Install packages
         run: yarn
 
@@ -230,31 +187,6 @@ jobs:
       - name: Run e2e tests
         run: yarn test:e2e
 
-<<<<<<< HEAD
-      # TODO: This is broken from Offchain labs side
-      # - name: Test upgrade
-      #   run: L1_RPC=${{ secrets.L1_RPC || 'https://rpc.ankr.com/eth/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923' }} yarn test:upgrade
-      - name: Run e2e tests
-        run: yarn test:e2e
-  test-e2e-custom-fee-token:
-    if: false # broken
-    name: Test e2e custom fee token
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
-        with:
-          args: --l3node
-          no-token-bridge: true
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-=======
   test-e2e-custom-fee-token:
     name: Test e2e custom fee token
     runs-on: ubuntu-latest
@@ -271,7 +203,6 @@ jobs:
           no-l3-token-bridge: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
           nitro-testnode-ref: v3-support
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -280,17 +211,6 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
-<<<<<<< HEAD
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
-=======
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
       - name: Install packages
         run: yarn
 
@@ -299,26 +219,6 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
-<<<<<<< HEAD
-  test-e2e-fee-token-6-decimals:
-    if: false # broken
-    name: Test e2e fee token with 6 decimals
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
-        with:
-          args: --l3node
-          no-token-bridge: true
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-=======
 
   test-e2e-fee-token-6-decimals:
     name: Test e2e fee token with 6 decimals and pricer
@@ -336,7 +236,6 @@ jobs:
           no-l3-token-bridge: true
           nitro-testnode-ref: v3-support
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -345,17 +244,6 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
-<<<<<<< HEAD
-      - name: Prepare Environment Variables
-        run: |
-          cp .env.sample.goerli .env
-          export $(grep -v '^#' .env | xargs) # Load variables
-          for var in $(grep -v '^#' .env | cut -d= -f1); do
-            echo "$var=${!var}" >> $GITHUB_ENV
-          done
-
-=======
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
       - name: Install packages
         run: yarn
 
@@ -364,8 +252,6 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
-<<<<<<< HEAD
-=======
 
   # bold-upgrade:
   #   name: BOLD upgrade test
@@ -400,4 +286,3 @@ jobs:
 
   #     - name: Test upgrade
   #       run: L1_RPC=${{ secrets.L1_RPC || 'https://rpc.ankr.com/eth' }} yarn test:upgrade
->>>>>>> 6fa15757b988ae3f4a35c7657e85aecdcc1a221b
