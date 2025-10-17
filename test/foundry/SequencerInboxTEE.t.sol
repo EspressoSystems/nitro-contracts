@@ -190,19 +190,13 @@ contract SequencerInboxTest is Test {
       batchPosterPrivateKey,
       reportDataHash
     );
-    bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.SGX
-    );
     vm.prank(tx.origin);
     vm.expectRevert();
 
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
-    emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       l2TEEData,
@@ -210,7 +204,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
   }
 
@@ -233,19 +227,13 @@ contract SequencerInboxTest is Test {
       awsNitroPrivateKey,
       reportDataHash
     );
-    bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.NITRO
-    );
     vm.prank(tx.origin);
     vm.expectRevert();
 
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
-    emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2BatchFromOrigin(
       sequenceNumber,
       l2TEEData,
@@ -253,7 +241,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -278,12 +266,6 @@ contract SequencerInboxTest is Test {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
     bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.SGX
-    );
-
     vm.prank(tx.origin);
     vm.expectRevert(
       abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
@@ -295,7 +277,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -320,11 +302,6 @@ contract SequencerInboxTest is Test {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
     bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.NITRO
-    );
 
     vm.prank(tx.origin);
     vm.expectRevert(
@@ -337,7 +314,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -364,18 +341,12 @@ contract SequencerInboxTest is Test {
     );
     bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.SGX
-    );
-
     vm.prank(tx.origin);
     vm.expectRevert();
 
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
-    emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2Batch(
       sequenceNumber,
       l2TEEData,
@@ -383,7 +354,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -410,18 +381,12 @@ contract SequencerInboxTest is Test {
     );
     bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.NITRO
-    );
-
     vm.prank(tx.origin);
     vm.expectRevert();
 
     //  We expect the TEE attestation quote to be validated
     vm.expectEmit();
-    emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+    emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
     seqInbox.addSequencerL2Batch(
       sequenceNumber,
       l2TEEData,
@@ -429,7 +394,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       1,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -454,11 +419,6 @@ contract SequencerInboxTest is Test {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
     bytes memory signature = abi.encodePacked(r, s, v);
 
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.SGX
-    );
     vm.prank(tx.origin);
     vm.expectRevert(
       abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
@@ -471,7 +431,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }
@@ -494,13 +454,6 @@ contract SequencerInboxTest is Test {
     );
     uint256 fakePrivateKey = vm.createWallet("fake").privateKey;
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(fakePrivateKey, reportDataHash);
-    bytes memory signature = abi.encodePacked(r, s, v);
-
-    bytes memory espressoMetadata = abi.encode(
-      hotshotHeight,
-      signature,
-      IEspressoTEEVerifier.TeeType.NITRO
-    );
     vm.prank(tx.origin);
     vm.expectRevert(
       abi.encodeWithSelector(IEspressoTEEVerifier.InvalidSignature.selector)
@@ -513,7 +466,7 @@ contract SequencerInboxTest is Test {
       IGasRefunder(0x0000000000000000000000000000000000000000),
       subMessageCount,
       nextSubMessageCount,
-      espressoMetadata
+      hotshotHeight
     );
     vm.stopPrank();
   }

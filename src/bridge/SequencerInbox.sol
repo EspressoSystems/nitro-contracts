@@ -372,7 +372,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
@@ -380,28 +380,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert DelayProofRequired();
         }
 
-        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
-            abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
-
-        // take keccak2256 hash of all the function arguments
-        // along with the hotshot height
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                data,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount,
-                hotshotHeight
-            )
-        );
-        // verify the the reportDataHash was signed by the a registered ephemeral key
-        // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        // signature from a registered ephemeral key generated inside TEE
-        // was verified over the batch data hash
-        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+        emit LastHotshotHeight(sequenceNumber, hotshotHeight);
 
         addSequencerL2BatchFromCalldataImpl(
             sequenceNumber, data, afterDelayedMessagesRead, prevMessageCount, newMessageCount, true
@@ -426,7 +405,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         if (isDelayProofRequired(afterDelayedMessagesRead)) {
@@ -437,24 +416,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes32[] memory dataHashes = reader4844.getDataHashes();
         if (dataHashes.length == 0) revert MissingDataHashes();
 
-        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
-            abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
-        // take keccak2256 hash of all the function arguments and encode packed blob hashes
-        // except the quote
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount,
-                abi.encode(dataHashes),
-                hotshotHeight
-            )
-        );
-        // verify the quote for the batch poster running in the TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+        emit LastHotshotHeight(sequenceNumber, hotshotHeight);
 
         addSequencerL2BatchFromBlobsImpl(
             sequenceNumber, afterDelayedMessagesRead, prevMessageCount, newMessageCount
@@ -605,7 +567,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) {
             revert NotBatchPoster();
@@ -614,30 +576,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert DelayProofRequired();
         }
 
-        // Only check the attestation quote if the batch has been posted by the
-        // batch poster
-        if (isBatchPoster[msg.sender]) {
-            (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) =
-                abi.decode(espressoMetadata, (uint256, bytes, IEspressoTEEVerifier.TeeType));
-            // take keccak2256 hash of all the function arguments
-            // along with the hotshot height
-            bytes32 reportDataHash = keccak256(
-                abi.encode(
-                    sequenceNumber,
-                    data,
-                    afterDelayedMessagesRead,
-                    address(gasRefunder),
-                    prevMessageCount,
-                    newMessageCount,
-                    hotshotHeight
-                )
-            );
-
-            espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-            // signature from a registered ephemeral key generated inside a registered TEE
-            // was verified over the batch data hash
-            emit TEESignatureVerified(sequenceNumber, hotshotHeight);
-        }
+        emit LastHotshotHeight(sequenceNumber, hotshotHeight);
 
         addSequencerL2BatchFromCalldataImpl(
             sequenceNumber, data, afterDelayedMessagesRead, prevMessageCount, newMessageCount, false
@@ -960,6 +899,18 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         address addr,
         bool isBatchPoster_
     ) external onlyRollupOwnerOrBatchPosterManager {
+        revert Deprecated();
+    }
+
+    function setIsBatchPoster(
+        address addr,
+        bool isBatchPoster_,
+        IEspressoTEEVerifier.TeeType teeType,
+        bytes memory attestation,
+        bytes memory auxData
+    ) external onlyRollupOwnerOrBatchPosterManager {
+        espressoTEEVerifier.registerSigner(attestation, auxData, teeType);
+
         isBatchPoster[addr] = isBatchPoster_;
         emit BatchPosterSet(addr, isBatchPoster_);
         emit OwnerFunctionCalled(1);

@@ -283,9 +283,6 @@ contract SequencerInboxTest is Test {
         uint256 basefee = 60000000000;
         vm.fee(basefee);
         uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         expectEvents(bridge, seqInbox, data, false, false, 0);
 
         vm.prank(tx.origin);
@@ -296,7 +293,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
     }
 
@@ -462,9 +459,6 @@ contract SequencerInboxTest is Test {
 
         expectEvents(bridge, seqInbox, data, true, false, 0);
         uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -473,7 +467,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
     }
 
@@ -505,9 +499,6 @@ contract SequencerInboxTest is Test {
         );
 
         uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -516,7 +507,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
     }
 
@@ -535,9 +526,6 @@ contract SequencerInboxTest is Test {
         uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
         uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
 
         vm.expectRevert(abi.encodeWithSelector(NotCodelessOrigin.selector));
         seqInbox.addSequencerL2BatchFromOrigin(
@@ -547,7 +535,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
 
         assertEq(rollupOwner.code.length, 0, "rollupOwner is codeless");
@@ -561,7 +549,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
         vm.etch(rollupOwner, bytes(""));
 
@@ -577,7 +565,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
 
         vm.prank(rollupOwner);
@@ -600,7 +588,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
 
         bytes memory authenticatedData = bytes.concat(seqInbox.DATA_BLOB_HEADER_FLAG(), data);
@@ -613,7 +601,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
 
         vm.expectRevert(
@@ -627,7 +615,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
     }
 
@@ -676,9 +664,6 @@ contract SequencerInboxTest is Test {
         }
 
         uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -687,7 +672,7 @@ contract SequencerInboxTest is Test {
             IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1,
-            espressoMetadata
+            hotshotHeight
         );
     }
 

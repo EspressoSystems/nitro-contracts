@@ -32,6 +32,8 @@ contract EspressoTEEVerifierMock {
     ) external {
         // data length should be 20 bytes
         require(data.length == 20, "Invalid data length");
+        // For this mock we only insist it is non-empty, then trust it.
+        require(attestation.length > 0, "empty attestation");
 
         address signer = address(uint160(bytes20(data[:20])));
         registeredSigner[signer] = true;

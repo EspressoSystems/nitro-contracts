@@ -160,7 +160,7 @@ contract Simple {
         uint256 delayedMessagesRead = sequencerInbox.totalDelayedMessagesRead();
         for (uint256 i = 0; i < numberToPost; i++) {
             sequencerInbox.addSequencerL2Batch(
-                sequenceNumber, batchData, delayedMessagesRead, IGasRefunder(address(0)), 0, 0
+                sequenceNumber, batchData, delayedMessagesRead, IGasRefunder(address(0)), 0, 0, 0
             );
             sequenceNumber++;
         }

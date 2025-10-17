@@ -11,6 +11,7 @@ import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 import "./Messages.sol";
 import "./DelayBufferTypes.sol";
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 
 interface ISequencerInbox is IDelayedMessageProvider {
     /// @notice The maximum amount of time variatin between a message being posted on the L1 and being executed on the L2
@@ -72,8 +73,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev Owner set the fee token pricer.
     event FeeTokenPricerSet(address feeTokenPricer);
 
-    /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
-    event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
+    /// @dev Last hotshot height that was processed
+    event LastHotshotHeight(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
@@ -241,7 +242,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external;
 
     function addSequencerL2Batch(
@@ -260,7 +261,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external;
 
     function addSequencerL2BatchFromBlobs(
@@ -277,7 +278,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 hotshotHeight
     ) external;
 
     /// @dev    Proves message delays, updates delay buffers, and posts an L2 batch with blob data.
@@ -332,6 +333,17 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @param isBatchPoster_ if the specified address should be authorized as a batch poster
      */
     function setIsBatchPoster(address addr, bool isBatchPoster_) external;
+
+    /**
+     * @notice Register a batch-poster via TEE attestation **and** set the
+     *         isBatchPoster flag in a single call.
+     * @param addr The address of the batch poster
+     * @param isBatchPoster_ If the specified address should be authorized as a batch poster
+     * @param teeType The type of TEE
+     * @param attestation The attestation from the TEE
+     * @param auxData The aux data from the TEE
+     */
+    function setIsBatchPoster(address addr, bool isBatchPoster_, IEspressoTEEVerifier.TeeType teeType, bytes calldata attestation, bytes calldata auxData) external;
 
     /**
      * @notice Makes Data Availability Service keyset valid

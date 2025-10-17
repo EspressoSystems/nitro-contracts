@@ -150,19 +150,16 @@ contract SequencerInboxBlobsTEE is Test {
             0x43179a4cba1a7fa58e6faad5cda5036169320c1a0c17b9f9488fb17acecaa23d;
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(awsNitroPrivateKey, reportDataHash);
-        bytes memory signature = abi.encodePacked(r, s, v);
-        bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         vm.expectEmit();
-        emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+        emit ISequencerInbox.LastHotshotHeight(sequenceNumber, hotshotHeight);
         seqInbox.addSequencerL2BatchFromBlobs(
             sequenceNumber,
             afterDelayedMessagesRead,
             gasRefunder,
             prevMessageCount,
             newMessageCount,
-            espressoMetadata
+            hotshotHeight
         );
         vm.stopPrank();
     }

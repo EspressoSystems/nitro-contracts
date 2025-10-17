@@ -59,7 +59,6 @@ contract RollupAdminLogic is
     }
 
     if (connectedContracts.sequencerInbox.totalDelayedMessagesRead() == 0) {
-      bytes memory espressoMetadata;
       connectedContracts.sequencerInbox.addSequencerL2Batch(
         0,
         '',
@@ -67,7 +66,7 @@ contract RollupAdminLogic is
         IGasRefunder(address(0)),
         0,
         1,
-        espressoMetadata
+        0
       );
     }
 
