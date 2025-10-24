@@ -9,7 +9,6 @@ import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
 import dotenv from 'dotenv'
 import '@nomicfoundation/hardhat-foundry'
-
 dotenv.config()
 
 const solidity = {
@@ -114,6 +113,26 @@ if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
   }
 }
 
+const getAccounts = (envKey) => process.env[envKey] ? [process.env[envKey]] : [];
+
+const infuraUrl = (network) => `https://${network}.infura.io/v3/${process.env['INFURA_KEY']}`;
+
+const devNetworks = {
+  sepolia: infuraUrl('sepolia'),
+  holesky: infuraUrl('holesky'),
+  arbRinkeby: 'https://rinkeby.arbitrum.io/rpc',
+  arbGoerliRollup: 'https://goerli-rollup.arbitrum.io/rpc',
+  arbSepolia: 'https://sepolia-rollup.arbitrum.io/rpc',
+  baseSepolia: 'https://sepolia.base.org',
+};
+
+const mainNetworks = {
+  mainnet: infuraUrl('mainnet'),
+  arb1: 'https://arb1.arbitrum.io/rpc',
+  nova: 'https://nova.arbitrum.io/rpc',
+  base: 'https://mainnet.base.org',
+};
+
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -138,74 +157,16 @@ module.exports = {
       },
       blockGasLimit: 200000000,
       // mining: {
-      //   auto: false,
-      //   interval: 1000,
+      // auto: false,
+      // interval: 1000,
       // },
       forking: {
         url: 'https://mainnet.infura.io/v3/' + process.env['INFURA_KEY'],
         enabled: process.env['SHOULD_FORK'] === '1',
       },
     },
-    mainnet: {
-      url: 'https://mainnet.infura.io/v3/' + process.env['INFURA_KEY'],
-      accounts: process.env['MAINNET_PRIVKEY']
-        ? [process.env['MAINNET_PRIVKEY']]
-        : [],
-    },
-    sepolia: {
-      url: 'https://sepolia.infura.io/v3/' + process.env['INFURA_KEY'],
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
-    holesky: {
-      url: 'https://holesky.infura.io/v3/' + process.env['INFURA_KEY'],
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
-    arbRinkeby: {
-      url: 'https://rinkeby.arbitrum.io/rpc',
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
-    arbGoerliRollup: {
-      url: 'https://goerli-rollup.arbitrum.io/rpc',
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
-    arbSepolia: {
-      url: 'https://sepolia-rollup.arbitrum.io/rpc',
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
-    arb1: {
-      url: 'https://arb1.arbitrum.io/rpc',
-      accounts: process.env['MAINNET_PRIVKEY']
-        ? [process.env['MAINNET_PRIVKEY']]
-        : [],
-    },
-    nova: {
-      url: 'https://nova.arbitrum.io/rpc',
-      accounts: process.env['MAINNET_PRIVKEY']
-        ? [process.env['MAINNET_PRIVKEY']]
-        : [],
-    },
-    base: {
-      url: 'https://mainnet.base.org',
-      accounts: process.env['MAINNET_PRIVKEY']
-        ? [process.env['MAINNET_PRIVKEY']]
-        : [],
-    },
-    baseSepolia: {
-      url: 'https://sepolia.base.org',
-      accounts: process.env['DEVNET_PRIVKEY']
-        ? [process.env['DEVNET_PRIVKEY']]
-        : [],
-    },
+    ...Object.fromEntries(Object.entries(devNetworks).map(([name, url]) => [name, { url, accounts: getAccounts('DEVNET_PRIVKEY') }])),
+    ...Object.fromEntries(Object.entries(mainNetworks).map(([name, url]) => [name, { url, accounts: getAccounts('MAINNET_PRIVKEY') }])),
     custom: {
       url: process.env['CUSTOM_RPC_URL'] || 'N/A',
     },
@@ -214,23 +175,13 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: {
-      mainnet: process.env['ETHERSCAN_API_KEY'],
-      sepolia: process.env['ETHERSCAN_API_KEY'],
-      holesky: process.env['ETHERSCAN_API_KEY'],
-      arbitrumOne: process.env['ARBISCAN_API_KEY'],
-      nova: process.env['NOVA_ARBISCAN_API_KEY'],
-      arbSepolia: process.env['ARBISCAN_API_KEY'],
-      base: process.env['BASESCAN_API_KEY'],
-      baseSepolia: process.env['BASESCAN_API_KEY'],
-      custom: process.env['CUSTOM_ETHERSCAN_API_KEY'],
-    },
+    apiKey: process.env['ETHERSCAN_API_KEY'],
     customChains: [
       {
         network: 'nova',
         chainId: 42170,
         urls: {
-          apiURL: 'https://api-nova.arbiscan.io/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=42170',
           browserURL: 'https://nova.arbiscan.io/',
         },
       },
@@ -238,7 +189,7 @@ module.exports = {
         network: 'arbSepolia',
         chainId: 421614,
         urls: {
-          apiURL: 'https://api-sepolia.arbiscan.io/api',
+          apiURL: 'https://api.etherscan.io/v2/api?chainid=421614',
           browserURL: 'https://sepolia.arbiscan.io/',
         },
       },
@@ -246,7 +197,7 @@ module.exports = {
         network: 'custom',
         chainId: process.env['CUSTOM_CHAINID'],
         urls: {
-          apiURL: process.env['CUSTOM_ETHERSCAN_API_URL'],
+          apiURL: process.env['CUSTOM_CHAINID'] ? `https://api.etherscan.io/v2/api?chainid=${process.env['CUSTOM_CHAINID']}` : 'https://api.etherscan.io/v2/api',
           browserURL: process.env['CUSTOM_ETHERSCAN_BROWSER_URL'],
         },
       },
