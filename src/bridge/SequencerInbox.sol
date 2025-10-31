@@ -66,7 +66,7 @@ import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {KeyManager} from "timeboost-contracts/KeyManager.sol";
-import {MockKeyManager} from "timeboost-contracts/MockKeyManager.sol";
+import {MockKeyManager} from "timeboost-contracts/mocks/MockKeyManager.sol";
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -457,9 +457,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         newMessageCount
       )
     );
-    // verify the the reportDataHash was signed by the a registered ephemeral key
-    // generated inside a registered TEE
-    if (!timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures)) {
+    // verify the the reportDataHash was signed by the batch posters
+    bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+    if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
         revert("invalid signatures");
     }
     // signature from a registered ephemeral key generated inside TEE
@@ -514,8 +514,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         abi.encode(dataHashes)
       )
     );
-    // verify the quote for the batch poster running in the TEE
-    if (!timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures)) {
+    // verify the the reportDataHash was signed by the batch posters
+    bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+    if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
         revert("invalid signatures");
     }
     emit TEESignatureVerified(sequenceNumber, newMessageCount);
@@ -740,7 +741,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         )
       );
 
-      if (!timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures)) {
+      // verify the the reportDataHash was signed by the batch posters
+      bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+      if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
         revert("invalid signatures");
       }
       // signature from a registered ephemeral key generated inside a registered TEE
