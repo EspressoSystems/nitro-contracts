@@ -50,7 +50,7 @@ import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {KeyManager} from "timeboost-contracts/KeyManager.sol";
-import {MockKeyManager} from "timeboost-contracts/MockKeyManager.sol";
+import {MockKeyManager} from "timeboost-contracts/mocks/MockKeyManager.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -452,7 +452,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 newMessageCount
             )
         );
-        if (!timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures)) {
+        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+        if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
           revert("invalid signatures");
         }
         // verify the the reportDataHash was signed by the a registered ephemeral key
@@ -576,7 +577,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             )
         );
         // verify the signature over data hash for the batch poster running in the TEE
-        if (!timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures)) {
+        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+        if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
           revert("invalid signatures");
         }
         emit TEESignatureVerified(sequenceNumber, newMessageCount);
@@ -635,7 +637,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 )
             );
 
-            timeboostKeyManager.verifyBatchSignatures(reportDataHash, signatures);
+            bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+            if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+              revert("invalid signatures");
+            }
             // signature from a registered ephemeral key generated inside a registered TEE
             // was verified over the batch data hash
             emit TEESignatureVerified(sequenceNumber, newMessageCount);
