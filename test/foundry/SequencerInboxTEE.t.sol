@@ -18,6 +18,7 @@ import {IEspressoNitroTEEVerifier} from
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
 import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
 import {CertManager} from "@nitro-validator/CertManager.sol";
+import "espresso-tee-contracts/types/Types.sol" as Types;
 
 contract RollupMock {
     address public immutable owner;
@@ -87,7 +88,7 @@ contract SequencerInboxTest is Test {
         sampleQuote = vm.readFileBinary(inputFile);
         // Register the signer
         bytes memory data = abi.encodePacked(batchPosterAddress);
-        espressoTEEVerifier.registerSigner(sampleQuote, data, IEspressoTEEVerifier.TeeType.SGX);
+        espressoTEEVerifier.registerService(sampleQuote, data, IEspressoTEEVerifier.TeeType.SGX, Types.ServiceType.BatchPoster);
 
         vm.warp(1_744_220_000);
         string memory attestationPath = "/test/foundry/configs/nitro-attestation.bin";
@@ -100,12 +101,12 @@ contract SequencerInboxTest is Test {
         address signerAddr = address(0x5f0B0D79E7F051903b08E30a3d6eA50D80333932);
 
         vm.expectEmit();
-        emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(
-            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO
+        emit IEspressoNitroTEEVerifier.AWSNitroServiceRegistered(signerAddr, pcr0Hash, Types.ServiceType.BatchPoster);
+        espressoTEEVerifier.registerService(
+            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO, Types.ServiceType.BatchPoster
         );
         bool value =
-            espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
+            espressoTEEVerifier.registeredServices(signerAddr, IEspressoTEEVerifier.TeeType.NITRO, Types.ServiceType.BatchPoster);
         vm.assertEq(value, true);
 
         rollupMock = new RollupMock(rollupOwner);
