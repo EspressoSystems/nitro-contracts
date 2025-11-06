@@ -1,6 +1,6 @@
 ds-test/=lib/espresso-tee-contracts/lib/forge-std/lib/ds-test/src/
 forge-std/=lib/espresso-tee-contracts/lib/forge-std/src/
-openzeppelin-contracts/=node_modules/@openzeppelin/contracts/
+openzeppelin-contracts/=lib/timeboost-contracts/lib/openzeppelin-contracts
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
 solady/=node_modules/solady/src/
