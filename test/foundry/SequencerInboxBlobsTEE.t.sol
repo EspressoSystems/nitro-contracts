@@ -14,7 +14,7 @@ import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTE
 import {IEspressoNitroTEEVerifier} from
     "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
-
+import "espresso-tee-contracts/types/Types.sol" as Types;
 import {CertManager} from "@nitro-validator/CertManager.sol";
 
 contract RollupMock {
@@ -75,12 +75,12 @@ contract SequencerInboxBlobsTEE is Test {
         bytes memory signature = vm.readFileBinary(sigFile);
 
         vm.expectEmit();
-        emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(
-            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO
+        emit IEspressoNitroTEEVerifier.AWSNitroServiceRegistered(signerAddr, pcr0Hash,  Types.ServiceType.BatchPoster);
+        espressoTEEVerifier.registerService(
+            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO, Types.ServiceType.BatchPoster
         );
         bool value =
-            espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
+            espressoTEEVerifier.registeredServices(signerAddr, IEspressoTEEVerifier.TeeType.NITRO,  Types.ServiceType.BatchPoster);
         vm.assertEq(value, true);
     }
 

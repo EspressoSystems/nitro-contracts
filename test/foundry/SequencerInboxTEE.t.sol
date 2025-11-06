@@ -7,13 +7,18 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import { ERC20Bridge } from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import { EspressoTEEVerifier } from "espresso-tee-contracts/EspressoTEEVerifier.sol";
-import { EspressoSGXTEEVerifier } from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
-import { IEspressoNitroTEEVerifier } from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
-import { IEspressoTEEVerifier } from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-import { EspressoNitroTEEVerifier } from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
-import { CertManager } from "@nitro-validator/CertManager.sol";
+import {TransparentUpgradeableProxy} from
+    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {V3QuoteVerifier} from
+    "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
+import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
+import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from
+    "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
+import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
+import {CertManager} from "@nitro-validator/CertManager.sol";
+import "espresso-tee-contracts/types/Types.sol" as Types;
 
 contract RollupMock {
   address public immutable owner;
@@ -89,17 +94,12 @@ contract SequencerInboxTest is Test {
       espressoSGXTEEVerifier,
       espressoNitroTEEVerifier
     );
-
     string memory quotePath = "/test/foundry/configs/attestation.bin";
     string memory inputFile = string.concat(vm.projectRoot(), quotePath);
     sampleQuote = vm.readFileBinary(inputFile);
     // Register the signer
     bytes memory data = abi.encodePacked(batchPosterAddress);
-    espressoTEEVerifier.registerSigner(
-      sampleQuote,
-      data,
-      IEspressoTEEVerifier.TeeType.SGX
-    );
+    espressoTEEVerifier.registerService(sampleQuote, data, IEspressoTEEVerifier.TeeType.SGX, Types.ServiceType.BatchPoster);
 
     vm.warp(1_744_220_000);
     string
@@ -116,16 +116,12 @@ contract SequencerInboxTest is Test {
     address signerAddr = address(0x5f0B0D79E7F051903b08E30a3d6eA50D80333932);
 
     vm.expectEmit();
-    emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-    espressoTEEVerifier.registerSigner(
-      attestation,
-      signature,
-      IEspressoTEEVerifier.TeeType.NITRO
+    emit IEspressoNitroTEEVerifier.AWSNitroServiceRegistered(signerAddr, pcr0Hash, Types.ServiceType.BatchPoster);
+    espressoTEEVerifier.registerService(
+        attestation, signature, IEspressoTEEVerifier.TeeType.NITRO, Types.ServiceType.BatchPoster
     );
-    bool value = espressoTEEVerifier.registeredSigners(
-      signerAddr,
-      IEspressoTEEVerifier.TeeType.NITRO
-    );
+    bool value =
+        espressoTEEVerifier.registeredServices(signerAddr, IEspressoTEEVerifier.TeeType.NITRO, Types.ServiceType.BatchPoster);
     vm.assertEq(value, true);
 
     rollupMock = new RollupMock(rollupOwner);
