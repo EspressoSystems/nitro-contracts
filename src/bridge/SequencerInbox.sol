@@ -732,13 +732,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           newMessageCount
         )
       );
-    // verify the the reportDataHash was signed by the batch posters
-    bytes[] memory sigs = abi.decode(signatures, (bytes[]));
-    if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+    if (msg.sender != address(rollup)) {
+      bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+      if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
         revert InvalidTimeboostSignatures();
+      }
+      // quorum of signatures from keymanagement contract
+      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
     }
-    // quorum of signatures from keymanagement contract
-    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
