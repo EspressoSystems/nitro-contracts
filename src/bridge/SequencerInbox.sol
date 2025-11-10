@@ -624,12 +624,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 )
         );
 
-        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
-        if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-          revert InvalidTimeboostSignatures();
+        if (msg.sender != address(rollup)) {
+            bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+            if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+            revert InvalidTimeboostSignatures();
+            }
+            // quorum of signatures from keymanagement contract
+            emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
         }
-        // quorum of signatures from keymanagement contract
-        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead
