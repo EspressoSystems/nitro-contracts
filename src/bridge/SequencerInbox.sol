@@ -30,7 +30,8 @@ import {
     InvalidHeaderFlag,
     NativeTokenMismatch,
     BadMaxTimeVariation,
-    Deprecated
+    Deprecated,
+    InvalidTimeboostSignatures
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -375,10 +376,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes memory espressoMetadata
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
-        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         
         // Verification
-        _verifyAttestation(
+        _verifyQuorumSignatures(
             sequenceNumber,
             data,
             afterDelayedMessagesRead,
@@ -429,7 +429,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
-    function _verifyAttestation(
+    function _verifyQuorumSignatures(
         uint256 sequenceNumber,
         bytes calldata data,
         uint256 afterDelayedMessagesRead,
@@ -438,10 +438,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         bytes memory signatures
     ) private {
-        // (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        //     espressoMetadata,
-        //     (uint256, bytes, IEspressoTEEVerifier.TeeType)
-        // );
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -452,16 +448,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 newMessageCount
             )
         );
+         // verify the the reportDataHash was signed by the batch posters
         bytes[] memory sigs = abi.decode(signatures, (bytes[]));
         if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-          revert("invalid signatures");
+          revert InvalidTimeboostSignatures();
         }
-        // verify the the reportDataHash was signed by the a registered ephemeral key
-        // generated inside a registered TEE
-        // espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        // signature from a registered ephemeral key generated inside TEE
-        // was verified over the batch data hash
-        emit TEESignatureVerified(sequenceNumber, newMessageCount);
+        // quorum of signatures from keymanagement contract
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
     }
 
     function addSequencerL2BatchFromBlobs(
@@ -482,8 +475,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         bytes memory espressoMetadata
     ) external refundsGas(gasRefunder, reader4844) {
-        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-
         bytes32[] memory dataHashes = reader4844.getDataHashes();
 
         // Verification logic extracted
@@ -576,12 +567,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 abi.encode(dataHashes)
             )
         );
-        // verify the signature over data hash for the batch poster running in the TEE
+        // verify the the reportDataHash was signed by the batch posters
         bytes[] memory sigs = abi.decode(signatures, (bytes[]));
         if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-          revert("invalid signatures");
+          revert InvalidTimeboostSignatures();
         }
-        emit TEESignatureVerified(sequenceNumber, newMessageCount);
+        // quorum of signatures from keymanagement contract
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
     }
 
     /**
@@ -619,32 +611,25 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         bytes memory signatures
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
-        if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
-
-        // Only check the attestation quote if the batch has been posted by the
-        // batch poster
-        if (isBatchPoster[msg.sender]) {
-            // take keccak2256 hash of all the function arguments
-            // along with the hotshot height
-            bytes32 reportDataHash = keccak256(
-                abi.encode(
-                    sequenceNumber,
-                    data,
-                    afterDelayedMessagesRead,
-                    address(gasRefunder),
-                    prevMessageCount,
-                    newMessageCount
+        // take keccak2256 hash of all the function arguments
+        // along with the hotshot height
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount
                 )
-            );
+        );
 
-            bytes[] memory sigs = abi.decode(signatures, (bytes[]));
-            if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-              revert("invalid signatures");
-            }
-            // signature from a registered ephemeral key generated inside a registered TEE
-            // was verified over the batch data hash
-            emit TEESignatureVerified(sequenceNumber, newMessageCount);
+        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+        if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+          revert InvalidTimeboostSignatures();
         }
+        // quorum of signatures from keymanagement contract
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
             afterDelayedMessagesRead
