@@ -35,7 +35,8 @@ import {
     DelayProofRequired,
     BadBufferConfig,
     ExtraGasNotUint64,
-    KeysetTooLarge
+    KeysetTooLarge,
+    InvalidTimeboostSignatures
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -438,7 +439,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bytes memory signatures
   ) external refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
-    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
@@ -460,11 +460,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // verify the the reportDataHash was signed by the batch posters
     bytes[] memory sigs = abi.decode(signatures, (bytes[]));
     if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-        revert("invalid signatures");
+        revert InvalidTimeboostSignatures();
     }
-    // signature from a registered ephemeral key generated inside TEE
-    // was verified over the batch data hash
-    emit TEESignatureVerified(sequenceNumber, newMessageCount);
+    // quorum of signatures from keymanagement contract
+    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -496,7 +495,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 newMessageCount,
     bytes memory signatures
   ) external refundsGas(gasRefunder, reader4844) {
-    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
@@ -517,9 +515,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // verify the the reportDataHash was signed by the batch posters
     bytes[] memory sigs = abi.decode(signatures, (bytes[]));
     if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-        revert("invalid signatures");
+        revert InvalidTimeboostSignatures();
     }
-    emit TEESignatureVerified(sequenceNumber, newMessageCount);
+    // quorum of signatures from keymanagement contract
+    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -717,20 +716,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 newMessageCount,
     bytes memory signatures
   ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
-    if (!isBatchPoster[msg.sender] && msg.sender != address(rollup))
-      revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
     // Question for Espresso Team
     // Same question as above
-
-    // Only check the attestation quote if the batch has been posted by the
-    // batch poster
-    if (isBatchPoster[msg.sender]) {
-      // take keccak2256 hash of all the function arguments
-      // along with the hotshot height
-      bytes32 reportDataHash = keccak256(
+    // take keccak2256 hash of all the function arguments
+    bytes32 reportDataHash = keccak256(
         abi.encode(
           sequenceNumber,
           data,
@@ -740,16 +732,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           newMessageCount
         )
       );
-
-      // verify the the reportDataHash was signed by the batch posters
-      bytes[] memory sigs = abi.decode(signatures, (bytes[]));
-      if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-        revert("invalid signatures");
-      }
-      // signature from a registered ephemeral key generated inside a registered TEE
-      // was verified over the batch data hash
-      emit TEESignatureVerified(sequenceNumber, newMessageCount);
+    // verify the the reportDataHash was signed by the batch posters
+    bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+    if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+        revert InvalidTimeboostSignatures();
     }
+    // quorum of signatures from keymanagement contract
+    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
