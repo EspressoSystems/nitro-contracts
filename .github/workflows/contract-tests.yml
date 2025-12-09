@@ -21,7 +21,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Prepare Environment Variables
@@ -60,7 +60,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Prepare Environment Variables
@@ -87,7 +87,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Check Contracts Format
@@ -148,7 +148,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Prepare Environment Variables
@@ -204,7 +204,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Prepare Environment Variables
@@ -249,7 +249,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Install packages
@@ -286,7 +286,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: v1.2.2
           cache: false
 
       - name: Install packages
@@ -309,7 +309,7 @@ jobs:
   #     - name: Install Foundry
   #       uses: foundry-rs/foundry-toolchain@v1
   #       with:
-  #         version: stable
+  #         version: v1.2.2
   #         cache: false
 
   #     - name: Setup node/yarn
