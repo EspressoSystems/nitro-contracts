@@ -417,7 +417,9 @@ contract SequencerInbox is
     );
     // verify the the reportDataHash was signed by the a registered ephemeral key
     // generated inside a registered TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+    if (!espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster)) {
+      revert IEspressoTEEVerifier.InvalidSignature();
+    }
     // signature from a registered ephemeral key generated inside TEE
     // was verified over the batch data hash
     emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -482,7 +484,9 @@ contract SequencerInbox is
       )
     );
     // verify the quote for the batch poster running in the TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+    if (!espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster)) {
+      revert IEspressoTEEVerifier.InvalidSignature();
+    }
     emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
     addSequencerL2BatchFromBlobsImpl(
@@ -699,7 +703,9 @@ contract SequencerInbox is
         )
       );
 
-      espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+      if (!espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster)) {
+        revert IEspressoTEEVerifier.InvalidSignature();
+      }
       // signature from a registered ephemeral key generated inside a registered TEE
       // was verified over the batch data hash
       emit TEESignatureVerified(sequenceNumber, hotshotHeight);
