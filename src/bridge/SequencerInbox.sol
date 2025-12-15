@@ -436,8 +436,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory signatures
+        bytes memory espressoMetadata
     ) private {
+        (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -445,16 +446,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 afterDelayedMessagesRead,
                 address(gasRefunder),
                 prevMessageCount,
-                newMessageCount
+                newMessageCount,
+                hotshotHeight
             )
         );
          // verify the the reportDataHash was signed by the batch posters
-        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
         if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
           revert InvalidTimeboostSignatures();
         }
         // quorum of signatures from keymanagement contract
-        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
     }
 
     function addSequencerL2BatchFromBlobs(
@@ -551,12 +552,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory signatures
+        bytes memory espressoMetadata
     ) private {
         bytes32[] memory dataHashes = reader4844.getDataHashes();
         if (dataHashes.length == 0) revert MissingDataHashes();
         // take keccak2256 hash of all the function arguments and encode packed blob hashes
         // except the quote
+        (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
         bytes32 reportDataHash = keccak256(
             abi.encode(
                 sequenceNumber,
@@ -564,16 +566,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 address(gasRefunder),
                 prevMessageCount,
                 newMessageCount,
-                abi.encode(dataHashes)
+                abi.encode(dataHashes),
+                hotshotHeight
             )
         );
         // verify the the reportDataHash was signed by the batch posters
-        bytes[] memory sigs = abi.decode(signatures, (bytes[]));
         if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
           revert InvalidTimeboostSignatures();
         }
         // quorum of signatures from keymanagement contract
-        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
     }
 
     /**
@@ -609,28 +611,28 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount,
-        bytes memory signatures
+        bytes memory espressoMetadata
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         // take keccak2256 hash of all the function arguments
         // along with the hotshot height
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                data,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount
-                )
-        );
-
         if (msg.sender != address(rollup)) {
-            bytes[] memory sigs = abi.decode(signatures, (bytes[]));
+            (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
+            bytes32 reportDataHash = keccak256(
+                abi.encode(
+                    sequenceNumber,
+                    data,
+                    afterDelayedMessagesRead,
+                    address(gasRefunder),
+                    prevMessageCount,
+                    newMessageCount,
+                    hotshotHeight
+                )
+            );
             if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
-            revert InvalidTimeboostSignatures();
+                revert InvalidTimeboostSignatures();
             }
             // quorum of signatures from keymanagement contract
-            emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber);
+            emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,

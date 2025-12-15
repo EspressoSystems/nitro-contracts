@@ -43,7 +43,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
 
     /// @dev Quorum of signatures verified from KeyManagerContract
-    event DecentralizedTimeboostQuorumSignaturesVerified(uint256 indexed sequenceNumber);
+    event DecentralizedTimeboostQuorumSignaturesVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
