@@ -464,7 +464,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert InvalidTimeboostSignatures();
     }
     // quorum of signatures from keymanagement contract
-    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -521,7 +521,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           revert InvalidTimeboostSignatures();
       }
       // quorum of signatures from keymanagement contract
-      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
       addSequencerL2BatchFromBlobsImpl(
         sequenceNumber,
         afterDelayedMessagesRead,
@@ -741,7 +741,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert InvalidTimeboostSignatures();
       }
       // quorum of signatures from keymanagement contract
-      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
     }
 
     addSequencerL2BatchFromCalldataImpl(
