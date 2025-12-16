@@ -455,7 +455,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           revert InvalidTimeboostSignatures();
         }
         // quorum of signatures from keymanagement contract
-        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
     }
 
     function addSequencerL2BatchFromBlobs(
@@ -575,7 +575,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           revert InvalidTimeboostSignatures();
         }
         // quorum of signatures from keymanagement contract
-        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+        emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
     }
 
     /**
@@ -632,7 +632,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 revert InvalidTimeboostSignatures();
             }
             // quorum of signatures from keymanagement contract
-            emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, hotshotHeight);
+            emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
         }
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             data,
