@@ -161,7 +161,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
+      decentralizedTimeboostKeyManager: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds
@@ -405,7 +405,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
+      decentralizedTimeboostKeyManager: address(new EspressoTEEVerifierMock())
     });
 
     // approve fee token to pay for deployment of L2 factories
@@ -644,7 +644,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
+      decentralizedTimeboostKeyManager: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds

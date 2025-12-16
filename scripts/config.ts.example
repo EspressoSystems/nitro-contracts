@@ -33,7 +33,7 @@ export const config = {
       max: ethers.BigNumber.from('14400'),
       replenishRateInBasis: ethers.BigNumber.from('833'),
     }
-    espressoTEEVerifier: '0xb562622f2D76F355D673560CB88c1dF6088702f1',
+    decentralizedTimeboostKeyManager: '0xb562622f2D76F355D673560CB88c1dF6088702f1',
   },
   validators: [
     '0x1234123412341234123412341234123412341234',

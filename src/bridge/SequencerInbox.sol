@@ -35,7 +35,8 @@ import {
     DelayProofRequired,
     BadBufferConfig,
     ExtraGasNotUint64,
-    KeysetTooLarge
+    KeysetTooLarge,
+    InvalidTimeboostSignatures
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -65,7 +66,8 @@ import '../libraries/ArbitrumChecker.sol';
 import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-
+import {KeyManager} from "timeboost-contracts/KeyManager.sol";
+import {MockKeyManager} from "timeboost-contracts/mocks/MockKeyManager.sol";
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -155,7 +157,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
   // True if the SequencerInbox is delay bufferable
   bool public immutable isDelayBufferable;
 
-  IEspressoTEEVerifier public espressoTEEVerifier;
+  KeyManager public timeboostKeyManager;
 
   constructor(
     uint256 _maxDataSize,
@@ -220,7 +222,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
     BufferConfig memory bufferConfig_,
     IFeeTokenPricer feeTokenPricer_,
-    address _espressoTEEVerifier
+    address _timeboostKeyManager
   ) external onlyDelegated {
     if (bridge != IBridge(address(0))) revert AlreadyInit();
     if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -251,7 +253,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     feeTokenPricer = feeTokenPricer_;
 
-    espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+    timeboostKeyManager = KeyManager(_timeboostKeyManager);
   }
 
   /// @notice Allows the rollup owner to sync the rollup address
@@ -437,20 +439,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bytes memory espressoMetadata
   ) external refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
-    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
     // Question for Espresso Team
     // Should we check the quote here?
 
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-
     // take keccak2256 hash of all the function arguments
     // along with the hotshot height
+    (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
     bytes32 reportDataHash = keccak256(
       abi.encode(
         sequenceNumber,
@@ -462,12 +459,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         hotshotHeight
       )
     );
-    // verify the the reportDataHash was signed by the a registered ephemeral key
-    // generated inside a registered TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-    // signature from a registered ephemeral key generated inside TEE
-    // was verified over the batch data hash
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    // verify the the reportDataHash was signed by the batch posters
+    if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+        revert InvalidTimeboostSignatures();
+    }
+    // quorum of signatures from keymanagement contract
+    emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -499,41 +496,39 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 newMessageCount,
     bytes memory espressoMetadata
   ) external refundsGas(gasRefunder, reader4844) {
-    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
     bytes32[] memory dataHashes = reader4844.getDataHashes();
     if (dataHashes.length == 0) revert MissingDataHashes();
-
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-    // take keccak2256 hash of all the function arguments and encode packed blob hashes
-    // except the quote
-    bytes32 reportDataHash = keccak256(
-      abi.encode(
+      // take keccak2256 hash of all the function arguments and encode packed blob hashes
+      // except the quote
+      (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
+      bytes32 reportDataHash = keccak256(
+        abi.encode(
+          sequenceNumber,
+          afterDelayedMessagesRead,
+          address(gasRefunder),
+          prevMessageCount,
+          newMessageCount,
+          abi.encode(dataHashes),
+          hotshotHeight
+        )
+      );
+      // verify the the reportDataHash was signed by the batch posters
+      
+      if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+          revert InvalidTimeboostSignatures();
+      }
+      // quorum of signatures from keymanagement contract
+      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
+      addSequencerL2BatchFromBlobsImpl(
         sequenceNumber,
         afterDelayedMessagesRead,
-        address(gasRefunder),
         prevMessageCount,
-        newMessageCount,
-        abi.encode(dataHashes),
-        hotshotHeight
-      )
-    );
-    // verify the quote for the batch poster running in the TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
-    addSequencerL2BatchFromBlobsImpl(
-      sequenceNumber,
-      afterDelayedMessagesRead,
-      prevMessageCount,
-      newMessageCount
-    );
-  }
-
+        newMessageCount
+      );
+  } 
   /// @inheritdoc ISequencerInbox
   function addSequencerL2BatchFromBlobsDelayProof(
     uint256 sequenceNumber,
@@ -712,7 +707,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
    * @param gasRefunder - the gas refunder contract
    * @param prevMessageCount - the number of messages in the previous batch
    * @param newMessageCount - the number of messages in the new batch
-   * @param espressoMetadata - the signature, the hotshot height, and TeeType
+   * @param signatures - the signature, the hotshot height, and TeeType
    */
   function addSequencerL2Batch(
     uint256 sequenceNumber,
@@ -723,23 +718,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 newMessageCount,
     bytes memory espressoMetadata
   ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
-    if (!isBatchPoster[msg.sender] && msg.sender != address(rollup))
-      revert NotBatchPoster();
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
     // Question for Espresso Team
     // Same question as above
-
-    // Only check the attestation quote if the batch has been posted by the
-    // batch poster
-    if (isBatchPoster[msg.sender]) {
-      (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-          espressoMetadata,
-          (uint256, bytes, IEspressoTEEVerifier.TeeType)
-      );
-      // take keccak2256 hash of all the function arguments
-      // along with the hotshot height
+    // take keccak2256 hash of all the function arguments
+    if (msg.sender != address(rollup)) {
+      (bytes[] memory sigs, uint256 hotshotHeight) = abi.decode(espressoMetadata, (bytes[], uint256));
       bytes32 reportDataHash = keccak256(
         abi.encode(
           sequenceNumber,
@@ -751,11 +737,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
           hotshotHeight
         )
       );
-
-      espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-      // signature from a registered ephemeral key generated inside a registered TEE
-      // was verified over the batch data hash
-      emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+      if (!timeboostKeyManager.verifyQuorumSignatures(reportDataHash, sigs)) {
+        revert InvalidTimeboostSignatures();
+      }
+      // quorum of signatures from keymanagement contract
+      emit DecentralizedTimeboostQuorumSignaturesVerified(sequenceNumber, newMessageCount, hotshotHeight);
     }
 
     addSequencerL2BatchFromCalldataImpl(
@@ -1191,10 +1177,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     emit BufferConfigSet(bufferConfig_);
   }
 
-  function setEspressoTEEVerifier(
-    address _espressoTEEVerifier
+  function setTimeboostKeyManager(
+    address _timeboostKeyManager
   ) external onlyRollupOwner {
-    espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+    timeboostKeyManager = KeyManager(_timeboostKeyManager);
     emit OwnerFunctionCalled(6);
   }
 

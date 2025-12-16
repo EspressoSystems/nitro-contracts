@@ -39,7 +39,7 @@ struct Config {
   uint64 challengeGracePeriodBlocks;
   BufferConfig bufferConfig;
   // address of the TEE verifier contract
-  address espressoTEEVerifier;
+  address decentralizedTimeboostKeyManager;
 }
 
 struct ContractDependencies {

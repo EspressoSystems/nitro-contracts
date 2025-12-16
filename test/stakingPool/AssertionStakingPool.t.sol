@@ -215,7 +215,7 @@ contract AssertionPoolTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(espressoTEEVerifier)
+      decentralizedTimeboostKeyManager: address(espressoTEEVerifier)
     });
 
     vm.expectEmit(false, false, false, false);

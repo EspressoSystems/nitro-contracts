@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
 import '../bridge/SequencerInbox.sol';
 import '../bridge/IEthBridge.sol';
 import { INITIALIZATION_MSG_TYPE } from '../libraries/MessageTypes.sol';
+import {KeyManager} from "timeboost-contracts/KeyManager.sol";
 
 contract SequencerInboxStub is SequencerInbox {
   constructor(
@@ -17,7 +18,7 @@ contract SequencerInboxStub is SequencerInbox {
     IReader4844 reader4844_,
     bool isUsingFeeToken_,
     bool isDelayBufferable_,
-    address espressoTEEVerifier_
+    address timeboostKeyManager_
   )
     SequencerInbox(
       maxDataSize_,
@@ -33,7 +34,7 @@ contract SequencerInboxStub is SequencerInbox {
     delaySeconds = uint64(maxTimeVariation_.delaySeconds);
     futureSeconds = uint64(maxTimeVariation_.futureSeconds);
     isBatchPoster[sequencer_] = true;
-    espressoTEEVerifier = IEspressoTEEVerifier(espressoTEEVerifier_);
+    timeboostKeyManager = KeyManager(timeboostKeyManager_);
   }
 
   function addInitMessage(uint256 chainId) external {

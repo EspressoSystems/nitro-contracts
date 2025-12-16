@@ -72,6 +72,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
   /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
   event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
 
+  /// @dev Quorum of signatures verified from KeyManagerContract
+  event DecentralizedTimeboostQuorumSignaturesVerified(uint256 indexed sequenceNumber, uint256 indexed newMessageCount, uint256 indexed hotshotHeight);
+
   function totalDelayedMessagesRead() external view returns (uint256);
 
   function bridge() external view returns (IBridge);

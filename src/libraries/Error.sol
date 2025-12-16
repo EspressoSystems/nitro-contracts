@@ -217,3 +217,6 @@ error ExtraGasNotUint64();
 
 /// @dev Thrown when keysetBytes is too large
 error KeysetTooLarge();
+
+/// @dev Thrown when when invalid signatures or not enough signatures
+error InvalidTimeboostSignatures();

@@ -7,3 +7,7 @@
 [submodule "src/precompiles"]
 	path = src/precompiles
 	url = https://github.com/OffchainLabs/nitro-precompile-interfaces.git
+[submodule "lib/timeboost-contracts"]
+	path = lib/timeboost-contracts
+	url = https://github.com/EspressoSystems/timeboost-contracts.git
+	branch = li/temp

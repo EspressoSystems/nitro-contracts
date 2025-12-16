@@ -67,8 +67,8 @@ export async function createRollup(
   rollupCreatorAddress: string,
   feeToken: string,
   feeTokenPricer: string,
-  stakeToken: string
-  espressoTEEVerifierAddress: string,
+  stakeToken: string,
+  decentralizedTimeboostKeyManager: string,
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -113,7 +113,8 @@ export async function createRollup(
             feeToken,
             feeTokenPricer,
             validatorWalletCreator,
-            stakeToken
+            stakeToken,
+            decentralizedTimeboostKeyManager
           )
         : {
             config: config.config,
@@ -237,7 +238,7 @@ async function _getDevRollupConfig(
   feeTokenPricer: string,
   validatorWalletCreator: string,
   stakeToken: string,
-  espressoTEEVerifierAddress: string
+  decentralizedTimeboostKeyManager: string
 ): Promise<RollupCreator.RollupDeploymentParamsStruct> {
   // set up owner address
   const ownerAddress =
@@ -347,7 +348,7 @@ async function _getDevRollupConfig(
       futureSeconds: ethers.BigNumber.from('3600'),
     },
     anyTrustFastConfirmer: ethers.constants.AddressZero,
-    espressoTEEVerifier: espressoTEEVerifierAddress,
+    decentralizedTimeboostKeyManager: decentralizedTimeboostKeyManager,
   }
 
   return {
