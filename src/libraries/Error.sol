@@ -202,3 +202,5 @@ error BadMaxTimeVariation();
 
 /// @dev Thrown when Blobstream verification fails for a Celestia Data Root
 error InvalidCelestiaBatch();
+/// @dev Thrown when TEE signature verification fails
+error TEEVerificationFailed();

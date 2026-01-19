@@ -7,13 +7,10 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
+import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {
-    V3QuoteVerifier
-} from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
 
 contract RollupMock {
     address public immutable owner;
@@ -69,7 +66,6 @@ contract SequencerInboxTest is Test {
     address batchPosterEphemeralAddress = address(0xe2148eE53c0755215Df69b2616E552154EdC584f);
 
     EspressoTEEVerifierMock espressoTEEVerifier;
-    V3QuoteVerifier quoteVerifier;
     bytes sampleQuote;
 
     function setUp() public {

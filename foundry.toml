@@ -22,7 +22,9 @@ libs = ['node_modules', 'lib']
 cache_path  = 'forge-cache/yul'
 remappings = []
 auto_detect_remappings = false
-lint.lint_on_build = false
+
+[profile.yul.lint]
+lint_on_build = false
 
 [fmt]
 number_underscore = 'thousands'
