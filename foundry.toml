@@ -27,6 +27,9 @@ remappings = []
 auto_detect_remappings = false
 lint.lint_on_build = false
 
+[profile.yul.lint]
+lint_on_build = false
+
 [fmt]
 number_underscore = 'thousands'
 line_length = 100
