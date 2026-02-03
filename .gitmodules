@@ -1,3 +1,7 @@
 [submodule "lib/espresso-tee-contracts"]
 	path = lib/espresso-tee-contracts
 	url = https://github.com/EspressoSystems/espresso-tee-contracts
+[submodule "lib/timeboost-contracts"]
+	path = lib/timeboost-contracts
+	url = https://github.com/EspressoSystems/timeboost-contracts.git
+	branch = li/verify-batch-signature

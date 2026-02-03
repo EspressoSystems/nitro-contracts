@@ -142,7 +142,7 @@ contract RollupCreator is Ownable {
             address(rollup),
             deployParams.nativeToken,
             deployParams.config.sequencerInboxMaxTimeVariation,
-            deployParams.config.espressoTEEVerifier
+            deployParams.config.decentralizedTimeboostKeyManager
         );
 
         IChallengeManager challengeManager = IChallengeManager(
