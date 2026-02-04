@@ -5,15 +5,14 @@ import "./AbsRollupEventInbox.t.sol";
 import {TestUtil} from "./util/TestUtil.sol";
 import {ERC20RollupEventInbox} from "../../src/rollup/ERC20RollupEventInbox.sol";
 import {ERC20Bridge, IERC20Bridge, IOwnable} from "../../src/bridge/ERC20Bridge.sol";
-import {ERC20PresetMinterPauser} from
-    "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {TestERC20Minter} from "./util/TestERC20.sol";
 
 contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
     function setUp() public {
         rollupEventInbox =
             IRollupEventInbox(TestUtil.deployProxy(address(new ERC20RollupEventInbox())));
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
+        address nativeToken = address(new TestERC20Minter("Appchain Token", "App"));
         IERC20Bridge(address(bridge)).initialize(IOwnable(rollup), nativeToken);
 
         vm.prank(rollup);

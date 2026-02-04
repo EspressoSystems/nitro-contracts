@@ -14,8 +14,8 @@ import {MAX_UPSCALE_AMOUNT} from "../libraries/Constants.sol";
 
 import {DecimalsConverterHelper} from "../libraries/DecimalsConverterHelper.sol";
 
-import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
@@ -38,7 +38,7 @@ contract ERC20Inbox is AbsInbox, IERC20Inbox {
 
         // inbox holds native token in transit used to pay for retryable tickets, approve bridge to use it
         address nativeToken = IERC20Bridge(address(bridge)).nativeToken();
-        IERC20(nativeToken).safeApprove(address(bridge), type(uint256).max);
+        IERC20(nativeToken).forceApprove(address(bridge), type(uint256).max);
     }
 
     /// @inheritdoc IERC20Inbox
@@ -46,7 +46,7 @@ contract ERC20Inbox is AbsInbox, IERC20Inbox {
         address dest = msg.sender;
 
         // solhint-disable-next-line avoid-tx-origin
-        if (AddressUpgradeable.isContract(msg.sender) || tx.origin != msg.sender) {
+        if (msg.sender.code.length > 0 || tx.origin != msg.sender) {
             // isContract check fails if this function is called during a contract's constructor.
             dest = AddressAliasHelper.applyL1ToL2Alias(msg.sender);
         }

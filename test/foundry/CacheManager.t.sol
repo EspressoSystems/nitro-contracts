@@ -16,7 +16,7 @@ contract CacheManagerTest is Test {
     ArbWasmCacheMock internal constant ARB_WASM_CACHE = ArbWasmCacheMock(address(0x72));
 
     constructor() {
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin(address(this));
         CacheManager cacheManagerImpl = new CacheManager();
         cacheManager = CacheManager(
             address(

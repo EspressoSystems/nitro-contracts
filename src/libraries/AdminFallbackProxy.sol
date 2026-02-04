@@ -5,12 +5,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/Proxy.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/StorageSlot.sol";
+import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
 
-/// @notice An extension to OZ's ERC1967Upgrade implementation to support two logic contracts
-abstract contract DoubleLogicERC1967Upgrade is ERC1967Upgrade {
+/// @notice An extension to OZ's ERC1967Utils implementation to support two logic contracts
+abstract contract DoubleLogicERC1967Upgrade {
     // This is the keccak-256 hash of "eip1967.proxy.implementation.secondary" subtracted by 1
     bytes32 internal constant _IMPLEMENTATION_SECONDARY_SLOT =
         0x2b1dbce74324248c222f0ec2d5ed7bd323cfc425b336f0253c5ccfda7265546d;
@@ -36,7 +37,7 @@ abstract contract DoubleLogicERC1967Upgrade is ERC1967Upgrade {
      */
     function _setSecondaryImplementation(address newImplementation) private {
         require(
-            Address.isContract(newImplementation),
+            newImplementation.code.length > 0,
             "ERC1967: new secondary implementation is not a contract"
         );
         StorageSlot.getAddressSlot(_IMPLEMENTATION_SECONDARY_SLOT).value = newImplementation;
@@ -114,16 +115,16 @@ contract AdminFallbackProxy is Proxy, DoubleLogicERC1967Upgrade {
         bytes memory userData,
         address adminAddr
     ) internal {
-        assert(_ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
+        assert(ERC1967Utils.ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
         assert(
-            _IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+            ERC1967Utils.IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
         );
         assert(
             _IMPLEMENTATION_SECONDARY_SLOT ==
                 bytes32(uint256(keccak256("eip1967.proxy.implementation.secondary")) - 1)
         );
-        _changeAdmin(adminAddr);
-        _upgradeToAndCall(adminLogic, adminData, false);
+        ERC1967Utils.changeAdmin(adminAddr);
+        ERC1967Utils.upgradeToAndCall(adminLogic, adminData);
         _upgradeSecondaryToAndCall(userLogic, userData, false);
     }
 
@@ -134,11 +135,11 @@ contract AdminFallbackProxy is Proxy, DoubleLogicERC1967Upgrade {
         // if the admin is disabled, all calls will be forwarded to user logic
         // admin affordances can be disabled by setting to a no-op smart contract
         // since there is a check for contract code before updating the value
-        address target = _getAdmin() != msg.sender
+        address target = ERC1967Utils.getAdmin() != msg.sender
             ? DoubleLogicERC1967Upgrade._getSecondaryImplementation()
-            : ERC1967Upgrade._getImplementation();
+            : ERC1967Utils.getImplementation();
         // implementation setters do an existence check, but we protect against selfdestructs this way
-        require(Address.isContract(target), "TARGET_NOT_CONTRACT");
+        require(target.code.length > 0, "TARGET_NOT_CONTRACT");
         return target;
     }
 
@@ -147,7 +148,7 @@ contract AdminFallbackProxy is Proxy, DoubleLogicERC1967Upgrade {
      * the admin is expected to interact only with the primary logic contract, which handles contract
      * upgrades using the UUPS approach
      */
-    function _beforeFallback() internal override {
-        super._beforeFallback();
+    function _beforeFallback() internal virtual {
+        // No-op - admin is allowed to fall through to logic
     }
 }

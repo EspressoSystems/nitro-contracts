@@ -5,6 +5,9 @@ import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/challenge/ChallengeManager.sol";
 import "../../src/osp/OneStepProofEntry.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract ChallengeManagerTest is Test {
     IChallengeResultReceiver resultReceiver = IChallengeResultReceiver(address(137));
@@ -13,14 +16,16 @@ contract ChallengeManagerTest is Test {
     IOneStepProofEntry osp = IOneStepProofEntry(address(140));
     IOneStepProofEntry newOsp = IOneStepProofEntry(address(141));
     IOneStepProofEntry condOsp = IOneStepProofEntry(address(142));
-    address proxyAdmin = address(141);
+    address proxyOwner = address(141);
+    ProxyAdmin proxyAdmin;
     ChallengeManager chalmanImpl = new ChallengeManager();
 
     bytes32 randomRoot = keccak256(abi.encodePacked("randomRoot"));
 
     function deploy() public returns (ChallengeManager) {
+        proxyAdmin = new ProxyAdmin(proxyOwner);
         ChallengeManager chalman = ChallengeManager(
-            address(new TransparentUpgradeableProxy(address(chalmanImpl), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(chalmanImpl), address(proxyAdmin), ""))
         );
         chalman.initialize(resultReceiver, sequencerInbox, bridge, osp);
         assertEq(
@@ -87,8 +92,9 @@ contract ChallengeManagerTest is Test {
         );
 
         /// do upgrade
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(chalman))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdmin.upgradeAndCall(
+            ITransparentUpgradeableProxy(payable(address(chalman))),
             address(chalmanImpl),
             abi.encodeWithSelector(
                 ChallengeManager.postUpgradeInit.selector,
@@ -146,8 +152,9 @@ contract ChallengeManagerTest is Test {
     function testPostUpgradeInit() public {
         ChallengeManager chalman = deploy();
 
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(chalman))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdmin.upgradeAndCall(
+            ITransparentUpgradeableProxy(payable(address(chalman))),
             address(chalmanImpl),
             abi.encodeWithSelector(
                 ChallengeManager.postUpgradeInit.selector,
@@ -164,14 +171,14 @@ contract ChallengeManagerTest is Test {
     function testPostUpgradeInitFailsNotAdmin() public {
         ChallengeManager chalman = deploy();
 
-        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, address(151), proxyAdmin));
+        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, address(151), proxyOwner));
         vm.prank(address(151));
         chalman.postUpgradeInit(newOsp, randomRoot, condOsp);
     }
 
     function testPostUpgradeInitFailsNotDelCall() public {
         vm.expectRevert(bytes("Function must be called through delegatecall"));
-        vm.prank(proxyAdmin);
+        vm.prank(proxyOwner);
         chalmanImpl.postUpgradeInit(newOsp, randomRoot, condOsp);
     }
 }

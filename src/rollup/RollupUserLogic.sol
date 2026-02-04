@@ -4,7 +4,8 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 import {IRollupUser} from "./IRollupLogic.sol";
 import "../libraries/UUPSNotUpgradeable.sol";
@@ -561,7 +562,7 @@ abstract contract AbsRollupUserLogic is
     }
 
     function owner() external view returns (address) {
-        return _getAdmin();
+        return ERC1967Utils.getAdmin();
     }
 
     function currentRequiredStake() public view returns (uint256) {
@@ -780,13 +781,13 @@ contract ERC20RollupUserLogic is AbsRollupUserLogic, IRollupUserERC20 {
     {
         uint256 amount = withdrawFunds(msg.sender);
         // This is safe because it occurs after all checks and effects
-        require(IERC20Upgradeable(stakeToken).transfer(msg.sender, amount), "TRANSFER_FAILED");
+        require(IERC20(stakeToken).transfer(msg.sender, amount), "TRANSFER_FAILED");
         return amount;
     }
 
     function receiveTokens(uint256 tokenAmount) private {
         require(
-            IERC20Upgradeable(stakeToken).transferFrom(msg.sender, address(this), tokenAmount),
+            IERC20(stakeToken).transferFrom(msg.sender, address(this), tokenAmount),
             "TRANSFER_FAIL"
         );
     }

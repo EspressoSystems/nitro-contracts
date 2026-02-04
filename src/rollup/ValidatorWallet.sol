@@ -60,8 +60,7 @@ contract ValidatorWallet is OwnableUpgradeable, DelegateCallAware, GasRefundEnab
         address _owner,
         address[] calldata initialExecutorAllowedDests
     ) external initializer onlyDelegated {
-        __Ownable_init();
-        transferOwnership(_owner);
+        __Ownable_init(_owner);
 
         executors[_executor] = true;
         emit ExecutorUpdated(_executor, true);
@@ -116,7 +115,7 @@ contract ValidatorWallet is OwnableUpgradeable, DelegateCallAware, GasRefundEnab
         if (numTxes != amount.length) revert BadArrayLength(numTxes, amount.length);
 
         for (uint256 i = 0; i < numTxes; i++) {
-            if (data[i].length > 0) require(destination[i].isContract(), "NO_CODE_AT_ADDR");
+            if (data[i].length > 0) require(destination[i].code.length > 0, "NO_CODE_AT_ADDR");
             validateExecuteTransaction(destination[i]);
             // We use a low level call here to allow for contract and non-contract calls
             // solhint-disable-next-line avoid-low-level-calls
@@ -146,7 +145,7 @@ contract ValidatorWallet is OwnableUpgradeable, DelegateCallAware, GasRefundEnab
         address destination,
         uint256 amount
     ) public payable onlyExecutorOrOwner refundsGas(gasRefunder, IReader4844(address(0))) {
-        if (data.length > 0) require(destination.isContract(), "NO_CODE_AT_ADDR");
+        if (data.length > 0) require(destination.code.length > 0, "NO_CODE_AT_ADDR");
         validateExecuteTransaction(destination);
         // We use a low level call here to allow for contract and non-contract calls
         // solhint-disable-next-line avoid-low-level-calls

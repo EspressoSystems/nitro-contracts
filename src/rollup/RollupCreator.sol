@@ -56,7 +56,7 @@ contract RollupCreator is Ownable {
 
     DeployHelper public l2FactoriesDeployer;
 
-    constructor() Ownable() {}
+    constructor() Ownable(msg.sender) {}
 
     // creator receives back excess fees (for deploying L2 factories) so it can refund the caller
     receive() external payable {}
@@ -133,7 +133,7 @@ contract RollupCreator is Ownable {
         }
 
         // create proxy admin which will manage bridge contracts
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
 
         // Create the rollup proxy to figure out the address and initialize it later
         RollupProxy rollup = new RollupProxy{salt: keccak256(abi.encode(deployParams))}();

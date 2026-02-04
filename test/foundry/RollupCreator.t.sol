@@ -18,8 +18,13 @@ import "../../src/mocks/UpgradeExecutorMock.sol";
 import "../../src/rollup/DeployHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import "./util/TestERC20.sol";
 import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
+import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
+import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
+import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -100,7 +105,9 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        EspressoSGXTEEVerifierMock sgxMock = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock = new EspressoNitroTEEVerifierMock();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(sgxMock)), IEspressoNitroTEEVerifier(address(nitroMock)));
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -249,7 +256,7 @@ contract RollupCreatorTest is Test {
         vm.startPrank(deployer);
         address proxyAdmin = address(140);
         address nativeToken = address(
-            new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000 ether, deployer)
+            new TestERC20("Appchain Token", "App", 1_000_000 ether, deployer)
         );
 
         // deployment params
@@ -260,7 +267,9 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        EspressoSGXTEEVerifierMock sgxMock = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock = new EspressoNitroTEEVerifierMock();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(sgxMock)), IEspressoNitroTEEVerifier(address(nitroMock)));
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -418,7 +427,9 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        EspressoSGXTEEVerifierMock sgxMock = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock = new EspressoNitroTEEVerifierMock();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(sgxMock)), IEspressoNitroTEEVerifier(address(nitroMock)));
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -538,7 +549,7 @@ contract RollupCreatorTest is Test {
 
 contract ProxyUpgradeAction {
     function perform(address admin, address payable target, address newLogic) public payable {
-        ProxyAdmin(admin).upgrade(TransparentUpgradeableProxy(target), newLogic);
+        ProxyAdmin(admin).upgradeAndCall(ITransparentUpgradeableProxy(target), newLogic, "");
     }
 }
 

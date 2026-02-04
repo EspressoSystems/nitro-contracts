@@ -27,9 +27,9 @@ import {
     L2MessageType_unsignedEOATx,
     L2_MSG
 } from "../libraries/MessageTypes.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {StorageSlot} from "@openzeppelin/contracts/utils/StorageSlot.sol";
 
 /**
  * @title Inbox for user and contract originated messages
@@ -217,7 +217,7 @@ abstract contract AbsInbox is DelegateCallAware, PausableUpgradeable, IInboxBase
 
     /// @inheritdoc IInboxBase
     function getProxyAdmin() external view returns (address) {
-        return StorageSlotUpgradeable.getAddressSlot(_ADMIN_SLOT).value;
+        return StorageSlot.getAddressSlot(_ADMIN_SLOT).value;
     }
 
     function _createRetryableTicket(
@@ -245,10 +245,10 @@ abstract contract AbsInbox is DelegateCallAware, PausableUpgradeable, IInboxBase
         // if a refund address is a contract, we apply the alias to it
         // so that it can access its funds on the L2
         // since the beneficiary and other refund addresses don't get rewritten by arb-os
-        if (AddressUpgradeable.isContract(excessFeeRefundAddress)) {
+        if (excessFeeRefundAddress.code.length > 0) {
             excessFeeRefundAddress = AddressAliasHelper.applyL1ToL2Alias(excessFeeRefundAddress);
         }
-        if (AddressUpgradeable.isContract(callValueRefundAddress)) {
+        if (callValueRefundAddress.code.length > 0) {
             // this is the beneficiary. be careful since this is the address that can cancel the retryable in the L2
             callValueRefundAddress = AddressAliasHelper.applyL1ToL2Alias(callValueRefundAddress);
         }

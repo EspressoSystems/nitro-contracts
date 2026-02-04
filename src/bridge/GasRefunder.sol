@@ -79,7 +79,7 @@ contract GasRefunder is IGasRefunder, Ownable {
     event DisallowerSet(address indexed addr);
     event CommonParameterSet(CommonParameterKey indexed parameter, uint256 value);
 
-    constructor() Ownable() {
+    constructor() Ownable(msg.sender) {
         commonParams = CommonParameters({
             maxRefundeeBalance: 0, // no limit
             extraGasMargin: 4000, // 4k gas

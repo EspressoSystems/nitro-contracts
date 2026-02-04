@@ -3,11 +3,9 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "../../src/express-lane-auction/ExpressLaneAuction.sol";
-import {
-    ERC20Burnable,
-    IERC20
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
@@ -122,7 +120,7 @@ contract ExpressLaneAuctionTest is Test {
 
     function deploy() internal returns (MockERC20, IExpressLaneAuction) {
         MockERC20 token = new MockERC20();
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
         ExpressLaneAuction impl = new ExpressLaneAuction();
 
         ExpressLaneAuction auction = ExpressLaneAuction(
@@ -193,7 +191,7 @@ contract ExpressLaneAuctionTest is Test {
 
     function testInit() public {
         MockERC20 token = new MockERC20();
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
         ExpressLaneAuction impl = new ExpressLaneAuction();
         InitArgs memory args = createArgs(address(token));
 
@@ -983,7 +981,7 @@ contract ExpressLaneAuctionTest is Test {
         MockERC20 erc20 = new MockERC20();
         Burner burner = new Burner(address(erc20));
         {
-            ProxyAdmin proxyAdmin = new ProxyAdmin();
+            ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
             ExpressLaneAuction impl = new ExpressLaneAuction();
 
             auction = ExpressLaneAuction(

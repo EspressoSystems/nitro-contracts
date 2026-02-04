@@ -6,11 +6,17 @@ import "./util/TestUtil.sol";
 import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {TestERC20Minter} from "./util/TestERC20.sol";
 import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
+import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
+import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
+import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {
     V3QuoteVerifier
 } from "@automata-network/dcap-attestation/contracts/verifiers/V3QuoteVerifier.sol";
@@ -58,7 +64,8 @@ contract SequencerInboxTest is Test {
             futureSeconds: 100
         });
     address dummyInbox = address(139);
-    address proxyAdmin = address(140);
+    address proxyOwner = address(140);
+    ProxyAdmin proxyAdminContract;
     bytes32 mrEnclave = bytes32(0x51dfe95acffa8a4075b716257c836895af9202a5fd56c8c2208dacb79c659ff0);
     bytes32 mrSigner = bytes32(0x0c8242bba090f54b10de0c2d1ca4b633b9c08b7178451c71d737c214b72fc836);
     IReader4844 dummyReader4844 = IReader4844(address(137));
@@ -75,7 +82,14 @@ contract SequencerInboxTest is Test {
     function setUp() public {
         vm.startPrank(adminTEE);
 
-        espressoTEEVerifier = new EspressoTEEVerifierMock();
+        proxyAdminContract = new ProxyAdmin(proxyOwner);
+
+        EspressoSGXTEEVerifierMock sgxMock = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock = new EspressoNitroTEEVerifierMock();
+        espressoTEEVerifier = new EspressoTEEVerifierMock(
+            IEspressoSGXTEEVerifier(address(sgxMock)),
+            IEspressoNitroTEEVerifier(address(nitroMock))
+        );
 
         vm.stopPrank();
     }
@@ -84,7 +98,7 @@ contract SequencerInboxTest is Test {
         RollupMock rollupMock = new RollupMock(rollupOwner);
         Bridge bridgeImpl = new Bridge();
         Bridge bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(bridgeImpl), address(proxyAdminContract), ""))
         );
 
         bridge.initialize(IOwnable(address(rollupMock)));
@@ -97,7 +111,7 @@ contract SequencerInboxTest is Test {
             false
         );
         SequencerInbox seqInbox = SequencerInbox(
-            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(seqInboxImpl), address(proxyAdminContract), ""))
         );
         seqInbox.initialize(bridge, maxTimeVariation, address(espressoTEEVerifier));
 
@@ -114,9 +128,9 @@ contract SequencerInboxTest is Test {
         RollupMock rollupMock = new RollupMock(rollupOwner);
         ERC20Bridge bridgeImpl = new ERC20Bridge();
         ERC20Bridge bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(bridgeImpl), address(proxyAdminContract), ""))
         );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
+        address nativeToken = address(new TestERC20Minter("Appchain Token", "App"));
 
         bridge.initialize(IOwnable(address(rollupMock)), nativeToken);
         vm.prank(rollupOwner);
@@ -135,7 +149,7 @@ contract SequencerInboxTest is Test {
             true
         );
         SequencerInbox seqInbox = SequencerInbox(
-            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(seqInboxImpl), address(proxyAdminContract), ""))
         );
         seqInbox.initialize(bridge, maxTimeVariation, address(espressoTEEVerifier));
 
@@ -309,7 +323,7 @@ contract SequencerInboxTest is Test {
 
     function testInitialize() public {
         Bridge _bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(new Bridge()), address(proxyAdminContract), ""))
         );
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
@@ -324,9 +338,9 @@ contract SequencerInboxTest is Test {
 
     function testInitialize_FeeTokenBased() public {
         ERC20Bridge _bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), address(proxyAdminContract), ""))
         );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
+        address nativeToken = address(new TestERC20Minter("Appchain Token", "App"));
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true));
@@ -340,7 +354,7 @@ contract SequencerInboxTest is Test {
 
     function testInitialize_revert_NativeTokenMismatch_EthFeeToken() public {
         Bridge _bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(new Bridge()), address(proxyAdminContract), ""))
         );
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true));
@@ -352,9 +366,9 @@ contract SequencerInboxTest is Test {
 
     function testInitialize_revert_NativeTokenMismatch_FeeTokenEth() public {
         ERC20Bridge _bridge = ERC20Bridge(
-            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), proxyAdmin, ""))
+            address(new TransparentUpgradeableProxy(address(new ERC20Bridge()), address(proxyAdminContract), ""))
         );
-        address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
+        address nativeToken = address(new TestERC20Minter("Appchain Token", "App"));
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
@@ -555,8 +569,9 @@ contract SequencerInboxTest is Test {
         (SequencerInbox seqInbox, ) = deployRollup(false);
         SequencerInbox seqInboxImpl = new SequencerInbox(maxDataSize, dummyReader4844, false);
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdminContract.upgradeAndCall(
+            ITransparentUpgradeableProxy(address(seqInbox)),
             address(seqInboxImpl),
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
@@ -574,8 +589,8 @@ contract SequencerInboxTest is Test {
         (SequencerInbox seqInbox, SequencerInbox seqInboxImpl) = testPostUpgradeInitAlreadyInit();
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdminContract.upgradeAndCall(ITransparentUpgradeableProxy(address(seqInbox)), 
             address(seqInboxImpl),
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
@@ -584,8 +599,8 @@ contract SequencerInboxTest is Test {
         vm.store(address(seqInbox), bytes32(uint256(5)), bytes32(uint256(futureBlocks))); // slot 5: futureBlocks
         vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(delaySeconds))); // slot 6: delaySeconds
         vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(futureSeconds))); // slot 7: futureSeconds
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdminContract.upgradeAndCall(ITransparentUpgradeableProxy(address(seqInbox)), 
             address(seqInboxImpl),
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
@@ -602,8 +617,8 @@ contract SequencerInboxTest is Test {
         assertEq(futureSeconds_, futureSeconds);
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdminContract.upgradeAndCall(ITransparentUpgradeableProxy(address(seqInbox)), 
             address(seqInboxImpl),
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
@@ -627,8 +642,8 @@ contract SequencerInboxTest is Test {
         vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(delaySeconds)); // slot 6: delaySeconds
         vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(futureSeconds)); // slot 7: futureSeconds
         vm.expectRevert(abi.encodeWithSelector(BadPostUpgradeInit.selector));
-        vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
+        vm.prank(proxyOwner);
+        proxyAdminContract.upgradeAndCall(ITransparentUpgradeableProxy(address(seqInbox)), 
             address(seqInboxImpl),
             abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );

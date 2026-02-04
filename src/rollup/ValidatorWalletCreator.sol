@@ -21,7 +21,7 @@ contract ValidatorWalletCreator is Ownable {
 
     address public template;
 
-    constructor() Ownable() {
+    constructor() Ownable(msg.sender) {
         template = address(new ValidatorWallet());
     }
 
@@ -36,7 +36,7 @@ contract ValidatorWalletCreator is Ownable {
     {
         address _executor = msg.sender;
         address _owner = msg.sender;
-        ProxyAdmin admin = new ProxyAdmin();
+        ProxyAdmin admin = new ProxyAdmin(msg.sender);
         address proxy = address(
             new TransparentUpgradeableProxy(address(template), address(admin), "")
         );

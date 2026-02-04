@@ -6,7 +6,7 @@ import "./ERC20Bridge.t.sol";
 import "../../src/bridge/ERC20Bridge.sol";
 import "../../src/bridge/ERC20Outbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import "./util/TestERC20.sol";
 
 contract ERC20OutboxTest is AbsOutboxTest {
     ERC20Outbox public erc20Outbox;
@@ -17,7 +17,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
 
     function setUp() public {
         // deploy token, bridge and outbox
-        nativeToken = new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000, address(this));
+        nativeToken = new TestERC20("Appchain Token", "App", 1_000_000, address(this));
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
         erc20Bridge = ERC20Bridge(address(bridge));
         outbox = IOutbox(TestUtil.deployProxy(address(new ERC20Outbox())));

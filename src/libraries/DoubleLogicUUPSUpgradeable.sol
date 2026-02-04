@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
 
 import {DoubleLogicERC1967Upgrade} from "./AdminFallbackProxy.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 /// @notice An extension to OZ's UUPSUpgradeable contract to be used for handling UUPS upgrades with a DoubleLogicERC1967Upgrade proxy
 ///         The should be used in the primary implementation slot of the DoubleLogicUUPS proxy
@@ -13,7 +14,7 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 abstract contract DoubleLogicUUPSUpgradeable is UUPSUpgradeable, DoubleLogicERC1967Upgrade {
     /// @inheritdoc UUPSUpgradeable
     function proxiableUUID() external view override notDelegated returns (bytes32) {
-        return _IMPLEMENTATION_SLOT;
+        return ERC1967Utils.IMPLEMENTATION_SLOT;
     }
 
     /**

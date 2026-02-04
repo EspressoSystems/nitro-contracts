@@ -29,7 +29,7 @@ import {
 } from "../libraries/MessageTypes.sol";
 import "../precompiles/ArbSys.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @title Inbox for user and contract originated messages
@@ -215,7 +215,7 @@ contract Inbox is AbsInbox, IInbox {
         address dest = msg.sender;
 
         // solhint-disable-next-line avoid-tx-origin
-        if (AddressUpgradeable.isContract(msg.sender) || tx.origin != msg.sender) {
+        if (msg.sender.code.length > 0 || tx.origin != msg.sender) {
             // isContract check fails if this function is called during a contract's constructor.
             dest = AddressAliasHelper.applyL1ToL2Alias(msg.sender);
         }

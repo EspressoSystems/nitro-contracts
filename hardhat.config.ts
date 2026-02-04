@@ -28,12 +28,13 @@ const solidity = {
   ],
   overrides: {
     'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.20',
+      version: '0.8.25',
       settings: {
         optimizer: {
           enabled: true,
           runs: 0,
         },
+        viaIR: true,
       },
     },
     'src/mocks/HostioTest.sol': {

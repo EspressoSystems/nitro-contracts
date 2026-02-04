@@ -5,7 +5,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {
     NotContract,
@@ -28,7 +28,7 @@ import "../libraries/DelegateCallAware.sol";
  * outboxes that can make calls from here and withdraw this escrow.
  */
 contract BridgeTester is Initializable, DelegateCallAware, IBridge, IEthBridge {
-    using AddressUpgradeable for address;
+    using Address for address;
 
     struct InOutInfo {
         uint256 index;
@@ -182,7 +182,7 @@ contract BridgeTester is Initializable, DelegateCallAware, IBridge, IEthBridge {
         bytes calldata data
     ) external override returns (bool success, bytes memory returnData) {
         if (!allowedOutboxesMap[msg.sender].allowed) revert NotOutbox(msg.sender);
-        if (data.length > 0 && !to.isContract()) revert NotContract(to);
+        if (data.length > 0 && to.code.length == 0) revert NotContract(to);
         address prevOutbox = _activeOutbox;
         _activeOutbox = msg.sender;
         // We set and reset active outbox around external call so activeOutbox remains valid during call

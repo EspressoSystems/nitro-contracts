@@ -7,8 +7,12 @@ import "../../src/rollup/BridgeCreator.sol";
 import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import "./util/TestERC20.sol";
 import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
+import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
+import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
+import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;
@@ -124,7 +128,12 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks;
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        EspressoSGXTEEVerifierMock sgxMock = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock = new EspressoNitroTEEVerifierMock();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(
+            IEspressoSGXTEEVerifier(address(sgxMock)),
+            IEspressoNitroTEEVerifier(address(nitroMock))
+        );
 
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
@@ -188,7 +197,7 @@ contract BridgeCreatorTest is Test {
         address proxyAdmin = address(300);
         address rollup = address(301);
         address nativeToken = address(
-            new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000, address(this))
+            new TestERC20("Appchain Token", "App", 1_000_000, address(this))
         );
         ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
             10,
@@ -198,7 +207,12 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks; // TODO: what is this?
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        EspressoSGXTEEVerifierMock sgxMock2 = new EspressoSGXTEEVerifierMock();
+        EspressoNitroTEEVerifierMock nitroMock2 = new EspressoNitroTEEVerifierMock();
+        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(
+            IEspressoSGXTEEVerifier(address(sgxMock2)),
+            IEspressoNitroTEEVerifier(address(nitroMock2))
+        );
 
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,

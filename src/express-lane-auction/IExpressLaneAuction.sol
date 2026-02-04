@@ -5,11 +5,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {RoundTimingInfo} from "./RoundTimingInfo.sol";
 import {ELCRound} from "./ELCRound.sol";
 import {
-    IAccessControlEnumerableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/IAccessControlEnumerableUpgradeable.sol";
+    IAccessControlEnumerable
+} from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
 import {
-    IERC165Upgradeable
-} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
+    IERC165
+} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @notice A bid to control the express lane for a specific round
 struct Bid {
@@ -67,7 +67,7 @@ struct InitArgs {
     address _masterAdmin;
 }
 
-interface IExpressLaneAuction is IAccessControlEnumerableUpgradeable, IERC165Upgradeable {
+interface IExpressLaneAuction is IAccessControlEnumerable, IERC165 {
     /// @notice An account has deposited funds to be used for bidding in the auction
     /// @param account The account that deposited funds
     /// @param amount The amount deposited by that account

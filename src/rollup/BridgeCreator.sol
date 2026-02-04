@@ -17,6 +17,7 @@ import "../bridge/ERC20Outbox.sol";
 import "../bridge/IBridge.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract BridgeCreator is Ownable {
     BridgeContracts public ethBasedTemplates;
@@ -36,7 +37,7 @@ contract BridgeCreator is Ownable {
     constructor(
         BridgeContracts memory _ethBasedTemplates,
         BridgeContracts memory _erc20BasedTemplates
-    ) Ownable() {
+    ) Ownable(msg.sender) {
         ethBasedTemplates = _ethBasedTemplates;
         erc20BasedTemplates = _erc20BasedTemplates;
     }

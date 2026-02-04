@@ -5,7 +5,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import "./AbsBridge.sol";
 import "./IEthBridge.sol";
 import "./Messages.sol";
@@ -18,7 +18,7 @@ import {L1MessageType_batchPostingReport} from "../libraries/MessageTypes.sol";
  * @notice It is also the ETH escrow for value sent with these messages.
  */
 contract Bridge is AbsBridge, IEthBridge {
-    using AddressUpgradeable for address;
+    using Address for address;
 
     /// @inheritdoc IEthBridge
     function initialize(IOwnable rollup_) external initializer onlyDelegated {

@@ -12,6 +12,7 @@ import "../bridge/ISequencerInbox.sol";
 import "../challenge/IChallengeManager.sol";
 import "../libraries/DoubleLogicUUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 import {NO_CHAL_INDEX} from "../libraries/Constants.sol";
 
@@ -62,7 +63,7 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
         minimumAssertionPeriod = 75;
 
         // the owner can't access the rollup user facet where escrow is redeemable
-        require(config.loserStakeEscrow != _getAdmin(), "INVALID_ESCROW_ADMIN");
+        require(config.loserStakeEscrow != ERC1967Utils.getAdmin(), "INVALID_ESCROW_ADMIN");
         // this next check shouldn't be an issue if the owner controls an AdminProxy
         // that accesses the admin facet, but still seems like a good extra precaution
         require(config.loserStakeEscrow != config.owner, "INVALID_ESCROW_OWNER");
@@ -178,7 +179,7 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
      * @param newOwner address of new rollup owner
      */
     function setOwner(address newOwner) external override {
-        _changeAdmin(newOwner);
+        ERC1967Utils.changeAdmin(newOwner);
         emit OwnerFunctionCalled(7);
     }
 
@@ -307,7 +308,7 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
     function setLoserStakeEscrow(address newLoserStakerEscrow) external override {
         // escrow holder can't be proxy admin, since escrow is only redeemable through
         // the primary user logic contract
-        require(newLoserStakerEscrow != _getAdmin(), "INVALID_ESCROW");
+        require(newLoserStakerEscrow != ERC1967Utils.getAdmin(), "INVALID_ESCROW");
         loserStakeEscrow = newLoserStakerEscrow;
         emit OwnerFunctionCalled(25);
     }

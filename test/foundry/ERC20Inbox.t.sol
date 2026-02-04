@@ -10,7 +10,7 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/libraries/AddressAliasHelper.sol";
 import "../../src/libraries/Error.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {TestERC20Minter} from "./util/TestERC20.sol";
 
 contract ERC20InboxTest is AbsInboxTest {
     IERC20 public nativeToken;
@@ -18,7 +18,7 @@ contract ERC20InboxTest is AbsInboxTest {
 
     function setUp() public {
         // deploy token, bridge and inbox
-        nativeToken = new ERC20PresetMinterPauser("Appchain Token", "App");
+        nativeToken = new TestERC20Minter("Appchain Token", "App");
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
         inbox = IInboxBase(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
         erc20Inbox = IERC20Inbox(address(inbox));
@@ -30,7 +30,7 @@ contract ERC20InboxTest is AbsInboxTest {
         bridge.setDelayedInbox(address(inbox), true);
 
         // fund user account
-        ERC20PresetMinterPauser(address(nativeToken)).mint(user, 1000 ether);
+        TestERC20Minter(address(nativeToken)).mint(user, 1000 ether);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -257,7 +257,7 @@ contract ERC20InboxTest is AbsInboxTest {
         uint256 delayedMsgCountBefore = bridge.delayedMessageCount();
 
         // prefund inbox with native token amount needed to pay for fees
-        ERC20PresetMinterPauser(address(nativeToken)).mint(address(inbox), depositAmount);
+        TestERC20Minter(address(nativeToken)).mint(address(inbox), depositAmount);
 
         // expect event
         vm.expectEmit(true, true, true, true);
@@ -619,7 +619,7 @@ contract ERC20InboxTest is AbsInboxTest {
 
     function test_createRetryableTicket_FromContract() public {
         address sender = address(new Sender());
-        ERC20PresetMinterPauser(address(nativeToken)).mint(address(sender), 1000);
+        TestERC20Minter(address(nativeToken)).mint(address(sender), 1000);
 
         uint256 bridgeTokenBalanceBefore = nativeToken.balanceOf(address(bridge));
         uint256 senderTokenBalanceBefore = nativeToken.balanceOf(address(sender));
@@ -1010,7 +1010,7 @@ contract ERC20InboxTest is AbsInboxTest {
 
     function test_unsafeCreateRetryableTicket_FromContract() public {
         address sender = address(new Sender());
-        ERC20PresetMinterPauser(address(nativeToken)).mint(address(sender), 1000);
+        TestERC20Minter(address(nativeToken)).mint(address(sender), 1000);
 
         uint256 bridgeTokenBalanceBefore = nativeToken.balanceOf(address(bridge));
         uint256 senderTokenBalanceBefore = nativeToken.balanceOf(address(sender));
