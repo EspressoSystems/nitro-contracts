@@ -65,6 +65,7 @@ import '../libraries/ArbitrumChecker.sol';
 import { IERC20Bridge } from './IERC20Bridge.sol';
 import './DelayBuffer.sol';
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
+import {ServiceType} from "espresso-tee-contracts/types/Types.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -464,7 +465,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     );
     // verify the the reportDataHash was signed by the a registered ephemeral key
     // generated inside a registered TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+    espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
     // signature from a registered ephemeral key generated inside TEE
     // was verified over the batch data hash
     emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -524,7 +525,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
       )
     );
     // verify the quote for the batch poster running in the TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+    espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
     emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
@@ -752,7 +753,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         )
       );
 
-      espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+      espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
       // signature from a registered ephemeral key generated inside a registered TEE
       // was verified over the batch data hash
       emit TEESignatureVerified(sequenceNumber, hotshotHeight);
