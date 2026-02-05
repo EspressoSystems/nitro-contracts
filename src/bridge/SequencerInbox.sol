@@ -30,7 +30,8 @@ import {
     InvalidHeaderFlag,
     NativeTokenMismatch,
     BadMaxTimeVariation,
-    Deprecated
+    Deprecated,
+    TEEVerificationFailed
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -453,7 +454,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
         // verify the the reportDataHash was signed by the a registered ephemeral key
         // generated inside a registered TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        if (!result) {
+            revert TEEVerificationFailed();
+        }
         // signature from a registered ephemeral key generated inside TEE
         // was verified over the batch data hash
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
@@ -577,7 +581,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             )
         );
         // verify the signature over data hash for the batch poster running in the TEE
-        espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        if (!result) {
+            revert TEEVerificationFailed();
+        }
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     }
 

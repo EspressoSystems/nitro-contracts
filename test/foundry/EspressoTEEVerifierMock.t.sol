@@ -3,22 +3,49 @@ pragma solidity ^0.8.0;
 
 import "../../src/bridge/EspressoTEE.sol";
 
+/**
+ * @title EspressoTEEVerifierMock - Always returns true
+ */
 contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
-    /**
-     * @notice Verify signature from a registered signer. This mock always returns true.
-     * @param signature The signature of the user data
-     * @param userDataHash The hash of the user data
-     * @param teeType The type of TEE
-     * @param service The type of service
-     */
     function verify(
         bytes memory signature,
         bytes32 userDataHash,
         TeeType teeType,
         ServiceType service
     ) external view override returns (bool) {
-        // Unused parameters to avoid compiler warnings.
         (signature, userDataHash, teeType, service);
         return true;
+    }
+}
+
+/**
+ * @title EspressoTEEVerifierMockFalse - Always returns false
+ */
+contract EspressoTEEVerifierMockFalse is IEspressoTEEVerifier {
+    function verify(
+        bytes memory signature,
+        bytes32 userDataHash,
+        TeeType teeType,
+        ServiceType service
+    ) external view override returns (bool) {
+        (signature, userDataHash, teeType, service);
+        return false;
+    }
+}
+
+/**
+ * @title EspressoTEEVerifierMockRevert - Always reverts
+ */
+contract EspressoTEEVerifierMockRevert is IEspressoTEEVerifier {
+    error TEEVerificationFailed();
+    
+    function verify(
+        bytes memory signature,
+        bytes32 userDataHash,
+        TeeType teeType,
+        ServiceType service
+    ) external view override returns (bool) {
+        (signature, userDataHash, teeType, service);
+        revert TEEVerificationFailed();
     }
 }
