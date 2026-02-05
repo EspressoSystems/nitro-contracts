@@ -29,7 +29,7 @@ contract InboxTest is AbsInboxTest {
     }
 
     /* solhint-disable func-name-mixedcase */
-    function test_initialize() public view {
+    function test_initialize() public {
         assertEq(address(inbox.bridge()), address(bridge), "Invalid bridge ref");
         assertEq(address(inbox.sequencerInbox()), seqInbox, "Invalid seqInbox ref");
         assertEq(inbox.allowListEnabled(), false, "Invalid allowListEnabled");

@@ -48,8 +48,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
-import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-import {ServiceType} from "espresso-tee-contracts/types/Types.sol";
+import {IEspressoTEEVerifier, ServiceType} from "./EspressoTEE.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
