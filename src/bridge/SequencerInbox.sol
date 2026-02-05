@@ -29,6 +29,7 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
+    TEEVerificationFailed,
     CannotSetFeeTokenPricer,
     NotDelayBufferable,
     InvalidDelayedAccPreimage,
@@ -514,7 +515,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
       )
     );
     // verify the quote for the batch poster running in the TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+    bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        if (!result) {
+            revert TEEVerificationFailed();
+        }
     emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
@@ -677,6 +681,41 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
       emit SequencerBatchData(seqMessageIndex, data);
     }
   }
+
+  function _verifyBlobQuote(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) private {
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
+        if (dataHashes.length == 0) revert MissingDataHashes();
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
+        // take keccak2256 hash of all the function arguments and encode packed blob hashes
+        // except the quote
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                abi.encode(dataHashes),
+                hotshotHeight
+            )
+        );
+        // verify the signature over data hash for the batch poster running in the TEE
+        bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType, ServiceType.BatchPoster);
+        if (!result) {
+            revert TEEVerificationFailed();
+        }
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    }
 
   /**
         Deprecated because we added a new method with TEE attestation quote
