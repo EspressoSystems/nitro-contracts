@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import 'forge-std/Test.sol';
-import './util/TestUtil.sol';
-import '../../src/bridge/Bridge.sol';
-import '../../src/bridge/SequencerInbox.sol';
-import { ERC20Bridge } from '../../src/bridge/ERC20Bridge.sol';
-import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
-import { EspressoTEEVerifierMock } from '../../src/mocks/EspressoTEEVerifier.sol';
+import "forge-std/Test.sol";
+import "./util/TestUtil.sol";
+import "../../src/bridge/Bridge.sol";
+import "../../src/bridge/SequencerInbox.sol";
+import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
+import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
+import {
+    TransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract RollupMock {
   address public immutable owner;
@@ -67,8 +70,8 @@ contract SequencerInboxTest is Test {
   address fakeAddress = address(145);
   address batchPosterEphemeralAddress = address(0xe2148eE53c0755215Df69b2616E552154EdC584f);
 
-  EspressoTEEVerifierMock espressoTEEVerifier;
-  bytes sampleQuote;
+    EspressoTEEVerifierMock espressoTEEVerifier;
+    bytes sampleQuote;
 
   function setUp() public {
     vm.startPrank(adminTEE);
