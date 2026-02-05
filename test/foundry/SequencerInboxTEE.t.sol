@@ -164,7 +164,7 @@ contract SequencerInboxTEETest is Test {
 
         // Transaction should revert when verify function reverts
         vm.prank(tx.origin);
-        vm.expectRevert(EspressoTEEVerifierMockRevert.TEEVerificationFailed.selector);
+        vm.expectRevert(EspressoTEEVerifierMockRevert.InvalidSignature.selector);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             sampleData,
