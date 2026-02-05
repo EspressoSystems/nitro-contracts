@@ -195,7 +195,7 @@ contract SequencerInboxBlobsTEETest is Test {
         );
 
         // Transaction should revert when verify function reverts
-        vm.expectRevert(EspressoTEEVerifierMockRevert.TEEVerificationFailed.selector);
+        vm.expectRevert(EspressoTEEVerifierMockRevert.InvalidSignature.selector);
         seqInbox.addSequencerL2BatchFromBlobs(
             sequenceNumber,
             afterDelayedMessagesRead,

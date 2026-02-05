@@ -37,8 +37,8 @@ contract EspressoTEEVerifierMockFalse is IEspressoTEEVerifier {
  * @title EspressoTEEVerifierMockRevert - Always reverts
  */
 contract EspressoTEEVerifierMockRevert is IEspressoTEEVerifier {
-    error TEEVerificationFailed();
-    
+    error InvalidSignature();
+
     function verify(
         bytes memory signature,
         bytes32 userDataHash,
@@ -46,6 +46,6 @@ contract EspressoTEEVerifierMockRevert is IEspressoTEEVerifier {
         ServiceType service
     ) external view override returns (bool) {
         (signature, userDataHash, teeType, service);
-        revert TEEVerificationFailed();
+        revert InvalidSignature();
     }
 }
