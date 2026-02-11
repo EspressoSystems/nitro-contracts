@@ -5,15 +5,51 @@ import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
-import {Reader4844} from "../../src/mocks/Reader4844.sol";
-import {IGasRefunder} from "../../src/libraries/IGasRefunder.sol";
-import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
-import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
-import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
-import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
+import "../../src/bridge/ISequencerInbox.sol";
+import "../../src/libraries/IReader4844.sol";
+import {
+    EspressoTEEVerifierMock,
+    EspressoTEEVerifierMockFalse,
+    EspressoTEEVerifierMockRevert
+} from "./EspressoTEEVerifierMock.t.sol";
+import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
+import {TEEVerificationFailed} from "../../src/libraries/Error.sol";
+import {
+    TransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {CertManager} from "@nitro-validator/CertManager.sol";
+/**
+ * @notice Mock Reader4844 that returns configurable blob data hashes
+ */
+contract Reader4844Mock is IReader4844 {
+    bytes32[] private _dataHashes;
+    uint256 private _blobBaseFee;
+
+    constructor() {
+        // Set default blob data hash
+        _dataHashes.push(bytes32(0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef));
+        _blobBaseFee = 1 gwei;
+    }
+
+    function setDataHashes(bytes32[] memory dataHashes_) external {
+        delete _dataHashes;
+        for (uint256 i = 0; i < dataHashes_.length; i++) {
+            _dataHashes.push(dataHashes_[i]);
+        }
+    }
+
+    function setBlobBaseFee(uint256 fee) external {
+        _blobBaseFee = fee;
+    }
+
+    function getBlobBaseFee() external view override returns (uint256) {
+        return _blobBaseFee;
+    }
+
+    function getDataHashes() external view override returns (bytes32[] memory) {
+        return _dataHashes;
+    }
+}
 
 contract RollupMock {
     address public immutable owner;
@@ -23,17 +59,8 @@ contract RollupMock {
     }
 }
 
-contract SequencerInboxBlobsTEE is Test {
-    address adminTEE = address(141);
+contract SequencerInboxBlobsTEETest is Test {
     address rollupOwner = address(137);
-    address proxyAdmin = address(140);
-    address dummyInbox = address(139);
-    address v3QuoteVerifier = address(0x6E64769A13617f528a2135692484B681Ee1a7169);
-    bytes32 enclaveHash =
-        bytes32(0x01f7290cb6bbaa427eca3daeb25eecccb87c4b61259b1ae2125182c4d77169c0);
-    address signerAddr = address(0x5f0B0D79E7F051903b08E30a3d6eA50D80333932);
-    bytes32 pcr0Hash = bytes32(0xc980e59163ce244bb4bb6211f48c7b46f88a4f40943e84eb99bdc41e129bd293);
-
     uint256 maxDataSize = 10000;
     ISequencerInbox.MaxTimeVariation maxTimeVariation =
         ISequencerInbox.MaxTimeVariation({
@@ -42,41 +69,16 @@ contract SequencerInboxBlobsTEE is Test {
             delaySeconds: 100,
             futureSeconds: 100
         });
-    bytes sampleQuote = hex"00";
-    EspressoTEEVerifier espressoTEEVerifier;
-    EspressoNitroTEEVerifier espressoNitroTEEVerifier;
-    EspressoSGXTEEVerifier espressoSGXTEEVerifier;
-    
-    address reader4844 = address(0xf6134C5849Fe8177163747288d41283B271B1624);
+    address dummyInbox = address(139);
+    address proxyAdmin = address(140);
+
+    Reader4844Mock reader4844Mock;
+
     function setUp() public {
-        vm.createSelectFork(
-            "https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923"
-        );
-        espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(enclaveHash, v3QuoteVerifier);
-        espressoNitroTEEVerifier = new EspressoNitroTEEVerifier(pcr0Hash, new CertManager());
-        espressoTEEVerifier = new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
-        string memory quotePath = "/test/foundry/configs/blobs_attestation.bin";
-        string memory inputFile = string.concat(vm.projectRoot(), quotePath);
-
-        sampleQuote = vm.readFileBinary(inputFile);
-
-        vm.warp(1_744_220_000);
-        string memory attestationPath = "/test/foundry/configs/nitro-attestation.bin";
-        string memory attestationFile = string.concat(vm.projectRoot(), attestationPath);
-        bytes memory attestation = vm.readFileBinary(attestationFile);
-
-        string memory signaturePath = "/test/foundry/configs/sig-attestation.bin";
-        string memory sigFile = string.concat(vm.projectRoot(), signaturePath);
-        bytes memory signature = vm.readFileBinary(sigFile);
-
-        vm.expectEmit();
-        emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(attestation, signature, IEspressoTEEVerifier.TeeType.NITRO);
-        bool value = espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
-        vm.assertEq(value, true);
+        reader4844Mock = new Reader4844Mock();
     }
 
-    function deployRollup() internal returns (SequencerInbox, Bridge) {
+    function deployRollupWithVerifier(address verifier) internal returns (SequencerInbox, Bridge) {
         RollupMock rollupMock = new RollupMock(rollupOwner);
         Bridge bridgeImpl = new Bridge();
         Bridge bridge = Bridge(
@@ -86,61 +88,118 @@ contract SequencerInboxBlobsTEE is Test {
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
         bridge.setDelayedInbox(dummyInbox, true);
-        // we created a mock reader4844 which returns the data hashes related to the attestation we are using
-        // for testing
-        Reader4844 reader4844 = new Reader4844();
-        SequencerInbox seqInboxImpl = new SequencerInbox(maxDataSize, reader4844, false);
-        SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(address(seqInboxImpl)));
-        seqInboxProxy.initialize(IBridge(bridge), maxTimeVariation, address(espressoTEEVerifier));
+
+        SequencerInbox seqInboxImpl = new SequencerInbox(
+            maxDataSize,
+            IReader4844(address(reader4844Mock)),
+            false
+        );
+        SequencerInbox seqInbox = SequencerInbox(
+            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
+        );
+        seqInbox.initialize(bridge, maxTimeVariation, verifier);
 
         vm.prank(rollupOwner);
-        seqInboxProxy.setIsBatchPoster(tx.origin, true);
+        seqInbox.setIsBatchPoster(address(this), true);
 
         vm.prank(rollupOwner);
-        bridge.setSequencerInbox(address(seqInboxProxy));
+        bridge.setSequencerInbox(address(seqInbox));
 
-        return (seqInboxProxy, bridge);
+        return (seqInbox, bridge);
     }
 
-    function testAddSequencerL2BatchFromBlobs() public {
-        vm.prank(rollupOwner);
-        (SequencerInbox seqInbox, Bridge bridge) = deployRollup();
-        uint256 sequenceNumber = 1;
-        uint256 afterDelayedMessagesRead = 3;
-        IGasRefunder gasRefunder = IGasRefunder(address(0));
-        uint256 prevMessageCount = 1;
-        uint256 newMessageCount = 3;
+    /**
+     * @notice Test that TEESignatureVerified event is emitted when verify returns true for blob batch
+     */
+    function test_TEESignatureVerified_WhenBlobVerifyReturnsTrue() public {
+        EspressoTEEVerifierMock verifier = new EspressoTEEVerifierMock();
+        (SequencerInbox seqInbox, ) = deployRollupWithVerifier(address(verifier));
+
+        uint256 sequenceNumber = 0;
+        uint256 afterDelayedMessagesRead = 0;
+        uint256 prevMessageCount = 0;
+        uint256 newMessageCount = 1;
         uint256 hotshotHeight = 123;
-        bytes32[] memory dataHashes = new bytes32[](1);
-        dataHashes[0] = hex"014e8e17947683a76729b8efd62f59785227e0011c4ace32d7887589acd46ee7";
-        bytes32 reportDataHash = keccak256(
-            abi.encode(
-                sequenceNumber,
-                afterDelayedMessagesRead,
-                address(gasRefunder),
-                prevMessageCount,
-                newMessageCount,
-                abi.encode(dataHashes),
-                hotshotHeight
-            )
+        bytes memory signature = hex"";
+
+        bytes memory espressoMetadata = abi.encode(
+            hotshotHeight,
+            signature,
+            IEspressoTEEVerifier.TeeType.SGX
         );
 
-        vm.prank(tx.origin);
-        vm.expectRevert();
-
-        uint256 awsNitroPrivateKey = 
-            0x43179a4cba1a7fa58e6faad5cda5036169320c1a0c17b9f9488fb17acecaa23d;
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(awsNitroPrivateKey, reportDataHash);
-        bytes memory signature = abi.encodePacked(r, s, v);
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
-
+        // Expect the TEESignatureVerified event to be emitted
         vm.expectEmit();
         emit ISequencerInbox.TEESignatureVerified(sequenceNumber, hotshotHeight);
+
         seqInbox.addSequencerL2BatchFromBlobs(
             sequenceNumber,
             afterDelayedMessagesRead,
-            gasRefunder,
+            IGasRefunder(address(0)),
+            prevMessageCount,
+            newMessageCount,
+            espressoMetadata
+        );
+    }
+
+    /**
+     * @notice Test that transaction reverts when verify returns false for blob batch
+     */
+    function test_Revert_WhenBlobVerifyReturnsFalse() public {
+        EspressoTEEVerifierMockFalse verifier = new EspressoTEEVerifierMockFalse();
+        (SequencerInbox seqInbox, ) = deployRollupWithVerifier(address(verifier));
+
+        uint256 sequenceNumber = 0;
+        uint256 afterDelayedMessagesRead = 0;
+        uint256 prevMessageCount = 0;
+        uint256 newMessageCount = 1;
+        uint256 hotshotHeight = 123;
+        bytes memory signature = hex"";
+
+        bytes memory espressoMetadata = abi.encode(
+            hotshotHeight,
+            signature,
+            IEspressoTEEVerifier.TeeType.SGX
+        );
+
+        // Transaction should revert when verify returns false
+        vm.expectRevert(TEEVerificationFailed.selector);
+        seqInbox.addSequencerL2BatchFromBlobs(
+            sequenceNumber,
+            afterDelayedMessagesRead,
+            IGasRefunder(address(0)),
+            prevMessageCount,
+            newMessageCount,
+            espressoMetadata
+        );
+    }
+
+    /**
+     * @notice Test that transaction reverts when verify function reverts for blob batch
+     */
+    function test_Revert_WhenBlobVerifyReverts() public {
+        EspressoTEEVerifierMockRevert verifier = new EspressoTEEVerifierMockRevert();
+        (SequencerInbox seqInbox, ) = deployRollupWithVerifier(address(verifier));
+
+        uint256 sequenceNumber = 0;
+        uint256 afterDelayedMessagesRead = 0;
+        uint256 prevMessageCount = 0;
+        uint256 newMessageCount = 1;
+        uint256 hotshotHeight = 123;
+        bytes memory signature = hex"";
+
+        bytes memory espressoMetadata = abi.encode(
+            hotshotHeight,
+            signature,
+            IEspressoTEEVerifier.TeeType.SGX
+        );
+
+        // Transaction should revert when verify function reverts
+        vm.expectRevert(EspressoTEEVerifierMockRevert.InvalidSignature.selector);
+        seqInbox.addSequencerL2BatchFromBlobs(
+            sequenceNumber,
+            afterDelayedMessagesRead,
+            IGasRefunder(address(0)),
             prevMessageCount,
             newMessageCount,
             espressoMetadata

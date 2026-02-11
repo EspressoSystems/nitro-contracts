@@ -50,7 +50,7 @@
     "deploy-cachemanager-testnode": "hardhat run scripts/local-deployment/deployCacheManager.ts"
   },
   "dependencies": {
-    "@nomicfoundation/hardhat-verify": "^2.0.12",
+    "@nomicfoundation/hardhat-verify": "^2.1.1",
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",

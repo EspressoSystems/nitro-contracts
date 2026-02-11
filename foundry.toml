@@ -23,6 +23,9 @@ cache_path  = 'forge-cache/yul'
 remappings = []
 auto_detect_remappings = false
 
+[profile.yul.lint]
+lint_on_build = false
+
 [fmt]
 number_underscore = 'thousands'
 line_length = 100
