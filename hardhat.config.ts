@@ -186,6 +186,12 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    moltenDevnet: {
+      url: 'https://molten-test-3.rpc.dev.caldera.xyz',
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
     geth: {
       url: 'http://localhost:8545',
     },
@@ -223,6 +229,13 @@ module.exports = {
         urls: {
           apiURL: 'https://api-sepolia.basescan.org/api',
           browserURL: 'https://sepolia.basescan.org/',
+        },
+      },
+      {
+        network: 'moltenDevnet',
+        chainId: 3603,
+        urls: {
+          apiURL: 'https://molten-test-3.rpc.dev.caldera.xyz/http',
         },
       },
     ],
