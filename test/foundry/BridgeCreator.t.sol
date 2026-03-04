@@ -9,6 +9,10 @@ import '../../src/bridge/AbsInbox.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol';
 import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
+import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
+import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
+import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 
 contract BridgeCreatorTest is Test {
   BridgeCreator public creator;
@@ -170,7 +174,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -261,7 +265,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -357,7 +361,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
 
     creator.createBridge(
       proxyAdmin,

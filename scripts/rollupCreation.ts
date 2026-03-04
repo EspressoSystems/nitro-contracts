@@ -67,7 +67,7 @@ export async function createRollup(
   rollupCreatorAddress: string,
   feeToken: string,
   feeTokenPricer: string,
-  stakeToken: string
+  stakeToken: string,
   espressoTEEVerifierAddress: string,
 ): Promise<{
   rollupCreationResult: RollupCreationResult
@@ -113,7 +113,8 @@ export async function createRollup(
             feeToken,
             feeTokenPricer,
             validatorWalletCreator,
-            stakeToken
+            stakeToken,
+            espressoTEEVerifierAddress,
           )
         : {
             config: config.config,

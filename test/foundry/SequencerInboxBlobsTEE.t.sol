@@ -7,15 +7,30 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {Reader4844} from "../../src/mocks/Reader4844.sol";
 import {IGasRefunder} from "../../src/libraries/IGasRefunder.sol";
-// import {EspressoTEEVerifierBlobsMock} from "../../src/mocks/EspressoTEEVerifierBlobsMock.sol";
-import {EspressoTEEVerifier} from "espresso-tee-contracts/EspressoTEEVerifier.sol";
-import {EspressoSGXTEEVerifier} from "espresso-tee-contracts/EspressoSGXTEEVerifier.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from
-    "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
-import {EspressoNitroTEEVerifier} from "espresso-tee-contracts/EspressoNitroTEEVerifier.sol";
+import {ServiceType} from "espresso-tee-contracts/types/Types.sol";
 
-import {CertManager} from "@nitro-validator/CertManager.sol";
+contract TEEVerifierMockBlobs {
+    mapping(uint8 => mapping(address => bool)) private _signers;
+
+    function addSigner(address signer, IEspressoTEEVerifier.TeeType teeType) external {
+        _signers[uint8(teeType)][signer] = true;
+    }
+
+    function verify(
+        bytes memory signature,
+        bytes32 userDataHash,
+        IEspressoTEEVerifier.TeeType teeType,
+        ServiceType
+    ) external view returns (bool) {
+        address signer = ECDSA.recover(userDataHash, signature);
+        if (!_signers[uint8(teeType)][signer]) {
+            revert IEspressoTEEVerifier.InvalidSignature();
+        }
+        return true;
+    }
+}
 
 contract RollupMock {
     address public immutable owner;
@@ -28,15 +43,10 @@ contract RollupMock {
 }
 
 contract SequencerInboxBlobsTEE is Test {
-    address adminTEE = address(141);
     address rollupOwner = address(137);
     address proxyAdmin = address(140);
     address dummyInbox = address(139);
-    address v3QuoteVerifier = address(0x6E64769A13617f528a2135692484B681Ee1a7169);
-    bytes32 enclaveHash =
-        bytes32(0x01f7290cb6bbaa427eca3daeb25eecccb87c4b61259b1ae2125182c4d77169c0);
     address signerAddr = address(0x5f0B0D79E7F051903b08E30a3d6eA50D80333932);
-    bytes32 pcr0Hash = bytes32(0xc980e59163ce244bb4bb6211f48c7b46f88a4f40943e84eb99bdc41e129bd293);
 
     uint256 maxDataSize = 10000;
     ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
@@ -45,43 +55,11 @@ contract SequencerInboxBlobsTEE is Test {
         delaySeconds: 100,
         futureSeconds: 100
     });
-    bytes sampleQuote = hex"00";
-    EspressoTEEVerifier espressoTEEVerifier;
-    EspressoNitroTEEVerifier espressoNitroTEEVerifier;
-    EspressoSGXTEEVerifier espressoSGXTEEVerifier;
-
-    address reader4844 = address(0xf6134C5849Fe8177163747288d41283B271B1624);
+    TEEVerifierMockBlobs espressoTEEVerifier;
 
     function setUp() public {
-        vm.createSelectFork(
-            "https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923"
-        );
-        espressoSGXTEEVerifier = new EspressoSGXTEEVerifier(enclaveHash, v3QuoteVerifier);
-        espressoNitroTEEVerifier = new EspressoNitroTEEVerifier(pcr0Hash, new CertManager());
-        espressoTEEVerifier =
-            new EspressoTEEVerifier(espressoSGXTEEVerifier, espressoNitroTEEVerifier);
-        string memory quotePath = "/test/foundry/configs/blobs_attestation.bin";
-        string memory inputFile = string.concat(vm.projectRoot(), quotePath);
-
-        sampleQuote = vm.readFileBinary(inputFile);
-
-        vm.warp(1_744_220_000);
-        string memory attestationPath = "/test/foundry/configs/nitro-attestation.bin";
-        string memory attestationFile = string.concat(vm.projectRoot(), attestationPath);
-        bytes memory attestation = vm.readFileBinary(attestationFile);
-
-        string memory signaturePath = "/test/foundry/configs/sig-attestation.bin";
-        string memory sigFile = string.concat(vm.projectRoot(), signaturePath);
-        bytes memory signature = vm.readFileBinary(sigFile);
-
-        vm.expectEmit();
-        emit IEspressoNitroTEEVerifier.AWSSignerRegistered(signerAddr, pcr0Hash);
-        espressoTEEVerifier.registerSigner(
-            attestation, signature, IEspressoTEEVerifier.TeeType.NITRO
-        );
-        bool value =
-            espressoTEEVerifier.registeredSigners(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
-        vm.assertEq(value, true);
+        espressoTEEVerifier = new TEEVerifierMockBlobs();
+        espressoTEEVerifier.addSigner(signerAddr, IEspressoTEEVerifier.TeeType.NITRO);
     }
 
     function deployRollup() internal returns (SequencerInbox, Bridge) {
