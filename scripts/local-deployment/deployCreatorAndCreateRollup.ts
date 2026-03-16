@@ -1,9 +1,11 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts, deployContract } from '../deploymentUtils'
+import { deployAllContracts } from '../deploymentUtils'
 import { createRollup } from '../rollupCreation'
 import { promises as fs } from 'fs'
 import { BigNumber } from 'ethers'
+import { execSync } from 'child_process'
+import * as path from 'path'
 
 async function main() {
   /// read env vars needed for deployment
@@ -61,17 +63,24 @@ async function main() {
     console.log('WETH deployed at', stakeToken)
   }
 
+  // Deploy mock TEE verifiers via forge script from the espresso-tee-contracts submodule
+  const teeContractsDir = path.join(__dirname, '../../lib/espresso-tee-contracts')
+  console.log('Deploying mock TEE verifiers via forge script')
+  execSync(`mkdir -p ${path.join(teeContractsDir, 'deployments')}`)
+  const forgeOutput = execSync(
+    `forge script scripts/DeployMockTEEVerifiers.s.sol:DeployMockTEEVerifiers --rpc-url ${parentChainRpc} --private-key ${deployerPrivKey} --broadcast`,
+    { cwd: teeContractsDir }
+  ).toString()
+  const match = forgeOutput.match(/EspressoTEEVerifierMock deployed at: (0x[0-9a-fA-F]{40})/)
+  if (!match) {
+    throw new Error('Failed to parse EspressoTEEVerifierMock address from forge output:\n' + forgeOutput)
+  }
+  const espressoTEEVerifierAddress = match[1]
+  console.log('EspressoTEEVerifierMock deployed at:', espressoTEEVerifierAddress)
+
   /// deploy templates and rollup creator
   console.log('Deploy RollupCreator')
   const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
-
-  //  for local deployment, we use a mock address
-  const espressoTEEVerifierMock = await deployContract(
-    'EspressoTEEVerifierMock',
-    deployerWallet,
-    [],
-    false
-  )
 
   console.log('Set templates on the Rollup Creator')
   await (
@@ -104,7 +113,7 @@ async function main() {
     feeToken,
     feeTokenPricer,
     stakeToken,
-    espressoTEEVerifierMock.address,
+    espressoTEEVerifierAddress,
   )
 
   if (!result) {
