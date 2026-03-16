@@ -1,42 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- *
- * @title  Verifies quotes from the TEE and attests on-chain
- * @notice Contains the logic to verify a quote from the TEE and attest on-chain. It uses the V3QuoteVerifier contract
- *         to verify the quote. Along with some additional verification logic.
- */
+import {IEspressoTEEVerifier} from "espresso-tee-contracts/interface/IEspressoTEEVerifier.sol";
+import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import {ServiceType} from "espresso-tee-contracts/types/Types.sol";
 
-contract EspressoTEEVerifierMock {
-    enum TeeType {
-        SGX,
-        NITRO
+contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
+    function espressoSGXTEEVerifier() external pure returns (IEspressoSGXTEEVerifier) {
+        return IEspressoSGXTEEVerifier(address(0));
     }
 
-    mapping(address => bool) public registeredSigner;
+    function espressoNitroTEEVerifier() external pure returns (IEspressoNitroTEEVerifier) {
+        return IEspressoNitroTEEVerifier(address(0));
+    }
 
-    constructor() {}
-
-    function verify(bytes calldata signature, bytes32 userDataHash, TeeType teeType)
-        external
-        view
-        returns (bool)
-    {
+    function verify(
+        bytes memory,
+        bytes32,
+        TeeType,
+        ServiceType
+    ) external pure returns (bool) {
         return true;
     }
 
-    function registerSigner(bytes calldata attestation, bytes calldata data, TeeType teeType)
-        external
-    {
-        // data length should be 20 bytes
-        require(data.length == 20, "Invalid data length");
+    function registerService(bytes calldata, bytes calldata, TeeType, ServiceType) external {}
 
-        address signer = address(uint160(bytes20(data[:20])));
-        registeredSigner[signer] = true;
+    function registeredEnclaveHashes(bytes32, TeeType, ServiceType) external pure returns (bool) {
+        return false;
     }
 
-    function registeredSigners(address signer, TeeType teeType) external view returns (bool) {
-        return registeredSigner[signer];
+    function isSignerValid(address, TeeType, ServiceType) external pure returns (bool) {
+        return true;
     }
+
+    function setEspressoSGXTEEVerifier(IEspressoSGXTEEVerifier) external {}
+
+    function setEspressoNitroTEEVerifier(IEspressoNitroTEEVerifier) external {}
+
+    function setEnclaveHash(bytes32, bool, TeeType, ServiceType) external {}
+
+    function deleteEnclaveHashes(bytes32[] memory, TeeType, ServiceType) external {}
+
+    function setQuoteVerifier(address) external {}
+
+    function setNitroEnclaveVerifier(address) external {}
 }
