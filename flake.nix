@@ -2,8 +2,10 @@
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   inputs.utils.url = "github:numtide/flake-utils";
   inputs.foundry.url = "github:shazow/foundry.nix/monthly"; # Use monthly branch for permanent releases
+  inputs.solc.url = "github:EspressoSystems/nix-solc-bin";
+  inputs.dregs.url = "github:EspressoSystems/dregs";
 
-  outputs = { self, nixpkgs, utils, foundry }:
+  outputs = { self, nixpkgs, utils, foundry, solc, dregs }:
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs
@@ -11,6 +13,8 @@
             inherit system;
             overlays = [
               foundry.overlay
+              solc.overlays.default
+              dregs.overlays.default
               (final: prev: {
                 # Overlaying nodejs here to ensure nodePackages use the desired
                 # version of nodejs use by the upstream CI.
@@ -27,6 +31,8 @@
             foundry-bin
             nodejs
             yarn
+            solc-bin."0.8.30"
+            pkgs.dregs
           ];
           shellHook = ''
             # Add node executables (incl. hardhat) to PATH
