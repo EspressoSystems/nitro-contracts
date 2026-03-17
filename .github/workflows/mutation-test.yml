@@ -130,6 +130,9 @@ jobs:
       - name: Install packages
         run: yarn
 
+      - name: Build
+        run: yarn build:all
+
       - name: Download mutants
         uses: actions/download-artifact@v8
         with:
