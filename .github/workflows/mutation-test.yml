@@ -131,7 +131,10 @@ jobs:
         run: yarn
 
       - name: Build
-        run: yarn build:all
+        run: yarn build && (FOUNDRY_PROFILE=yul forge build --skip '*.sol' || true)
+
+      - name: Verify yul artifact
+        run: test -f out/yul/Reader4844.yul/Reader4844.json
 
       - name: Download mutants
         uses: actions/download-artifact@v8
