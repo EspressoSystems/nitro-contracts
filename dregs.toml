@@ -5,7 +5,7 @@ functions = ["addSequencerL2BatchFromOrigin"]
 # Foundry tests
 [[target.test_commands]]
 kind = "foundry"
-args = ["--match-test", "testAddSequencerL2BatchFromOrigin|testFuzz_addSequencerBatch_FeeToken", "--gas-limit", "10000000000"]
+args = ["--match-test", "testAddSequencerL2BatchFromOrigin", "--no-match-test", "testFuzz_", "--gas-limit", "10000000000"]
 
 # Hardhat contract tests
 [[target.test_commands]]
