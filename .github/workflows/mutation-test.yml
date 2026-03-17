@@ -30,9 +30,14 @@ jobs:
           fetch-depth: 0
           filter: blob:none
 
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: dregs
+      - name: Install dregs
+        run: |
+          curl -fSL https://api.github.com/repos/EspressoSystems/dregs/releases \
+            | jq -r '[.[] | .assets[] | select(.name == "dregs-x86_64-unknown-linux-musl.tar.gz")][0].url' \
+            | xargs curl -fL -H "Accept: application/octet-stream" -o dregs.tar.gz
+          tar xzf dregs.tar.gz
+          sudo mv dregs /usr/local/bin/dregs
+          dregs --version
 
       - uses: EspressoSystems/dregs/.github/actions/install-solc@main
         with:
@@ -98,9 +103,14 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: dregs
+      - name: Install dregs
+        run: |
+          curl -fSL https://api.github.com/repos/EspressoSystems/dregs/releases \
+            | jq -r '[.[] | .assets[] | select(.name == "dregs-x86_64-unknown-linux-musl.tar.gz")][0].url' \
+            | xargs curl -fL -H "Accept: application/octet-stream" -o dregs.tar.gz
+          tar xzf dregs.tar.gz
+          sudo mv dregs /usr/local/bin/dregs
+          dregs --version
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -146,9 +156,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: dregs
+      - name: Install dregs
+        run: |
+          curl -fSL https://api.github.com/repos/EspressoSystems/dregs/releases \
+            | jq -r '[.[] | .assets[] | select(.name == "dregs-x86_64-unknown-linux-musl.tar.gz")][0].url' \
+            | xargs curl -fL -H "Accept: application/octet-stream" -o dregs.tar.gz
+          tar xzf dregs.tar.gz
+          sudo mv dregs /usr/local/bin/dregs
+          dregs --version
 
       - name: Download mutants
         uses: actions/download-artifact@v8
