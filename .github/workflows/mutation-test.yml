@@ -45,6 +45,16 @@ jobs:
           version: stable
           cache: false
 
+      - name: Setup node/yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
+
+      - name: Install packages
+        run: yarn
+
       - name: Configure shard count
         id: shards
         run: |
