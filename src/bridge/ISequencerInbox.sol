@@ -57,6 +57,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
   ///      To get the full history, search for `OwnerFunctionCalled(5)` events.
   event BatchPosterManagerSet(address newBatchPosterManager);
 
+  /// @dev Owner set the espresso TEE verifier.
+  event EspressoTEEVerifierSet(address newEspressoTEEVerifier);
+
   /// @dev Owner set the buffer config.
   event BufferConfigSet(BufferConfig bufferConfig);
 

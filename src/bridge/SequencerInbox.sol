@@ -1196,6 +1196,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     address _espressoTEEVerifier
   ) external onlyRollupOwner {
     espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+    emit EspressoTEEVerifierSet(_espressoTEEVerifier);
     emit OwnerFunctionCalled(7);
   }
 
