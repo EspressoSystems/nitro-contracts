@@ -334,6 +334,40 @@ contract SequencerInboxTest is Test {
         assertEq(address(seqInboxProxy.rollup()), address(_bridge.rollup()), "Invalid rollup");
     }
 
+    function testInitialize_revert_NotContract() public {
+        Bridge _bridge =
+            Bridge(address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, "")));
+        _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
+
+        address seqInboxLogic =
+            address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false));
+        // -------- Case 1: address(0) --------
+        {
+            SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
+
+            vm.expectRevert(abi.encodeWithSelector(NotContract.selector, address(0)));
+
+            seqInboxProxy.initialize(
+                IBridge(_bridge),
+                maxTimeVariation,
+                address(0)
+            );
+        }
+
+        // -------- Case 2: EOA --------
+        {
+            SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
+
+            vm.expectRevert(abi.encodeWithSelector(NotContract.selector, address(0x123456)));
+
+            seqInboxProxy.initialize(
+                IBridge(_bridge),
+                maxTimeVariation,
+                address(0x123456)
+            );
+        }
+    }
+
     function testInitialize_revert_NativeTokenMismatch_EthFeeToken() public {
         Bridge _bridge = Bridge(
             address(new TransparentUpgradeableProxy(address(new Bridge()), proxyAdmin, ""))
