@@ -1196,7 +1196,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     address _espressoTEEVerifier
   ) external onlyRollupOwner {
     espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
-    emit OwnerFunctionCalled(6);
+    emit OwnerFunctionCalled(7);
   }
 
   function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
