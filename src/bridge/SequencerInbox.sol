@@ -17,6 +17,7 @@ import {
     BadSequencerNumber,
     AlreadyValidDASKeyset,
     NoSuchKeyset,
+    NotContract,
     NotForked,
     NotBatchPosterManager,
     NotCodelessOrigin,
@@ -195,6 +196,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
+        if (_espressoTEEVerifier == address(0) || _espressoTEEVerifier.code.length == 0) revert NotContract(_espressoTEEVerifier);
 
         // Make sure logic contract was created by proper value for 'isUsingFeeToken'.
         // Bridge in ETH based chains doesn't implement nativeToken(). In future it might implement it and return address(0)
@@ -1041,6 +1043,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setEspressoTEEVerifier(
         address _espressoTEEVerifier
     ) external onlyRollupOwner {
+        if (_espressoTEEVerifier == address(0) || _espressoTEEVerifier.code.length == 0) revert NotContract(_espressoTEEVerifier);
         espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
         emit OwnerFunctionCalled(6);
     }
