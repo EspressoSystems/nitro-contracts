@@ -1,0 +1,15 @@
+[[target]]
+files = ["src/bridge/SequencerInbox.sol"]
+functions = ["addSequencerL2BatchFromOrigin"]
+
+# Foundry tests
+[[target.test_commands]]
+kind = "foundry"
+args = ["--match-test", "testAddSequencerL2BatchFromOrigin", "--no-match-test", "testFuzz_", "--no-match-path", "test/foundry/SequencerInboxTEE.t.sol", "--gas-limit", "10000000000"]
+
+# Hardhat contract tests
+[[target.test_commands]]
+kind = "custom"
+command = ["npx", "hardhat", "test", "--network", "hardhat", "test/contract/sequencerInboxForceInclude.spec.ts"]
+symlinks = ["node_modules"]
+
