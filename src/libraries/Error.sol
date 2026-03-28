@@ -35,7 +35,7 @@ error NotOrigin();
 error DataTooLarge(uint256 dataLength, uint256 maxDataLength);
 
 /// @dev The provided is not a contract and was expected to be
-/// @param addr The adddress in question
+/// @param addr The address in question
 error NotContract(address addr);
 
 /// @dev The merkle proof provided was too long
