@@ -61,17 +61,17 @@ async function main() {
     console.log('WETH deployed at', stakeToken)
   }
 
-  /// deploy templates and rollup creator
-  console.log('Deploy RollupCreator')
-  const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
-
-  //  for local deployment, we use a mock address
   const espressoTEEVerifierMock = await deployContract(
     'EspressoTEEVerifierMock',
     deployerWallet,
     [],
     false
   )
+  const espressoTEEVerifierAddress = espressoTEEVerifierMock.address
+
+  /// deploy templates and rollup creator
+  console.log('Deploy RollupCreator')
+  const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
 
   console.log('Set templates on the Rollup Creator')
   await (
@@ -104,7 +104,7 @@ async function main() {
     feeToken,
     feeTokenPricer,
     stakeToken,
-    espressoTEEVerifierMock.address,
+    espressoTEEVerifierAddress,
   )
 
   if (!result) {
