@@ -19,9 +19,10 @@ const solidity = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 2000,
+          runs: process.env['OPTIMIZER_RUNS'] ?
+            parseInt(process.env['OPTIMIZER_RUNS']) : 2000,
         },
-        viaIR: true,
+        viaIR: process.env['VIA_IR'] === 'true',
       },
     },
   ],
