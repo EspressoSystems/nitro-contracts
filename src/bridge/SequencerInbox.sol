@@ -361,7 +361,53 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
-        revert Deprecated();
+        if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        bytes calldata certificate = data[:65];
+        // Verify the certificate here
+
+        bytes calldata batchData = data[65:];
+
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
+            batchData,
+            afterDelayedMessagesRead
+        );
+        // Reformat the stack to prevent "Stack too deep"
+        uint256 sequenceNumber_ = sequenceNumber;
+        IBridge.TimeBounds memory timeBounds_ = timeBounds;
+        bytes32 dataHash_ = dataHash;
+        uint256 dataLength = batchData.length;
+        uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
+        uint256 prevMessageCount_ = prevMessageCount;
+        uint256 newMessageCount_ = newMessageCount;
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash_,
+                afterDelayedMessagesRead_,
+                dataLength,
+                prevMessageCount_,
+                newMessageCount_
+            );
+
+        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
+        if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
+        }
+
+        emit SequencerBatchDelivered(
+            seqMessageIndex,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds_,
+            IBridge.BatchDataLocation.TxInput
+        );
     }
 
     function addSequencerL2BatchFromOrigin(
