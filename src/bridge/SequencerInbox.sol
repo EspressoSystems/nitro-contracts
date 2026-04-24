@@ -364,10 +364,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        bytes calldata certificate = data[:65];
+        bytes calldata certificate = data[:101];
         // Verify the certificate here
 
-        bytes calldata batchData = data[65:];
+        bytes calldata batchData = data[101:];
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formCallDataHash(
             batchData,
@@ -406,8 +406,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds_,
-            IBridge.BatchDataLocation.TxInput
+            IBridge.BatchDataLocation.SeparateBatchEvent
         );
+
+        emit SequencerBatchData(seqMessageIndex, batchData);
     }
 
     function addSequencerL2BatchFromOrigin(
