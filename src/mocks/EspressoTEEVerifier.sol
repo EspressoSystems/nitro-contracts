@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ServiceType, IEspressoTEEVerifier} from "../bridge/EspressoTEE.sol";
+import {IEspressoTEEVerifier} from "../bridge/EspressoTEE.sol";
 
 /**
  *
@@ -17,8 +17,7 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
     function verify(
         bytes calldata signature,
         bytes32 userDataHash,
-        IEspressoTEEVerifier.TeeType teeType,
-        ServiceType service
+        IEspressoTEEVerifier.TeeType teeType
     ) external view returns (bool) {
         return true;
     }

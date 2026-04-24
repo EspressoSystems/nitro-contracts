@@ -125,7 +125,7 @@ contract SequencerInboxBlobsTEETest is Test {
         bytes memory espressoMetadata = abi.encode(
             hotshotHeight,
             signature,
-            IEspressoTEEVerifier.TeeType.SGX
+            IEspressoTEEVerifier.TeeType.NITRO
         );
 
         // Expect the TEESignatureVerified event to be emitted
@@ -159,7 +159,7 @@ contract SequencerInboxBlobsTEETest is Test {
         bytes memory espressoMetadata = abi.encode(
             hotshotHeight,
             signature,
-            IEspressoTEEVerifier.TeeType.SGX
+            IEspressoTEEVerifier.TeeType.NITRO
         );
 
         // Transaction should revert when verify returns false
@@ -191,7 +191,7 @@ contract SequencerInboxBlobsTEETest is Test {
         bytes memory espressoMetadata = abi.encode(
             hotshotHeight,
             signature,
-            IEspressoTEEVerifier.TeeType.SGX
+            IEspressoTEEVerifier.TeeType.NITRO
         );
 
         // Transaction should revert when verify function reverts

@@ -10,10 +10,9 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
     function verify(
         bytes memory signature,
         bytes32 userDataHash,
-        TeeType teeType,
-        ServiceType service
+        TeeType teeType
     ) external view override returns (bool) {
-        (signature, userDataHash, teeType, service);
+        (signature, userDataHash, teeType);
         return true;
     }
 }
@@ -25,10 +24,9 @@ contract EspressoTEEVerifierMockFalse is IEspressoTEEVerifier {
     function verify(
         bytes memory signature,
         bytes32 userDataHash,
-        TeeType teeType,
-        ServiceType service
+        TeeType teeType
     ) external view override returns (bool) {
-        (signature, userDataHash, teeType, service);
+        (signature, userDataHash, teeType);
         return false;
     }
 }
@@ -42,10 +40,9 @@ contract EspressoTEEVerifierMockRevert is IEspressoTEEVerifier {
     function verify(
         bytes memory signature,
         bytes32 userDataHash,
-        TeeType teeType,
-        ServiceType service
+        TeeType teeType
     ) external view override returns (bool) {
-        (signature, userDataHash, teeType, service);
+        (signature, userDataHash, teeType);
         revert InvalidSignature();
     }
 }

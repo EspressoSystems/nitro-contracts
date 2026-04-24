@@ -265,7 +265,7 @@ contract SequencerInboxTest is Test {
         // The mock contract doesnt really care about the signature and hotshotheight
         uint256 hotshotHeight = 123;
         bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -386,7 +386,7 @@ contract SequencerInboxTest is Test {
 
         uint256 hotshotHeight = 123;
         bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -423,7 +423,7 @@ contract SequencerInboxTest is Test {
 
         uint256 hotshotHeight = 123;
         bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -454,7 +454,7 @@ contract SequencerInboxTest is Test {
 
         uint256 hotshotHeight = 123;
         bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
