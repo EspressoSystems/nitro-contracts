@@ -11,7 +11,7 @@ import {
     EspressoTEEVerifierMockFalse,
     EspressoTEEVerifierMockRevert
 } from "./EspressoTEEVerifierMock.t.sol";
-import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
+import {IEspressoTEEVerifier} from "@espresso-tee/interface/IEspressoTEEVerifier.sol";
 import {TEEVerificationFailed} from "../../src/libraries/Error.sol";
 import {
     TransparentUpgradeableProxy
@@ -164,7 +164,7 @@ contract SequencerInboxTEETest is Test {
 
         // Transaction should revert when verify function reverts
         vm.prank(tx.origin);
-        vm.expectRevert(EspressoTEEVerifierMockRevert.InvalidSignature.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidSignature.selector);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             sampleData,

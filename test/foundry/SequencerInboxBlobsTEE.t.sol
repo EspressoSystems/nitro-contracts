@@ -12,7 +12,7 @@ import {
     EspressoTEEVerifierMockFalse,
     EspressoTEEVerifierMockRevert
 } from "./EspressoTEEVerifierMock.t.sol";
-import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
+import {IEspressoTEEVerifier} from "@espresso-tee/interface/IEspressoTEEVerifier.sol";
 import {TEEVerificationFailed} from "../../src/libraries/Error.sol";
 import {
     TransparentUpgradeableProxy
@@ -195,7 +195,7 @@ contract SequencerInboxBlobsTEETest is Test {
         );
 
         // Transaction should revert when verify function reverts
-        vm.expectRevert(EspressoTEEVerifierMockRevert.InvalidSignature.selector);
+        vm.expectRevert(IEspressoTEEVerifier.InvalidSignature.selector);
         seqInbox.addSequencerL2BatchFromBlobs(
             sequenceNumber,
             afterDelayedMessagesRead,
