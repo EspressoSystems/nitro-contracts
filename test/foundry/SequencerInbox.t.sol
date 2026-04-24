@@ -280,7 +280,7 @@ contract SequencerInboxTest is Test {
         uint256 hotshotHeight = 123;
         bytes memory signature;
         bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         expectEvents(bridge, seqInbox, data, false, false, 0);
 
         vm.prank(tx.origin);
@@ -499,7 +499,7 @@ contract SequencerInboxTest is Test {
         uint256 hotshotHeight = 123;
         bytes memory signature;
         bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -542,7 +542,7 @@ contract SequencerInboxTest is Test {
         uint256 hotshotHeight = 123;
         bytes memory signature;
         bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
@@ -572,7 +572,7 @@ contract SequencerInboxTest is Test {
         uint256 hotshotHeight = 123;
         bytes memory signature;
         bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
 
         vm.expectRevert(abi.encodeWithSelector(NotCodelessOrigin.selector));
         seqInbox.addSequencerL2BatchFromOrigin(
@@ -713,7 +713,7 @@ contract SequencerInboxTest is Test {
         uint256 hotshotHeight = 123;
         bytes memory signature;
         bytes memory espressoMetadata =
-            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
