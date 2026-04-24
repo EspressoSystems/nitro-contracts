@@ -71,7 +71,7 @@ contract SequencerInboxBlobsTEE is Test {
 
     function setUp() public {
         vm.createSelectFork(
-            "https://rpc.ankr.com/eth_sepolia/10a56026b3c20655c1dab931446156dea4d63d87d1261934c82a1b8045885923"
+            "https://rpc.ankr.com/eth_sepolia/b4eb7cd43eb25061e06a5d07ecd191433c3a28988f14dd9bfb6be6a122355023"
         );
 
         // Ensure NitroEnclaveVerifier has code on the fork
