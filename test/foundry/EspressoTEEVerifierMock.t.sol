@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IEspressoTEEVerifier} from "@espresso-tee/interface/IEspressoTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "@espresso-tee/interface/IEspressoNitroTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
+import {IEspressoNitroTEEVerifier} from "../../src/bridge/EspressoNitroTEEVerifier.sol";
 
 /**
  * @title EspressoTEEVerifierMock - Always returns true
  */
 contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
-    function verify(
-        bytes memory signature,
-        bytes32 userDataHash,
-        TeeType teeType
-    ) external view override returns (bool) {
+    function verify(bytes memory signature, bytes32 userDataHash, TeeType teeType)
+        external
+        view
+        override
+        returns (bool)
+    {
         (signature, userDataHash, teeType);
         return true;
     }
@@ -44,11 +45,12 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
  * @title EspressoTEEVerifierMockFalse - Always returns false
  */
 contract EspressoTEEVerifierMockFalse is IEspressoTEEVerifier {
-    function verify(
-        bytes memory signature,
-        bytes32 userDataHash,
-        TeeType teeType
-    ) external view override returns (bool) {
+    function verify(bytes memory signature, bytes32 userDataHash, TeeType teeType)
+        external
+        view
+        override
+        returns (bool)
+    {
         (signature, userDataHash, teeType);
         return false;
     }
@@ -80,11 +82,12 @@ contract EspressoTEEVerifierMockFalse is IEspressoTEEVerifier {
  * @title EspressoTEEVerifierMockRevert - Always reverts
  */
 contract EspressoTEEVerifierMockRevert is IEspressoTEEVerifier {
-    function verify(
-        bytes memory signature,
-        bytes32 userDataHash,
-        TeeType teeType
-    ) external view override returns (bool) {
+    function verify(bytes memory signature, bytes32 userDataHash, TeeType teeType)
+        external
+        view
+        override
+        returns (bool)
+    {
         (signature, userDataHash, teeType);
         revert InvalidSignature();
     }

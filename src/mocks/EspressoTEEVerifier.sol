@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IEspressoTEEVerifier} from "@espresso-tee/interface/IEspressoTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "@espresso-tee/interface/IEspressoNitroTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../bridge/EspressoTEE.sol";
+import {IEspressoNitroTEEVerifier} from "../bridge/EspressoNitroTEEVerifier.sol";
 
 /**
  *
