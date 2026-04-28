@@ -16,6 +16,7 @@ remappings = [
     'forge-std/=lib/forge-std/src/',
     '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
     '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
+    'aws-nitro-enclave-attestation/=lib/espresso-tee-contracts/lib/aws-nitro-enclave-attestation/contracts/src/',
 ]
 
 [profile.yul]
