@@ -434,31 +434,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     // Question for Espresso Team
     // Should we check the quote here?
-
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-
-    // take keccak2256 hash of all the function arguments
-    // along with the hotshot height
-    bytes32 reportDataHash = keccak256(
-      abi.encode(
-        sequenceNumber,
+    _verifyAttestation(sequenceNumber,
         data,
         afterDelayedMessagesRead,
-        address(gasRefunder),
+        gasRefunder,
         prevMessageCount,
         newMessageCount,
-        hotshotHeight
-      )
+        espressoMetadata
     );
-    // verify the the reportDataHash was signed by the a registered ephemeral key
-    // generated inside a registered TEE
-    espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-    // signature from a registered ephemeral key generated inside TEE
-    // was verified over the batch data hash
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
 
     addSequencerL2BatchFromCalldataImpl(
       sequenceNumber,
@@ -494,32 +477,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     if (isDelayProofRequired(afterDelayedMessagesRead))
       revert DelayProofRequired();
 
-    bytes32[] memory dataHashes = reader4844.getDataHashes();
-    if (dataHashes.length == 0) revert MissingDataHashes();
-
-    (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-        espressoMetadata,
-        (uint256, bytes, IEspressoTEEVerifier.TeeType)
-    );
-    // take keccak2256 hash of all the function arguments and encode packed blob hashes
-    // except the quote
-    bytes32 reportDataHash = keccak256(
-      abi.encode(
+    _verifyBlobQuote(
         sequenceNumber,
         afterDelayedMessagesRead,
-        address(gasRefunder),
+        gasRefunder,
         prevMessageCount,
         newMessageCount,
-        abi.encode(dataHashes),
-        hotshotHeight
-      )
+        espressoMetadata
     );
-    // verify the quote for the batch poster running in the TEE
-    bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-        if (!result) {
-            revert TEEVerificationFailed();
-        }
-    emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     addSequencerL2BatchFromBlobsImpl(
       sequenceNumber,
       afterDelayedMessagesRead,
@@ -682,6 +647,41 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
   }
 
+  function _verifyAttestation(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) private {
+        (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
+            espressoMetadata,
+            (uint256, bytes, IEspressoTEEVerifier.TeeType)
+        );
+        bytes32 reportDataHash = keccak256(
+            abi.encode(
+                sequenceNumber,
+                data,
+                afterDelayedMessagesRead,
+                address(gasRefunder),
+                prevMessageCount,
+                newMessageCount,
+                hotshotHeight
+            )
+        );
+        // verify the the reportDataHash was signed by the a registered ephemeral key
+        // generated inside a registered TEE
+        bool result = espressoTEEVerifier.verify(signature, reportDataHash, teeType);
+        if (!result) {
+            revert TEEVerificationFailed();
+        }
+        // signature from a registered ephemeral key generated inside TEE
+        // was verified over the batch data hash
+        emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+    }
+
   function _verifyBlobQuote(
         uint256 sequenceNumber,
         uint256 afterDelayedMessagesRead,
@@ -763,28 +763,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // Only check the attestation quote if the batch has been posted by the
     // batch poster
     if (isBatchPoster[msg.sender]) {
-      (uint256 hotshotHeight, bytes memory signature, IEspressoTEEVerifier.TeeType teeType) = abi.decode(
-          espressoMetadata,
-          (uint256, bytes, IEspressoTEEVerifier.TeeType)
-      );
-      // take keccak2256 hash of all the function arguments
-      // along with the hotshot height
-      bytes32 reportDataHash = keccak256(
-        abi.encode(
-          sequenceNumber,
-          data,
-          afterDelayedMessagesRead,
-          address(gasRefunder),
-          prevMessageCount,
-          newMessageCount,
-          hotshotHeight
-        )
-      );
-
-      espressoTEEVerifier.verify(signature, reportDataHash, teeType);
-      // signature from a registered ephemeral key generated inside a registered TEE
-      // was verified over the batch data hash
-      emit TEESignatureVerified(sequenceNumber, hotshotHeight);
+        _verifyAttestation(
+            sequenceNumber,
+            data,
+            afterDelayedMessagesRead,
+            gasRefunder,
+            prevMessageCount,
+            newMessageCount,
+            espressoMetadata
+        );
     }
 
     addSequencerL2BatchFromCalldataImpl(

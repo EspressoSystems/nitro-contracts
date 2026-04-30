@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - develop
+      - v3.1.1
 
 jobs:
   test-unit:
