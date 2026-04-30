@@ -21,10 +21,6 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol'
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol';
 import { NoZeroTransferToken } from './util/NoZeroTransferToken.sol';
 import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
-// import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
-// import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
-// import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
-// import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
   RollupCreator public rollupCreator;

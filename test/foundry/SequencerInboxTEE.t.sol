@@ -16,26 +16,6 @@ import {TEEVerificationFailed} from "../../src/libraries/Error.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-// contract TEEVerifierMock {
-//     mapping(uint8 => mapping(address => bool)) private _signers;
-
-//     function addSigner(address signer, IEspressoTEEVerifier.TeeType teeType) external {
-//         _signers[uint8(teeType)][signer] = true;
-//     }
-
-//     function verify(
-//         bytes memory signature,
-//         bytes32 userDataHash,
-//         IEspressoTEEVerifier.TeeType teeType,
-//     ) external view returns (bool) {
-//         address signer = ECDSA.recover(userDataHash, signature);
-//         if (!_signers[uint8(teeType)][signer]) {
-//             revert IEspressoTEEVerifier.InvalidSignature();
-//         }
-//         return true;
-//     }
-// }
-
 contract RollupMock {
     address public immutable owner;
 
