@@ -170,7 +170,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -261,7 +261,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -357,7 +357,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     creator.createBridge(
       proxyAdmin,

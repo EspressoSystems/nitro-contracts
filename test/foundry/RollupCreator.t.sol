@@ -21,10 +21,10 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol'
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol';
 import { NoZeroTransferToken } from './util/NoZeroTransferToken.sol';
 import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
-import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
-import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
-import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+// import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
+// import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
+// import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
+// import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
 
 contract RollupCreatorTest is Test {
   RollupCreator public rollupCreator;
@@ -165,7 +165,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock()))))
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds
@@ -409,7 +409,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock()))))
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // approve fee token to pay for deployment of L2 factories
@@ -648,7 +648,7 @@ contract RollupCreatorTest is Test {
         max: 14400,
         replenishRateInBasis: 500
       }),
-      espressoTEEVerifier: address(new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock()))))
+      espressoTEEVerifier: address(new EspressoTEEVerifierMock())
     });
 
     // prepare funds

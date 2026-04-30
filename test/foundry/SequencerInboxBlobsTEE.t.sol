@@ -78,7 +78,7 @@ contract SequencerInboxBlobsTEETest is Test {
         reader4844Mock = new Reader4844Mock();
     }
 
-    function deployRollupWithVerifier(address verifier) internal returns (SequencerInbox, Bridge) {
+    function deployRollupWithVerifier(address verifier, BufferConfig memory bufferConfig) internal returns (SequencerInbox, Bridge) {
         RollupMock rollupMock = new RollupMock(rollupOwner);
         Bridge bridgeImpl = new Bridge();
         Bridge bridge =
@@ -89,11 +89,11 @@ contract SequencerInboxBlobsTEETest is Test {
         bridge.setDelayedInbox(dummyInbox, true);
 
         SequencerInbox seqInboxImpl =
-            new SequencerInbox(maxDataSize, IReader4844(address(reader4844Mock)), false);
+            new SequencerInbox(maxDataSize, IReader4844(address(reader4844Mock)), false, false);
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation, verifier);
+        seqInbox.initialize(bridge, maxTimeVariation,bufferConfig, verifier);
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(address(this), true);
@@ -109,7 +109,11 @@ contract SequencerInboxBlobsTEETest is Test {
      */
     function test_TEESignatureVerified_WhenBlobVerifyReturnsTrue() public {
         EspressoTEEVerifierMock verifier = new EspressoTEEVerifierMock();
-        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier));
+        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier),BufferConfig({
+      threshold: type(uint64).max,
+      max: type(uint64).max,
+      replenishRateInBasis: 0
+    }));
 
         uint256 sequenceNumber = 0;
         uint256 afterDelayedMessagesRead = 0;
@@ -140,7 +144,11 @@ contract SequencerInboxBlobsTEETest is Test {
      */
     function test_Revert_WhenBlobVerifyReturnsFalse() public {
         EspressoTEEVerifierMockFalse verifier = new EspressoTEEVerifierMockFalse();
-        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier));
+        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier),BufferConfig({
+      threshold: type(uint64).max,
+      max: type(uint64).max,
+      replenishRateInBasis: 0
+    }));
 
         uint256 sequenceNumber = 0;
         uint256 afterDelayedMessagesRead = 0;
@@ -169,7 +177,11 @@ contract SequencerInboxBlobsTEETest is Test {
      */
     function test_Revert_WhenBlobVerifyReverts() public {
         EspressoTEEVerifierMockRevert verifier = new EspressoTEEVerifierMockRevert();
-        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier));
+        (SequencerInbox seqInbox,) = deployRollupWithVerifier(address(verifier),BufferConfig({
+      threshold: type(uint64).max,
+      max: type(uint64).max,      
+      replenishRateInBasis: 0
+    }));
 
         uint256 sequenceNumber = 0;
         uint256 afterDelayedMessagesRead = 0;
