@@ -93,7 +93,7 @@ contract SequencerInboxBlobsTEETest is Test {
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation,bufferConfig, verifier);
+        seqInbox.initialize(bridge, maxTimeVariation,bufferConfig,IFeeTokenPricer(address(0)), verifier);
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(address(this), true);

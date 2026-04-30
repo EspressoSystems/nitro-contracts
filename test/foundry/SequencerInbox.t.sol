@@ -259,22 +259,24 @@ contract SequencerInboxTest is Test {
         bytes32 delayedAcc = bridge.delayedInboxAccs(delayedMessagesRead - 1);
         bytes32 afterAcc = keccak256(abi.encodePacked(beforeAcc, dataHash, delayedAcc));
 
-        // spending report
-        vm.expectEmit(true, true, true, true);
-        emit MessageDelivered(
-            delayedMessagesRead,
-            delayedAcc,
-            address(seqInbox),
-            L1MessageType_batchPostingReport,
-            tx.origin,
-            keccak256(expectedSpendingReportMsg),
-            block.basefee,
-            uint64(block.timestamp)
-        );
+        if (!isUsingFeeToken) {
+            // spending report
+            vm.expectEmit(true, true, true, true);
+            emit MessageDelivered(
+                delayedMessagesRead,
+                delayedAcc,
+                address(seqInbox),
+                L1MessageType_batchPostingReport,
+                tx.origin,
+                keccak256(expectedSpendingReportMsg),
+                block.basefee,
+                uint64(block.timestamp)
+            );
 
-        // spending report event in seq inbox
-        vm.expectEmit(true, true, true, true);
-        emit InboxMessageDelivered(delayedMessagesRead, expectedSpendingReportMsg);
+            // spending report event in seq inbox
+            vm.expectEmit(true, true, true, true);
+            emit InboxMessageDelivered(delayedMessagesRead, expectedSpendingReportMsg);
+        }
 
         // sequencer batch delivered
         vm.expectEmit(true, true, true, true);
@@ -988,13 +990,18 @@ contract SequencerInboxTest is Test {
             expectEvents(IBridge(address(bridge)), seqInbox, data, true, true, exchangeRate);
         }
         vm.prank(tx.origin);
+        uint256 hotshotHeight = 123;
+        bytes memory signature;
+        bytes memory espressoMetadata =
+            abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.NITRO);
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             data,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1
+            subMessageCount + 1,
+            espressoMetadata
         );
     }
 
