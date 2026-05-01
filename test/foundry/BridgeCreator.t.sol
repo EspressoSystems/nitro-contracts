@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import 'forge-std/Test.sol';
-import './util/TestUtil.sol';
-import '../../src/rollup/BridgeCreator.sol';
-import '../../src/bridge/ISequencerInbox.sol';
-import '../../src/bridge/AbsInbox.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol';
-import {EspressoTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoTEEVerifier.sol";
-import {EspressoSGXTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoSGXTEEVerifierMock.sol";
-import {EspressoNitroTEEVerifierMock} from "espresso-tee-contracts/mocks/EspressoNitroTEEVerifierMock.sol";
-import {IEspressoSGXTEEVerifier} from "espresso-tee-contracts/interface/IEspressoSGXTEEVerifier.sol";
-import {IEspressoNitroTEEVerifier} from "espresso-tee-contracts/interface/IEspressoNitroTEEVerifier.sol";
+import "forge-std/Test.sol";
+import "./util/TestUtil.sol";
+import "../../src/rollup/BridgeCreator.sol";
+import "../../src/bridge/ISequencerInbox.sol";
+import "../../src/bridge/AbsInbox.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
 
 contract BridgeCreatorTest is Test {
   BridgeCreator public creator;
@@ -174,7 +170,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -265,7 +261,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
       proxyAdmin,
@@ -361,7 +357,7 @@ contract BridgeCreatorTest is Test {
       replenishRateInBasis: 0
     });
 
-    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock(IEspressoSGXTEEVerifier(address(new EspressoSGXTEEVerifierMock())), IEspressoNitroTEEVerifier(address(new EspressoNitroTEEVerifierMock())));
+    EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
 
     creator.createBridge(
       proxyAdmin,

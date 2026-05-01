@@ -283,28 +283,10 @@ describe('SequencerInbox', async () => {
       .connect(user)
     await (await bridgeAdmin.initialize(rollupMock.address)).wait()
     await (
-      await sequencerInbox.initialize(
-        bridgeProxy.address,
-        {
-          delayBlocks: maxDelayBlocks,
-          delaySeconds: maxDelayTime,
-          futureBlocks: 10,
-          futureSeconds: 3000,
-        },
-        {
-          threshold: 0,
-          max: 0,
-          replenishRateInBasis: 0,
-        },
-        constants.AddressZero
-      )
-    ).wait()
-
-    await (
       await sequencerInbox
         .connect(user)
         .functions[
-          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address)'
+          'initialize(address,(uint256,uint256,uint256,uint256),(uint64,uint64,uint64),address,address)'
         ](
           bridgeProxy.address,
           {
@@ -318,6 +300,7 @@ describe('SequencerInbox', async () => {
             max: 0,
             replenishRateInBasis: 0,
           },
+          constants.AddressZero,
           espressoTEEVerifier.address,
           { gasLimit: 10000000 }
         )

@@ -18,6 +18,7 @@ remappings = [
     '@offchainlabs/upgrade-executor/=node_modules/@offchainlabs/upgrade-executor/',
     '@uniswap/v2-core/=node_modules/@uniswap/v2-core/contracts',
     '@uniswap/lib/=node_modules/@uniswap/lib/contracts',
+    'aws-nitro-enclave-attestation/=lib/espresso-tee-contracts/lib/aws-nitro-enclave-attestation/contracts/src/',
 ]
 fs_permissions = [{ access = "read", path = "./" }]
 
