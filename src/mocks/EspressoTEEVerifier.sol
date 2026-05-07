@@ -11,6 +11,28 @@ import {IEspressoNitroTEEVerifier} from "../bridge/EspressoNitroTEEVerifier.sol"
  *         to verify the quote. Along with some additional verification logic.
  */
 contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
+    struct PCRValue {
+        bytes32 first;
+        bytes16 second;
+    }
+
+    struct PCR {
+        uint64 index;
+        PCRValue value;
+    }
+
+    struct VerifierJournal {
+        uint8 result;
+        uint8 trustedCertsPrefixLen;
+        uint64 timestamp;
+        bytes32[] certs;
+        bytes userData;
+        bytes nonce;
+        bytes publicKey;
+        PCR[] pcrs;
+        string moduleId;
+    }
+
     mapping(address => bool) public registeredSigner;
 
     constructor() {}
@@ -27,14 +49,18 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
         return IEspressoNitroTEEVerifier(address(0));
     }
 
-    function registerService(bytes calldata, bytes calldata, TeeType) external {}
+    function registerService(bytes calldata output, bytes calldata, TeeType) external {
+        VerifierJournal memory journal = abi.decode(output, (VerifierJournal));
+        address signer = address(uint160(uint256(keccak256(journal.publicKey))));
+        registeredSigner[signer] = true;
+    }
 
     function registeredEnclaveHashes(bytes32, TeeType) external view returns (bool) {
         return false;
     }
 
-    function isSignerValid(address, TeeType) external view returns (bool) {
-        return false;
+    function isSignerValid(address signer, TeeType) external view returns (bool) {
+        return registeredSigner[signer];
     }
 
     function setEspressoNitroTEEVerifier(IEspressoNitroTEEVerifier) external {}
