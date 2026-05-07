@@ -51,7 +51,11 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
 
     function registerService(bytes calldata output, bytes calldata, TeeType) external {
         VerifierJournal memory journal = abi.decode(output, (VerifierJournal));
-        address signer = address(uint160(uint256(keccak256(journal.publicKey))));
+        bytes memory pubKey = journal.publicKey;
+        if (pubKey.length == 65 && pubKey[0] == 0x04) {
+            assembly { pubKey := add(pubKey, 1) mstore(pubKey, 64) }
+        }
+        address signer = address(uint160(uint256(keccak256(pubKey))));
         registeredSigner[signer] = true;
     }
 
