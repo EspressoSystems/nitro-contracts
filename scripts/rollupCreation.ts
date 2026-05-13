@@ -127,6 +127,8 @@ export async function createRollup(
             batchPosterManager: config.batchPosterManager,
             feeTokenPricer: feeTokenPricer,
             customOsp: config.customOsp,
+            espressoTEEVerifier: process.env.ESPRESSO_TEE_VERIFIER || ethers.constants.AddressZero,
+            startHotshotBlock: process.env.START_HOTSHOT_BLOCK ? parseInt(process.env.START_HOTSHOT_BLOCK, 10) : 0,
           }
 
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
@@ -352,6 +354,16 @@ async function _getDevRollupConfig(
     dataCostEstimate: ethers.BigNumber.from('0'),
   }
 
+  const espressoTEEVerifier =
+    process.env.ESPRESSO_TEE_VERIFIER !== undefined
+      ? process.env.ESPRESSO_TEE_VERIFIER
+      : ethers.constants.AddressZero
+
+  const startHotshotBlock =
+    process.env.START_HOTSHOT_BLOCK !== undefined
+      ? parseInt(process.env.START_HOTSHOT_BLOCK, 10)
+      : 0
+
   return {
     config: config,
     validators: validators,
@@ -363,6 +375,8 @@ async function _getDevRollupConfig(
     batchPosterManager: batchPosterManager,
     feeTokenPricer: feeTokenPricer,
     customOsp: customOsp,
+    espressoTEEVerifier: espressoTEEVerifier,
+    startHotshotBlock: startHotshotBlock,
   }
 
   function _createValidatorAddress(
