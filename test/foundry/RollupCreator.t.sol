@@ -4,6 +4,9 @@ pragma solidity ^0.8.4;
 import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/rollup/RollupCreator.sol";
+import {
+    IEspressoTEEVerifier
+} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
 import "../../src/rollup/RollupAdminLogic.sol";
 import "../../src/rollup/RollupUserLogic.sol";
 import "../../src/rollup/ValidatorWalletCreator.sol";
@@ -39,7 +42,9 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeTemplates public ethBasedTemplates = BridgeCreator.BridgeTemplates({
         bridge: new Bridge(),
         sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false),
-        delayBufferableSequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, true),
+        delayBufferableSequencerInbox: new SequencerInbox(
+            MAX_DATA_SIZE, dummyReader4844, false, true
+        ),
         inbox: new Inbox(MAX_DATA_SIZE),
         rollupEventInbox: new RollupEventInbox(),
         outbox: new Outbox()
@@ -47,7 +52,9 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeTemplates public erc20BasedTemplates = BridgeCreator.BridgeTemplates({
         bridge: new ERC20Bridge(),
         sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false),
-        delayBufferableSequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, true),
+        delayBufferableSequencerInbox: new SequencerInbox(
+            MAX_DATA_SIZE, dummyReader4844, true, true
+        ),
         inbox: new ERC20Inbox(MAX_DATA_SIZE),
         rollupEventInbox: new ERC20RollupEventInbox(),
         outbox: new ERC20Outbox()
@@ -157,19 +164,21 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0)),
-            customOsp: customOsp
-        });
+        RollupCreator.RollupDeploymentParams memory deployParams =
+            RollupCreator.RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: address(0),
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                feeTokenPricer: IFeeTokenPricer(address(0)),
+                customOsp: customOsp,
+                espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+                startHotshotBlock: 0
+            });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
 
@@ -301,7 +310,10 @@ contract RollupCreatorTest is Test {
         _createERC20Rollup(nativeToken, makeAddr("CustomOsp"));
     }
 
-    function _createERC20Rollup(address nativeToken, address customOsp) internal {
+    function _createERC20Rollup(
+        address nativeToken,
+        address customOsp
+    ) internal {
         vm.startPrank(deployer);
 
         Config memory config = _getDefaultConfig();
@@ -319,19 +331,21 @@ contract RollupCreatorTest is Test {
         validators[1] = makeAddr("validator2");
 
         IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: nativeToken,
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: feeTokenPricer,
-            customOsp: customOsp
-        });
+        RollupCreator.RollupDeploymentParams memory deployParams =
+            RollupCreator.RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: nativeToken,
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                feeTokenPricer: feeTokenPricer,
+                customOsp: customOsp,
+                espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+                startHotshotBlock: 0
+            });
 
         vm.mockCall(
             address(feeTokenPricer),
@@ -488,19 +502,21 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            feeTokenPricer: IFeeTokenPricer(address(0)),
-            customOsp: address(0)
-        });
+        RollupCreator.RollupDeploymentParams memory deployParams =
+            RollupCreator.RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: address(0),
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                feeTokenPricer: IFeeTokenPricer(address(0)),
+                customOsp: address(0),
+                espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+                startHotshotBlock: 0
+            });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
 
@@ -582,7 +598,11 @@ contract RollupCreatorTest is Test {
 }
 
 contract ProxyUpgradeAction {
-    function perform(address admin, address payable target, address newLogic) public payable {
+    function perform(
+        address admin,
+        address payable target,
+        address newLogic
+    ) public payable {
         ProxyAdmin(admin).upgrade(TransparentUpgradeableProxy(target), newLogic);
     }
 }

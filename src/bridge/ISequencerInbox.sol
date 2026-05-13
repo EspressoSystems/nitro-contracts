@@ -11,6 +11,9 @@ import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 import "./Messages.sol";
 import "./DelayBufferTypes.sol";
+import {
+    IEspressoTEEVerifier
+} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
 
 interface ISequencerInbox is IDelayedMessageProvider {
     /// @notice The maximum amount of time variatin between a message being posted on the L1 and being executed on the L2
@@ -71,6 +74,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @dev Owner set the fee token pricer.
     event FeeTokenPricerSet(address feeTokenPricer);
+
+    /// @dev Emitted when the Espresso TEE verifier is updated
+    event EspressoTEEVerifierSet(address espressoTEEVerifier);
+
+    /// @dev Emitted when the start hotshot block is updated
+    event StartHotshotBlockSet(uint32 startHotshotBlock);
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
@@ -304,7 +313,10 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @param addr the address
      * @param isBatchPoster_ if the specified address should be authorized as a batch poster
      */
-    function setIsBatchPoster(address addr, bool isBatchPoster_) external;
+    function setIsBatchPoster(
+        address addr,
+        bool isBatchPoster_
+    ) external;
 
     /**
      * @notice Makes Data Availability Service keyset valid
@@ -328,7 +340,10 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @param addr the address
      * @param isSequencer_ if the specified address should be authorized as a sequencer
      */
-    function setIsSequencer(address addr, bool isSequencer_) external;
+    function setIsSequencer(
+        address addr,
+        bool isSequencer_
+    ) external;
 
     /**
      * @notice Updates the batch poster manager, the address which has the ability to rotate batch poster keys
@@ -356,7 +371,19 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge bridge_,
         MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig calldata bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        IEspressoTEEVerifier espressoTEEVerifier_,
+        uint32 startHotshotBlock_
+    ) external;
+
+    /// @notice Sets the Espresso TEE verifier contract
+    function setEspressoTEEVerifier(
+        IEspressoTEEVerifier espressoTEEVerifier_
+    ) external;
+
+    /// @notice Sets the start hotshot block for CAS certificate payload construction
+    function setStartHotshotBlock(
+        uint32 startHotshotBlock_
     ) external;
 }
 

@@ -217,3 +217,6 @@ error ExtraGasNotUint64();
 
 /// @dev Thrown when keysetBytes is too large
 error KeysetTooLarge();
+
+/// @dev Thrown when the CAS certificate in batch data is invalid or too short
+error InvalidCasCertificate();

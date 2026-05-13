@@ -6,6 +6,9 @@ import "./util/TestUtil.sol";
 import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
+import {
+    IEspressoTEEVerifier
+} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
 contract RollupMock {
@@ -47,15 +50,10 @@ contract SequencerInboxTest is Test {
     address rollupOwner = address(137);
     uint256 maxDataSize = 10000;
     ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
-        delayBlocks: 10,
-        futureBlocks: 10,
-        delaySeconds: 100,
-        futureSeconds: 100
+        delayBlocks: 10, futureBlocks: 10, delaySeconds: 100, futureSeconds: 100
     });
     BufferConfig bufferConfigDefault = BufferConfig({
-        threshold: type(uint64).max,
-        max: type(uint64).max,
-        replenishRateInBasis: 714
+        threshold: type(uint64).max, max: type(uint64).max, replenishRateInBasis: 714
     });
     address dummyInbox = address(139);
     address proxyAdmin = address(140);
@@ -86,7 +84,14 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0)));
+        seqInbox.initialize(
+            bridge,
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, true);
@@ -124,7 +129,9 @@ contract SequencerInboxTest is Test {
             bridge,
             maxTimeVariation,
             bufferConfigDefault,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         vm.prank(rollupOwner);
@@ -231,7 +238,7 @@ contract SequencerInboxTest is Test {
             delayedAcc,
             delayedMessagesRead,
             timeBounds,
-            IBridge.BatchDataLocation.TxInput
+            IBridge.BatchDataLocation.SeparateBatchEvent
         );
     }
 
@@ -303,7 +310,12 @@ contract SequencerInboxTest is Test {
             address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
@@ -325,7 +337,14 @@ contract SequencerInboxTest is Test {
             address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, bufferConfig, feeTokenPricer);
+        seqInboxProxy.initialize(
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            feeTokenPricer,
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
         assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
@@ -350,7 +369,12 @@ contract SequencerInboxTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
         seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
     }
 
@@ -372,7 +396,9 @@ contract SequencerInboxTest is Test {
             IBridge(_bridge),
             maxTimeVariation,
             bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
     }
 
@@ -383,7 +409,14 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         IFeeTokenPricer pricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
         vm.expectRevert(abi.encodeWithSelector(CannotSetFeeTokenPricer.selector));
-        seqInboxProxy.initialize(IBridge(bridge), maxTimeVariation, bufferConfigDefault, pricer);
+        seqInboxProxy.initialize(
+            IBridge(bridge),
+            maxTimeVariation,
+            bufferConfigDefault,
+            pricer,
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
     }
 
     function testAddSequencerL2BatchFromOrigin_ArbitrumHosted(
@@ -650,17 +683,19 @@ contract SequencerInboxTest is Test {
         (SequencerInbox seqInbox,,) = deployRollup(false, false, bufferConfigDefault);
         SequencerInbox seqInboxImpl = new SequencerInbox(maxDataSize, dummyReader4844, false, true);
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
+            );
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
+            );
         return (seqInbox, seqInboxImpl);
     }
 
@@ -674,10 +709,11 @@ contract SequencerInboxTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
+            );
 
         // reset buffer and config
         vm.store(address(seqInbox), bytes32(uint256(12)), bytes32(0));
@@ -687,10 +723,11 @@ contract SequencerInboxTest is Test {
         vm.store(address(seqInbox), bytes32(uint256(16)), bytes32(0));
 
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
+            );
         {
             (uint64 bufferBlocks, uint64 max, uint64 threshold,, uint64 replenishRateInBasis,) =
                 seqInbox.buffer();
@@ -701,10 +738,11 @@ contract SequencerInboxTest is Test {
         }
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfig)
+            );
     }
 
     function testPostUpgradeInitBadInitBuffer(
@@ -726,10 +764,11 @@ contract SequencerInboxTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(BadBufferConfig.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, configInvalid)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, configInvalid)
+            );
     }
 
     function testSetBufferConfig(
@@ -761,7 +800,8 @@ contract SequencerInboxTest is Test {
         bool checkValue = true;
         if (
             delayBlocks > uint256(type(uint64).max) || futureBlocks > uint256(type(uint64).max)
-                || delaySeconds > uint256(type(uint64).max) || futureSeconds > uint256(type(uint64).max)
+                || delaySeconds > uint256(type(uint64).max)
+                || futureSeconds > uint256(type(uint64).max)
         ) {
             vm.expectRevert(abi.encodeWithSelector(BadMaxTimeVariation.selector));
             checkValue = false;
@@ -775,8 +815,12 @@ contract SequencerInboxTest is Test {
                 futureSeconds: futureSeconds
             })
         );
-        (uint256 _delayBlocks, uint256 _futureBlocks, uint256 _delaySeconds, uint256 _futureSeconds)
-        = seqInbox.maxTimeVariation();
+        (
+            uint256 _delayBlocks,
+            uint256 _futureBlocks,
+            uint256 _delaySeconds,
+            uint256 _futureSeconds
+        ) = seqInbox.maxTimeVariation();
         if (checkValue) {
             assertEq(_delayBlocks, delayBlocks);
             assertEq(_futureBlocks, futureBlocks);
@@ -818,10 +862,11 @@ contract SequencerInboxTest is Test {
             deployRollup(false, false, bufferConfigDefault);
         vm.expectRevert(abi.encodeWithSelector(NotDelayBufferable.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfigDefault)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfigDefault)
+            );
     }
 
     function test_postUpgradeInit_revert_AlreadyInit() public {
@@ -829,9 +874,10 @@ contract SequencerInboxTest is Test {
             deployRollup(false, true, bufferConfigDefault);
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
-        TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl),
-            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfigDefault)
-        );
+        TransparentUpgradeableProxy(payable(address(seqInbox)))
+            .upgradeToAndCall(
+                address(seqInboxImpl),
+                abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector, bufferConfigDefault)
+            );
     }
 }

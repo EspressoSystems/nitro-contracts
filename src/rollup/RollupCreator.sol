@@ -45,6 +45,8 @@ contract RollupCreator is Ownable {
         address batchPosterManager;
         IFeeTokenPricer feeTokenPricer;
         address customOsp;
+        IEspressoTEEVerifier espressoTEEVerifier;
+        uint32 startHotshotBlock;
     }
 
     BridgeCreator public bridgeCreator;
@@ -216,7 +218,9 @@ contract RollupCreator is Ownable {
             deployParams.nativeToken,
             deployParams.config.sequencerInboxMaxTimeVariation,
             deployParams.config.bufferConfig,
-            deployParams.feeTokenPricer
+            deployParams.feeTokenPricer,
+            deployParams.espressoTEEVerifier,
+            deployParams.startHotshotBlock
         );
 
         IEdgeChallengeManager challengeManager = createChallengeManager(
