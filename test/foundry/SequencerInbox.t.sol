@@ -238,7 +238,7 @@ contract SequencerInboxTest is Test {
             delayedAcc,
             delayedMessagesRead,
             timeBounds,
-            IBridge.BatchDataLocation.SeparateBatchEvent
+            IBridge.BatchDataLocation.TxInput
         );
     }
 

@@ -96,6 +96,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant CUSTOM_DA_MESSAGE_HEADER_FLAG = 0x01;
 
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant ESPRESSO_CAS_HEADER_FLAG = 0x70;
+
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
@@ -374,12 +377,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     /// @notice Verify a CAS (Chain Adjacent Service) certificate embedded in the batch data.
-    /// @dev    The data layout is:
-    ///         [0..39]    sequencer header (40 bytes)
-    ///         [40..71]   CAS header (32 bytes, byte 40 = version 0x70)
-    ///         [72..75]   min_hotshot_block (uint32 BE)
-    ///         [76..140]  CAS ECDSA signature (65 bytes)
-    ///         [141+]     downstream DA certificate
+    /// @dev    The data layout (relative to the `data` parameter, which does NOT include the
+    ///         40-byte sequencer header generated internally by packHeader) is:
+    ///         [0..31]    CAS header (32 bytes, byte 0 = ESPRESSO_CAS_HEADER_FLAG 0x70)
+    ///         [32..35]   min_hotshot_block (uint32 BE)
+    ///         [36..100]  CAS ECDSA signature (65 bytes)
+    ///         [101+]     downstream DA certificate
     ///         The canonical payload signed by CAS is:
     ///         abi.encodePacked(uint32(prevMessageCount), uint32(newMessageCount),
     ///                          startHotshotBlock, minHotshotBlock, downstreamCert)
@@ -388,17 +391,17 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) internal {
-        // Minimum size: HEADER_LENGTH (40) + Espresso cert fixed (ESPRESSO_CERT_LEN) = 141 bytes
-        if (data.length < HEADER_LENGTH + ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
+        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 101 bytes
+        if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
 
-        // Parse min_hotshot_block from data[72:76]
-        uint32 minHotshotBlock = uint32(bytes4(data[72:76]));
+        // Parse min_hotshot_block from data[32:36]
+        uint32 minHotshotBlock = uint32(bytes4(data[32:36]));
 
-        // Extract CAS ECDSA signature from data[76:141]
-        bytes memory signature = data[76:141];
+        // Extract CAS ECDSA signature from data[36:101]
+        bytes memory signature = data[36:101];
 
-        // Extract downstream DA certificate from data[141:]
-        bytes calldata downstreamCert = data[141:];
+        // Extract downstream DA certificate from data[101:]
+        bytes calldata downstreamCert = data[101:];
 
         // Build the canonical payload that was signed by CAS
         bytes memory payload = abi.encodePacked(
@@ -561,10 +564,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds,
-            IBridge.BatchDataLocation.SeparateBatchEvent
+            (isFromCodelessOrigin && !hasEspressoTEEVerifier)
+                ? IBridge.BatchDataLocation.TxInput
+                : IBridge.BatchDataLocation.SeparateBatchEvent
         );
 
-        if (!isFromCodelessOrigin) {
+        if (!isFromCodelessOrigin || hasEspressoTEEVerifier) {
             _emitSequencerBatchData(seqMessageIndex, data, hasEspressoTEEVerifier);
         }
     }
@@ -575,9 +580,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bool hasEspressoTEEVerifier
     ) internal {
         if (hasEspressoTEEVerifier) {
-            bytes memory dataWithoutEspressoCert =
-                bytes.concat(data[:HEADER_LENGTH], data[HEADER_LENGTH + ESPRESSO_CERT_LEN:]);
-            emit SequencerBatchData(seqMessageIndex, dataWithoutEspressoCert);
+            emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
         } else {
             emit SequencerBatchData(seqMessageIndex, data);
         }
@@ -687,7 +690,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         return headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
             || (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG))
             || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG
-            || headerByte == CUSTOM_DA_MESSAGE_HEADER_FLAG;
+            || headerByte == CUSTOM_DA_MESSAGE_HEADER_FLAG || headerByte == ESPRESSO_CAS_HEADER_FLAG;
     }
 
     /// @dev    Form a hash of the data taken from the calldata
@@ -728,9 +731,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             }
         }
         if (hasEspressoTEEVerifier) {
-            bytes memory dataWithoutCert =
-                bytes.concat(data[:HEADER_LENGTH], data[HEADER_LENGTH + ESPRESSO_CERT_LEN:]);
-            return (keccak256(bytes.concat(header, dataWithoutCert)), timeBounds);
+            return (keccak256(bytes.concat(header, data[ESPRESSO_CERT_LEN:])), timeBounds);
         }
 
         return (keccak256(bytes.concat(header, data)), timeBounds);
