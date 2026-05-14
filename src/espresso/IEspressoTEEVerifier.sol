@@ -16,27 +16,44 @@ interface IEspressoTEEVerifier {
 
     function espressoNitroTEEVerifier() external view returns (IEspressoNitroTEEVerifier);
 
-    function verify(bytes memory signature, bytes32 userDataHash, TeeType teeType)
-        external
-        view
-        returns (bool);
+    function verify(
+        bytes memory signature,
+        bytes32 userDataHash,
+        TeeType teeType
+    ) external view returns (bool);
 
-    function registerService(bytes calldata verificationData, bytes calldata data, TeeType teeType)
-        external;
+    function registerService(
+        bytes calldata verificationData,
+        bytes calldata data,
+        TeeType teeType
+    ) external;
 
-    function registeredEnclaveHashes(bytes32 enclaveHash, TeeType teeType)
-        external
-        view
-        returns (bool);
+    function registeredEnclaveHashes(
+        bytes32 enclaveHash,
+        TeeType teeType
+    ) external view returns (bool);
 
-    function isSignerValid(address signer, TeeType teeType) external view returns (bool);
+    function isSignerValid(
+        address signer,
+        TeeType teeType
+    ) external view returns (bool);
 
-    function setEspressoNitroTEEVerifier(IEspressoNitroTEEVerifier _espressoNitroTEEVerifier)
-        external;
+    function setEspressoNitroTEEVerifier(
+        IEspressoNitroTEEVerifier _espressoNitroTEEVerifier
+    ) external;
 
-    function setEnclaveHash(bytes32 enclaveHash, bool valid, TeeType teeType) external;
+    function setEnclaveHash(
+        bytes32 enclaveHash,
+        bool valid,
+        TeeType teeType
+    ) external;
 
-    function deleteEnclaveHashes(bytes32[] memory enclaveHashes, TeeType teeType) external;
+    function deleteEnclaveHashes(
+        bytes32[] memory enclaveHashes,
+        TeeType teeType
+    ) external;
 
-    function setNitroEnclaveVerifier(address nitroVerifier) external;
+    function setNitroEnclaveVerifier(
+        address nitroVerifier
+    ) external;
 }

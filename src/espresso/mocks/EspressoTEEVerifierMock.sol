@@ -12,13 +12,15 @@ contract EspressoTEEVerifierMock is EIP712 {
     bytes32 private constant ESPRESSO_TEE_VERIFIER_TYPE_HASH =
         keccak256("EspressoTEEVerifier(bytes32 commitment)");
 
-    constructor(IEspressoNitroTEEVerifier _espressoNitroTEEVerifier)
-        EIP712("EspressoTEEVerifier", "1")
-    {
+    constructor(
+        IEspressoNitroTEEVerifier _espressoNitroTEEVerifier
+    ) EIP712("EspressoTEEVerifier", "1") {
         espressoNitroTEEVerifier = _espressoNitroTEEVerifier;
     }
 
-    function _requireNitroTeeType(IEspressoTEEVerifier.TeeType teeType) private pure {
+    function _requireNitroTeeType(
+        IEspressoTEEVerifier.TeeType teeType
+    ) private pure {
         if (teeType != IEspressoTEEVerifier.TeeType.NITRO) {
             revert IEspressoTEEVerifier.UnsupportedTeeType(teeType);
         }
@@ -51,39 +53,46 @@ contract EspressoTEEVerifierMock is EIP712 {
         espressoNitroTEEVerifier.registerService(attestation, data);
     }
 
-    function isSignerValid(address signer, IEspressoTEEVerifier.TeeType teeType)
-        external
-        view
-        returns (bool)
-    {
+    function isSignerValid(
+        address signer,
+        IEspressoTEEVerifier.TeeType teeType
+    ) external view returns (bool) {
         _requireNitroTeeType(teeType);
         return espressoNitroTEEVerifier.isSignerValid(signer);
     }
 
-    function registeredEnclaveHashes(bytes32 enclaveHash, IEspressoTEEVerifier.TeeType teeType)
-        external
-        view
-        returns (bool)
-    {
+    function registeredEnclaveHashes(
+        bytes32 enclaveHash,
+        IEspressoTEEVerifier.TeeType teeType
+    ) external view returns (bool) {
         _requireNitroTeeType(teeType);
         return espressoNitroTEEVerifier.registeredEnclaveHash(enclaveHash);
     }
 
-    function setEspressoNitroTEEVerifier(IEspressoNitroTEEVerifier _espressoNitroTEEVerifier)
-        external
-    {
+    function setEspressoNitroTEEVerifier(
+        IEspressoNitroTEEVerifier _espressoNitroTEEVerifier
+    ) external {
         espressoNitroTEEVerifier = _espressoNitroTEEVerifier;
     }
 
-    function setEnclaveHash(bytes32, bool, IEspressoTEEVerifier.TeeType) external pure {
+    function setEnclaveHash(
+        bytes32,
+        bool,
+        IEspressoTEEVerifier.TeeType
+    ) external pure {
         revert("not implemented");
     }
 
-    function deleteEnclaveHashes(bytes32[] memory, IEspressoTEEVerifier.TeeType) external pure {
+    function deleteEnclaveHashes(
+        bytes32[] memory,
+        IEspressoTEEVerifier.TeeType
+    ) external pure {
         revert("not implemented");
     }
 
-    function setNitroEnclaveVerifier(address) external pure {
+    function setNitroEnclaveVerifier(
+        address
+    ) external pure {
         revert("not implemented");
     }
 }

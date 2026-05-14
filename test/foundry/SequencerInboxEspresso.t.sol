@@ -9,12 +9,16 @@ import {NotOwner, InvalidCasCertificate} from "../../src/libraries/Error.sol";
 import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import {IEspressoNitroTEEVerifier} from "../../src/espresso/IEspressoNitroTEEVerifier.sol";
 import {EspressoTEEVerifierMock} from "../../src/espresso/mocks/EspressoTEEVerifierMock.sol";
-import {EspressoNitroTEEVerifierMock} from "../../src/espresso/mocks/EspressoNitroTEEVerifierMock.sol";
+import {
+    EspressoNitroTEEVerifierMock
+} from "../../src/espresso/mocks/EspressoNitroTEEVerifierMock.sol";
 
 contract EspressoRollupMock {
     address public immutable owner;
 
-    constructor(address _owner) {
+    constructor(
+        address _owner
+    ) {
         owner = _owner;
     }
 }
@@ -48,15 +52,12 @@ contract SequencerInboxEspressoTest is Test {
     address dummyInbox = address(139);
     IReader4844 dummyReader4844 = IReader4844(address(137));
 
-    ISequencerInbox.MaxTimeVariation maxTimeVariation =
-        ISequencerInbox.MaxTimeVariation({
-            delayBlocks: 10,
-            futureBlocks: 10,
-            delaySeconds: 100,
-            futureSeconds: 100
-        });
-    BufferConfig bufferConfigDefault =
-        BufferConfig({threshold: type(uint64).max, max: type(uint64).max, replenishRateInBasis: 714});
+    ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
+        delayBlocks: 10, futureBlocks: 10, delaySeconds: 100, futureSeconds: 100
+    });
+    BufferConfig bufferConfigDefault = BufferConfig({
+        threshold: type(uint64).max, max: type(uint64).max, replenishRateInBasis: 714
+    });
 
     EspressoNitroTEEVerifierMock nitroMock;
     EspressoTEEVerifierMock teeVerifierMock;
@@ -64,7 +65,9 @@ contract SequencerInboxEspressoTest is Test {
 
     // ── Helpers ────────────────────────────────────────────────────────
 
-    function _registerSigner(address _signer) internal {
+    function _registerSigner(
+        address _signer
+    ) internal {
         nitroMock.setSignerValid(_signer, true);
     }
 
@@ -74,9 +77,7 @@ contract SequencerInboxEspressoTest is Test {
         uint256 pk,
         bytes32 userDataHash
     ) internal view returns (bytes memory signature) {
-        bytes32 structHash = keccak256(
-            abi.encode(ESPRESSO_TEE_VERIFIER_TYPE_HASH, userDataHash)
-        );
+        bytes32 structHash = keccak256(abi.encode(ESPRESSO_TEE_VERIFIER_TYPE_HASH, userDataHash));
 
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -152,19 +153,14 @@ contract SequencerInboxEspressoTest is Test {
         EspressoRollupMock rollupMock = new EspressoRollupMock(rollupOwner);
 
         Bridge bridgeImpl = new Bridge();
-        bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
-        );
+        bridge =
+            Bridge(address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, "")));
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
         bridge.setDelayedInbox(dummyInbox, true);
 
-        SequencerInbox seqInboxImpl = new SequencerInbox(
-            MAX_DATA_SIZE,
-            dummyReader4844,
-            false,
-            false
-        );
+        SequencerInbox seqInboxImpl =
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false);
         seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
@@ -186,7 +182,9 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     /// @dev Enqueue a delayed message so that addSequencerL2Batch can reference it.
-    function _enqueueDelayed(Bridge bridge) internal {
+    function _enqueueDelayed(
+        Bridge bridge
+    ) internal {
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(3, address(140), keccak256("delayed"));
     }
@@ -235,18 +233,14 @@ contract SequencerInboxEspressoTest is Test {
         );
     }
 
-
     function setUp() public {
         signer = vm.addr(SIGNER_PK);
 
         nitroMock = new EspressoNitroTEEVerifierMock();
-        teeVerifierMock = new EspressoTEEVerifierMock(
-            IEspressoNitroTEEVerifier(address(nitroMock))
-        );
+        teeVerifierMock = new EspressoTEEVerifierMock(IEspressoNitroTEEVerifier(address(nitroMock)));
 
         _registerSigner(signer);
     }
-
 
     function testAddBatchWithValidEspressoCert() public {
         (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(1);
@@ -254,24 +248,14 @@ contract SequencerInboxEspressoTest is Test {
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"deadbeef";
-        (
-            bytes memory data,
-            uint256 seqNum,
-            uint256 delayedRead,
-            uint256 prevMsg,
-            uint256 newMsg
-        ) = _prepareValidBatch(seqInbox, bridge, 1, downstream);
+        (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
+            _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
         uint256 countBefore = bridge.sequencerMessageCount();
 
         vm.prank(tx.origin);
         seqInbox.addSequencerL2Batch(
-            seqNum,
-            data,
-            delayedRead,
-            IGasRefunder(address(0)),
-            prevMsg,
-            newMsg
+            seqNum, data, delayedRead, IGasRefunder(address(0)), prevMsg, newMsg
         );
 
         assertEq(bridge.sequencerMessageCount(), countBefore + 1, "batch not accepted");
@@ -283,24 +267,14 @@ contract SequencerInboxEspressoTest is Test {
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"deadbeef";
-        (
-            bytes memory data,
-            uint256 seqNum,
-            uint256 delayedRead,
-            uint256 prevMsg,
-            uint256 newMsg
-        ) = _prepareValidBatch(seqInbox, bridge, 1, downstream);
+        (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
+            _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
         uint256 countBefore = bridge.sequencerMessageCount();
 
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
-            seqNum,
-            data,
-            delayedRead,
-            IGasRefunder(address(0)),
-            prevMsg,
-            newMsg
+            seqNum, data, delayedRead, IGasRefunder(address(0)), prevMsg, newMsg
         );
 
         assertEq(bridge.sequencerMessageCount(), countBefore + 1, "batch not accepted");
@@ -319,12 +293,7 @@ contract SequencerInboxEspressoTest is Test {
         bytes memory downstream = hex"deadbeef";
 
         bytes32 userDataHash = _computeUserDataHash(
-            prevMsg,
-            newMsg,
-            seqInbox.startHotshotBlock(),
-            delayedRead,
-            1,
-            downstream
+            prevMsg, newMsg, seqInbox.startHotshotBlock(), delayedRead, 1, downstream
         );
 
         // Sign with unregistered key
@@ -376,13 +345,8 @@ contract SequencerInboxEspressoTest is Test {
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"cafe";
-        (
-            bytes memory data,
-            uint256 seqNum,
-            uint256 delayedRead,
-            uint256 prevMsg,
-            uint256 newMsg
-        ) = _prepareValidBatch(seqInbox, bridge, newMinBlock, downstream);
+        (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
+            _prepareValidBatch(seqInbox, bridge, newMinBlock, downstream);
 
         vm.expectEmit(false, false, false, true, address(seqInbox));
         emit StartHotshotBlockSet(newMinBlock);
@@ -401,13 +365,8 @@ contract SequencerInboxEspressoTest is Test {
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"aabbccdd";
-        (
-            bytes memory data,
-            uint256 seqNum,
-            uint256 delayedRead,
-            uint256 prevMsg,
-            uint256 newMsg
-        ) = _prepareValidBatch(seqInbox, bridge, 1, downstream);
+        (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
+            _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
         // Expect SequencerBatchData to contain only the downstream cert (data[117:])
         vm.expectEmit(true, false, false, true, address(seqInbox));
@@ -431,9 +390,7 @@ contract SequencerInboxEspressoTest is Test {
 
         // Non-owner reverts
         address nonOwner = address(0xBAD);
-        vm.expectRevert(
-            abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner)
-        );
+        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner));
         vm.prank(nonOwner);
         seqInbox.setEspressoTEEVerifier(IEspressoTEEVerifier(address(0)));
     }
@@ -448,9 +405,7 @@ contract SequencerInboxEspressoTest is Test {
 
         // Non-owner reverts
         address nonOwner = address(0xBAD);
-        vm.expectRevert(
-            abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner)
-        );
+        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner));
         vm.prank(nonOwner);
         seqInbox.setStartHotshotBlock(99);
     }
@@ -459,16 +414,14 @@ contract SequencerInboxEspressoTest is Test {
         // Deploy without espresso TEE verifier
         EspressoRollupMock rollupMock = new EspressoRollupMock(rollupOwner);
         Bridge bridgeImpl = new Bridge();
-        Bridge bridge = Bridge(
-            address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, ""))
-        );
+        Bridge bridge =
+            Bridge(address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, "")));
         bridge.initialize(IOwnable(address(rollupMock)));
         vm.prank(rollupOwner);
         bridge.setDelayedInbox(dummyInbox, true);
 
-        SequencerInbox seqInboxImpl = new SequencerInbox(
-            MAX_DATA_SIZE, dummyReader4844, false, false
-        );
+        SequencerInbox seqInboxImpl =
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false);
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
@@ -502,10 +455,11 @@ contract SequencerInboxEspressoTest is Test {
             seqNum, data, delayedRead, IGasRefunder(address(0)), prevMsg, newMsg
         );
 
-        assertEq(bridge.sequencerMessageCount(), countBefore + 1, "batch not accepted without verifier");
+        assertEq(
+            bridge.sequencerMessageCount(), countBefore + 1, "batch not accepted without verifier"
+        );
     }
 }
-
 
 // todo: no setter needed for starthotshot block
 // addinfg delated messages read

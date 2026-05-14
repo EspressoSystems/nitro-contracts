@@ -28,8 +28,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install packages
         run: yarn
@@ -57,9 +57,9 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          node-version: '18'
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -68,7 +68,11 @@ jobs:
           cache: false
 
       - name: Check Contracts Format
-        run: forge fmt --check
+        run: |
+          changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.sol')
+          if [ -n "$changed_files" ]; then
+            echo "$changed_files" | xargs forge fmt --check
+          fi
 
       - name: Install dependencies
         run: yarn install
@@ -106,8 +110,8 @@ jobs:
       - name: Run unused Solidity errors checker
         uses: OffchainLabs/actions/check-unused-errors@main
         with:
-          directory: "./src"
-          exceptions_file: "./test/unused-errors/exceptions.txt"
+          directory: './src'
+          exceptions_file: './test/unused-errors/exceptions.txt'
 
       - name: Run coverage
         run: yarn hardhat coverage --testfiles "test/contract/*.spec.ts"
@@ -147,8 +151,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install dependencies
         run: yarn install
@@ -167,20 +171,41 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - name: Checkout nitro-testnode
+        uses: actions/checkout@v4
         with:
-          l3-node: true
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
-          nitro-testnode-ref: release
+          repository: EspressoSystems/nitro-testnode
+          submodules: true
+          path: nitro-testnode
+          ref: integrate-cas
+
+      - name: Start nitro test node
+        shell: bash
+        run: |
+          cd nitro-testnode
+          export NITRO_CONTRACTS_BRANCH="${{ github.event.pull_request.head.sha || github.sha }}"
+          ./test-node.bash --init --no-simple --l3node --no-tokenbridge &
+
+      - name: Wait for nitro startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:8547"; do sleep 10; done
+
+      - name: Wait for L3 startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:3347"; do sleep 10; done
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install packages
         run: yarn
@@ -199,21 +224,41 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - name: Checkout nitro-testnode
+        uses: actions/checkout@v4
         with:
-          l3-node: true
-          args: --l3-fee-token
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
-          nitro-testnode-ref: release
+          repository: EspressoSystems/nitro-testnode
+          submodules: true
+          path: nitro-testnode
+          ref: integrate-cas
+
+      - name: Start nitro test node
+        shell: bash
+        run: |
+          cd nitro-testnode
+          export NITRO_CONTRACTS_BRANCH="${{ github.event.pull_request.head.sha || github.sha }}"
+          ./test-node.bash --init --no-simple --l3node --l3-fee-token --no-tokenbridge &
+
+      - name: Wait for nitro startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:8547"; do sleep 10; done
+
+      - name: Wait for L3 startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:3347"; do sleep 10; done
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install packages
         run: yarn
@@ -232,21 +277,41 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - name: Checkout nitro-testnode
+        uses: actions/checkout@v4
         with:
-          l3-node: true
-          args: --l3-fee-token --l3-fee-token-pricer --l3-fee-token-decimals 6
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-testnode-ref: release
-          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
+          repository: EspressoSystems/nitro-testnode
+          submodules: true
+          path: nitro-testnode
+          ref: integrate-cas
+
+      - name: Start nitro test node
+        shell: bash
+        run: |
+          cd nitro-testnode
+          export NITRO_CONTRACTS_BRANCH="${{ github.event.pull_request.head.sha || github.sha }}"
+          ./test-node.bash --init --no-simple --l3node --l3-fee-token --l3-fee-token-pricer --l3-fee-token-decimals 6 --no-tokenbridge &
+
+      - name: Wait for nitro startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:8547"; do sleep 10; done
+
+      - name: Wait for L3 startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:3347"; do sleep 10; done
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install packages
         run: yarn

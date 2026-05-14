@@ -5,21 +5,34 @@ contract EspressoNitroTEEVerifierMock {
     mapping(bytes32 => bool) public registeredEnclaveHashes;
     mapping(address => bool) public registeredServices;
 
-    function registerService(bytes calldata, bytes calldata) external {}
+    function registerService(
+        bytes calldata,
+        bytes calldata
+    ) external {}
 
-    function registeredEnclaveHash(bytes32 enclaveHash) external view returns (bool) {
+    function registeredEnclaveHash(
+        bytes32 enclaveHash
+    ) external view returns (bool) {
         return registeredEnclaveHashes[enclaveHash];
     }
 
-    function isSignerValid(address signer) external view returns (bool) {
+    function isSignerValid(
+        address signer
+    ) external view returns (bool) {
         return registeredServices[signer];
     }
 
-    function setSignerValid(address signer, bool valid) external {
+    function setSignerValid(
+        address signer,
+        bool valid
+    ) external {
         registeredServices[signer] = valid;
     }
 
-    function setEnclaveHash(bytes32 enclaveHash, bool valid) external {
+    function setEnclaveHash(
+        bytes32 enclaveHash,
+        bool valid
+    ) external {
         registeredEnclaveHashes[enclaveHash] = valid;
     }
 }

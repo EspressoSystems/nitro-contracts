@@ -174,8 +174,7 @@ contract RollupCreator is Ownable {
                 ,
                 ISequencerInbox ethSequencerInbox,
                 ISequencerInbox ethDelayBufferableSequencerInbox,
-                IInboxBase ethInbox,
-                ,
+                IInboxBase ethInbox,,
             ) = bridgeCreator.ethBasedTemplates();
             require(
                 deployParams.maxDataSize == ethSequencerInbox.maxDataSize(),
@@ -191,8 +190,7 @@ contract RollupCreator is Ownable {
                 ,
                 ISequencerInbox erc20SequencerInbox,
                 ISequencerInbox erc20DelayBufferableSequencerInbox,
-                IInboxBase erc20Inbox,
-                ,
+                IInboxBase erc20Inbox,,
             ) = bridgeCreator.erc20BasedTemplates();
             require(
                 deployParams.maxDataSize == erc20SequencerInbox.maxDataSize(),
