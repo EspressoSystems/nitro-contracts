@@ -54,9 +54,7 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 import "./DelayBuffer.sol";
-import {
-    IEspressoTEEVerifier
-} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../espresso/IEspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -152,7 +150,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool public immutable isDelayBufferable;
 
     /// @notice Length of the CAS certificate embedded in the batch data
-    uint256 public constant ESPRESSO_CERT_LEN = 101;
+    uint256 public constant ESPRESSO_CERT_LEN = 117;
 
     /// @notice The Espresso TEE verifier used for CAS certificate validation
     IEspressoTEEVerifier public espressoTEEVerifier;
@@ -380,34 +378,41 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @dev    The data layout (relative to the `data` parameter, which does NOT include the
     ///         40-byte sequencer header generated internally by packHeader) is:
     ///         [0..31]    CAS header (32 bytes, byte 0 = ESPRESSO_CAS_HEADER_FLAG 0x70)
-    ///         [32..35]   min_hotshot_block (uint32 BE)
-    ///         [36..100]  CAS ECDSA signature (65 bytes)
-    ///         [101+]     downstream DA certificate
+    ///         [32..35]   start_message_pos (uint32 BE)
+    ///         [36..39]   end_message_pos (uint32 BE)
+    ///         [40..43]   start_hotshot_block (uint32 BE)
+    ///         [44..47]   after_delayed_messages_read (uint32 BE)
+    ///         [48..51]   min_hotshot_block (uint32 BE)
+    ///         [52..116]  CAS ECDSA signature (65 bytes)
+    ///         [117+]     downstream DA certificate
     ///         The canonical payload signed by CAS is:
     ///         abi.encodePacked(uint32(prevMessageCount), uint32(newMessageCount),
-    ///                          startHotshotBlock, minHotshotBlock, downstreamCert)
+    ///                          startHotshotBlock, uint32(afterDelayedMessagesRead),
+    ///                          minHotshotBlock, downstreamCert)
     function verifyEspressoCertificate(
         bytes calldata data,
+        uint256 afterDelayedMessagesRead,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) internal {
-        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 101 bytes
+        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 117 bytes
         if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
 
-        // Parse min_hotshot_block from data[32:36]
-        uint32 minHotshotBlock = uint32(bytes4(data[32:36]));
+        // Parse min_hotshot_block from data[48:52]
+        uint32 minHotshotBlock = uint32(bytes4(data[48:52]));
 
-        // Extract CAS ECDSA signature from data[36:101]
-        bytes memory signature = data[36:101];
+        // Extract CAS ECDSA signature from data[52:117]
+        bytes memory signature = data[52:117];
 
-        // Extract downstream DA certificate from data[101:]
-        bytes calldata downstreamCert = data[101:];
+        // Extract downstream DA certificate from data[117:]
+        bytes calldata downstreamCert = data[117:];
 
         // Build the canonical payload that was signed by CAS
         bytes memory payload = abi.encodePacked(
             uint32(prevMessageCount),
             uint32(newMessageCount),
             startHotshotBlock,
+            uint32(afterDelayedMessagesRead),
             minHotshotBlock,
             downstreamCert
         );
@@ -534,7 +539,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 calldataLengthPosted = 0;
 
         if (hasEspressoTEEVerifier) {
-            verifyEspressoCertificate(data, prevMessageCount, newMessageCount);
+            verifyEspressoCertificate(
+                data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
+            );
         }
 
         if (isFromCodelessOrigin) {

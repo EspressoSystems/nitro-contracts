@@ -4,9 +4,7 @@ pragma solidity ^0.8.4;
 import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/rollup/RollupCreator.sol";
-import {
-    IEspressoTEEVerifier
-} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import "../../src/rollup/RollupAdminLogic.sol";
 import "../../src/rollup/RollupUserLogic.sol";
 import "../../src/rollup/ValidatorWalletCreator.sol";

@@ -9,9 +9,7 @@ import "../../src/rollup/RollupCore.sol";
 import "../../src/rollup/RollupUserLogic.sol";
 import "../../src/rollup/RollupAdminLogic.sol";
 import "../../src/rollup/RollupCreator.sol";
-import {
-    IEspressoTEEVerifier
-} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 
 import "../../src/osp/OneStepProver0.sol";
 import "../../src/osp/OneStepProverMemory.sol";

@@ -5,9 +5,7 @@ import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/rollup/BridgeCreator.sol";
 import "../../src/bridge/ISequencerInbox.sol";
-import {
-    IEspressoTEEVerifier
-} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";

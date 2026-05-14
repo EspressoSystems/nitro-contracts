@@ -11,6 +11,7 @@ import "@offchainlabs/upgrade-executor/src/IUpgradeExecutor.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {IEspressoTEEVerifier} from "../espresso/IEspressoTEEVerifier.sol";
 import {DeployHelper} from "./DeployHelper.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OneStepProofEntry, IOneStepProofEntry, IOneStepProver} from "../osp/OneStepProofEntry.sol";

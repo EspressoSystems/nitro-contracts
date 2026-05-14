@@ -12,9 +12,7 @@ import {
     IFeeTokenPricer,
     BufferConfig
 } from "../../src/bridge/SequencerInbox.sol";
-import {
-    IEspressoTEEVerifier
-} from "../../lib/espresso-tee-contracts/src/interface/IEspressoTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import {INITIALIZATION_MSG_TYPE} from "../../src/libraries/MessageTypes.sol";
 import {
     ERC20PresetMinterPauser

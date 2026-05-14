@@ -16,9 +16,7 @@ remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
               '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/', 
               '@offchainlabs/upgrade-executor/=node_modules/@offchainlabs/upgrade-executor/',
               '@uniswap/v2-core/=node_modules/@uniswap/v2-core/contracts',
-              '@uniswap/lib/=node_modules/@uniswap/lib/contracts',
-              'aws-nitro-enclave-attestation/=lib/espresso-tee-contracts/lib/aws-nitro-enclave-attestation/contracts/src/',
-              '@espresso-tee/=lib/espresso-tee-contracts/src/']
+              '@uniswap/lib/=node_modules/@uniswap/lib/contracts']
 fs_permissions = [{ access = "read-write", path = "./"}]
 additional_compiler_profiles = [
     { name = "20_runs", optimizer_runs = 20 },

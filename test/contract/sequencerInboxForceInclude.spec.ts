@@ -293,7 +293,9 @@ describe('SequencerInboxForceInclude', async () => {
         max: 0,
         replenishRateInBasis: 0,
       },
-      constants.AddressZero
+      constants.AddressZero,
+      constants.AddressZero,
+      0
     )
 
     await (

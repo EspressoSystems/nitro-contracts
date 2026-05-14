@@ -289,7 +289,9 @@ describe('SequencerInbox', async () => {
           max: 0,
           replenishRateInBasis: 0,
         },
-        constants.AddressZero
+        constants.AddressZero,
+        constants.AddressZero,
+        0
       )
     ).wait()
 
