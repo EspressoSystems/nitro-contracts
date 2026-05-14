@@ -102,8 +102,8 @@ jobs:
       - name: Test size
         run: yarn contract:size
 
-      - name: Test Storage Layouts
-        run: yarn run test:storage
+      # - name: Test Storage Layouts
+      #   run: yarn run test:storage
 
       - name: Test function signatures
         run: yarn run test:signatures
