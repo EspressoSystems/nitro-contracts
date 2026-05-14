@@ -28,8 +28,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install packages
         run: yarn
@@ -38,7 +38,7 @@ jobs:
         run: yarn test:foundry
   tests:
     name: Contract tests
-    runs-on: ubuntu-8
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -57,9 +57,9 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          node-version: "18"
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -106,8 +106,8 @@ jobs:
       - name: Run unused Solidity errors checker
         uses: OffchainLabs/actions/check-unused-errors@main
         with:
-          directory: './src'
-          exceptions_file: './test/unused-errors/exceptions.txt'
+          directory: "./src"
+          exceptions_file: "./test/unused-errors/exceptions.txt"
 
       - name: Run coverage
         run: yarn hardhat coverage --testfiles "test/contract/*.spec.ts"
@@ -147,8 +147,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install dependencies
         run: yarn install
@@ -172,15 +172,15 @@ jobs:
           l3-node: true
           no-token-bridge: true
           no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
           nitro-testnode-ref: release
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install packages
         run: yarn
@@ -205,15 +205,15 @@ jobs:
           args: --l3-fee-token
           no-token-bridge: true
           no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
           nitro-testnode-ref: release
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install packages
         run: yarn
@@ -239,14 +239,14 @@ jobs:
           no-token-bridge: true
           no-l3-token-bridge: true
           nitro-testnode-ref: release
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+          nitro-contracts-branch: "${{ github.event.pull_request.head.sha || github.sha }}"
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install packages
         run: yarn
