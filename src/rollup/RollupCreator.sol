@@ -47,7 +47,7 @@ contract RollupCreator is Ownable {
         IFeeTokenPricer feeTokenPricer;
         address customOsp;
         IEspressoTEEVerifier espressoTEEVerifier;
-        uint32 startHotshotBlock;
+        uint64 startHotshotBlock;
     }
 
     BridgeCreator public bridgeCreator;

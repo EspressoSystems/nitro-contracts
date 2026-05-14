@@ -38,7 +38,7 @@ jobs:
         run: yarn test:foundry
   tests:
     name: Contract tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-8
     defaults:
       run:
         shell: bash

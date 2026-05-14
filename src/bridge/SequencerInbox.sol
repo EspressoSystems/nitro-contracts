@@ -150,13 +150,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool public immutable isDelayBufferable;
 
     /// @notice Length of the CAS certificate embedded in the batch data
-    uint256 public constant ESPRESSO_CERT_LEN = 117;
+    uint256 public constant ESPRESSO_CERT_LEN = 137;
 
     /// @notice The Espresso TEE verifier used for CAS certificate validation
     IEspressoTEEVerifier public espressoTEEVerifier;
 
-    /// @notice The start hotshot block used for CAS certificate payload construction
-    uint32 public startHotshotBlock;
+    uint64 public startHotshotBlock;
 
     constructor(
         uint256 _maxDataSize,
@@ -199,7 +198,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         BufferConfig memory bufferConfig_,
         IFeeTokenPricer feeTokenPricer_,
         IEspressoTEEVerifier espressoTEEVerifier_,
-        uint32 startHotshotBlock_
+        uint64 startHotshotBlock_
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -379,16 +378,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @dev    The data layout (relative to the `data` parameter, which does NOT include the
     ///         40-byte sequencer header generated internally by packHeader) is:
     ///         [0..31]    CAS header (32 bytes, byte 0 = ESPRESSO_CAS_HEADER_FLAG 0x70)
-    ///         [32..35]   start_message_pos (uint32 BE)
-    ///         [36..39]   end_message_pos (uint32 BE)
-    ///         [40..43]   start_hotshot_block (uint32 BE)
-    ///         [44..47]   after_delayed_messages_read (uint32 BE)
-    ///         [48..51]   min_hotshot_block (uint32 BE)
-    ///         [52..116]  CAS ECDSA signature (65 bytes)
-    ///         [117+]     downstream DA certificate
+    ///         [32..39]   start_message_pos (uint64 BE)
+    ///         [40..47]   end_message_pos (uint64 BE)
+    ///         [48..55]   start_hotshot_block (uint64 BE)
+    ///         [56..63]   after_delayed_messages_read (uint64 BE)
+    ///         [64..71]   min_hotshot_block (uint64 BE)
+    ///         [72..136]  CAS ECDSA signature (65 bytes)
+    ///         [137+]     downstream DA certificate
     ///         The canonical payload signed by CAS is:
-    ///         abi.encodePacked(uint32(prevMessageCount), uint32(newMessageCount),
-    ///                          startHotshotBlock, uint32(afterDelayedMessagesRead),
+    ///         abi.encodePacked(uint64(prevMessageCount), uint64(newMessageCount),
+    ///                          uint64(startHotshotBlock), uint64(afterDelayedMessagesRead),
     ///                          minHotshotBlock, downstreamCert)
     function verifyEspressoCertificate(
         bytes calldata data,
@@ -396,24 +395,24 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) internal {
-        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 117 bytes
+        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 137 bytes
         if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
 
-        // Parse min_hotshot_block from data[48:52]
-        uint32 minHotshotBlock = uint32(bytes4(data[48:52]));
+        // Parse min_hotshot_block from data[64:72]
+        uint64 minHotshotBlock = uint64(bytes8(data[64:72]));
 
-        // Extract CAS ECDSA signature from data[52:117]
-        bytes memory signature = data[52:117];
+        // Extract CAS ECDSA signature from data[72:137]
+        bytes memory signature = data[72:137];
 
-        // Extract downstream DA certificate from data[117:]
-        bytes calldata downstreamCert = data[117:];
+        // Extract downstream DA certificate from data[137:]
+        bytes calldata downstreamCert = data[137:];
 
         // Build the canonical payload that was signed by CAS
         bytes memory payload = abi.encodePacked(
-            uint32(prevMessageCount),
-            uint32(newMessageCount),
+            uint64(prevMessageCount),
+            uint64(newMessageCount),
             startHotshotBlock,
-            uint32(afterDelayedMessagesRead),
+            uint64(afterDelayedMessagesRead),
             minHotshotBlock,
             downstreamCert
         );

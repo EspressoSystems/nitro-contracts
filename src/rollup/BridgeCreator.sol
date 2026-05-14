@@ -110,7 +110,7 @@ contract BridgeCreator {
         BufferConfig calldata bufferConfig,
         IFeeTokenPricer feeTokenPricer,
         IEspressoTEEVerifier espressoTEEVerifier,
-        uint32 startHotshotBlock
+        uint64 startHotshotBlock
     ) external returns (BridgeContracts memory) {
         // use create2 salt to ensure deterministic addresses
         bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));

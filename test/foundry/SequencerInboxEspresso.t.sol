@@ -34,8 +34,8 @@ contract SequencerInboxEspressoTest is Test {
         IBridge.BatchDataLocation dataLocation
     );
     event SequencerBatchData(uint256 indexed batchSequenceNumber, bytes data);
-    event StartHotshotBlockSet(uint32 startHotshotBlock);
-    event EspressoCertificateVerified(uint32 startHotshotBlock);
+    event StartHotshotBlockSet(uint64 startHotshotBlock);
+    event EspressoCertificateVerified(uint64 startHotshotBlock);
     event EspressoTEEVerifierSet(address espressoTEEVerifier);
 
     // ── Constants ─────────────────────────────────────────────────────
@@ -102,16 +102,16 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     /// @dev Build the full certificate data that SequencerInbox expects.
-    ///      Layout: [0..31] CAS header | [32..35] startMessagePos |
-    ///              [36..39] endMessagePos | [40..43] startHotshotBlock |
-    ///              [44..47] afterDelayedMessagesRead | [48..51] minHotshotBlock |
-    ///              [52..116] signature | [117+] downstreamCert
+    ///      Layout: [0..31] CAS header | [32..39] startMessagePos |
+    ///              [40..47] endMessagePos | [48..55] startHotshotBlock |
+    ///              [56..63] afterDelayedMessagesRead | [64..71] minHotshotBlock |
+    ///              [72..136] signature | [137+] downstreamCert
     function _buildCertData(
-        uint32 startMessagePos,
-        uint32 endMessagePos,
-        uint32 startHotshotBlock_,
-        uint32 afterDelayedMessagesRead,
-        uint32 minHotshotBlock,
+        uint64 startMessagePos,
+        uint64 endMessagePos,
+        uint64 startHotshotBlock_,
+        uint64 afterDelayedMessagesRead,
+        uint64 minHotshotBlock,
         bytes memory signature,
         bytes memory downstreamCert
     ) internal pure returns (bytes memory) {
@@ -121,11 +121,11 @@ contract SequencerInboxEspressoTest is Test {
 
         return abi.encodePacked(
             casHeader,
-            bytes4(startMessagePos),
-            bytes4(endMessagePos),
-            bytes4(startHotshotBlock_),
-            bytes4(afterDelayedMessagesRead),
-            bytes4(minHotshotBlock),
+            bytes8(startMessagePos),
+            bytes8(endMessagePos),
+            bytes8(startHotshotBlock_),
+            bytes8(afterDelayedMessagesRead),
+            bytes8(minHotshotBlock),
             signature,
             downstreamCert
         );
@@ -135,16 +135,16 @@ contract SequencerInboxEspressoTest is Test {
     function _computeUserDataHash(
         uint256 prevMsgCount,
         uint256 newMsgCount,
-        uint32 _startHotshotBlock,
+        uint64 _startHotshotBlock,
         uint256 afterDelayedMessagesRead,
-        uint32 minHotshotBlock,
+        uint64 minHotshotBlock,
         bytes memory downstreamCert
     ) internal pure returns (bytes32) {
         bytes memory payload = abi.encodePacked(
-            uint32(prevMsgCount),
-            uint32(newMsgCount),
+            uint64(prevMsgCount),
+            uint64(newMsgCount),
             _startHotshotBlock,
-            uint32(afterDelayedMessagesRead),
+            uint64(afterDelayedMessagesRead),
             minHotshotBlock,
             downstreamCert
         );
@@ -153,7 +153,7 @@ contract SequencerInboxEspressoTest is Test {
 
     /// @dev Deploy Bridge + SequencerInbox with espresso TEE verifier enabled.
     function _deployEspressoRollup(
-        uint32 startBlock
+        uint64 startBlock
     ) internal returns (SequencerInbox seqInbox, Bridge bridge) {
         EspressoRollupMock rollupMock = new EspressoRollupMock(rollupOwner);
 
@@ -199,7 +199,7 @@ contract SequencerInboxEspressoTest is Test {
     function _prepareValidBatch(
         SequencerInbox seqInbox,
         Bridge bridge,
-        uint32 minHotshotBlock,
+        uint64 minHotshotBlock,
         bytes memory downstreamCert
     )
         internal
@@ -228,10 +228,10 @@ contract SequencerInboxEspressoTest is Test {
 
         bytes memory sig = _signPayload(SIGNER_PK, userDataHash);
         data = _buildCertData(
-            uint32(prevMsgCount),
-            uint32(newMsgCount),
+            uint64(prevMsgCount),
+            uint64(newMsgCount),
             seqInbox.startHotshotBlock(),
-            uint32(delayedMessagesRead),
+            uint64(delayedMessagesRead),
             minHotshotBlock,
             sig,
             downstreamCert
@@ -304,10 +304,10 @@ contract SequencerInboxEspressoTest is Test {
         // Sign with unregistered key
         bytes memory sig = _signPayload(OTHER_PK, userDataHash);
         bytes memory data = _buildCertData(
-            uint32(prevMsg),
-            uint32(newMsg),
+            uint64(prevMsg),
+            uint64(newMsg),
             seqInbox.startHotshotBlock(),
-            uint32(delayedRead),
+            uint64(delayedRead),
             1,
             sig,
             downstream
@@ -330,8 +330,8 @@ contract SequencerInboxEspressoTest is Test {
         uint256 delayedRead = bridge.delayedMessageCount();
         uint256 seqNum = bridge.sequencerMessageCount();
 
-        // Build data shorter than 117 bytes but with valid CAS header flag
-        bytes memory shortData = new bytes(116);
+        // Build data shorter than 137 bytes but with valid CAS header flag
+        bytes memory shortData = new bytes(136);
         shortData[0] = 0x70;
 
         vm.expectRevert(InvalidCasCertificate.selector);
@@ -342,8 +342,8 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testStartHotshotBlockUpdated() public {
-        uint32 initialBlock = 5;
-        uint32 newMinBlock = 10;
+        uint64 initialBlock = 5;
+        uint64 newMinBlock = 10;
 
         (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(initialBlock);
         _enqueueDelayed(bridge);
@@ -373,7 +373,7 @@ contract SequencerInboxEspressoTest is Test {
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
             _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
-        // Expect SequencerBatchData to contain only the downstream cert (data[117:])
+        // Expect SequencerBatchData to contain only the downstream cert (data[137:])
         vm.expectEmit(true, false, false, true, address(seqInbox));
         emit SequencerBatchData(seqNum, downstream);
 
@@ -401,9 +401,9 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testSecondBatchUsesUpdatedStartHotshotBlock() public {
-        uint32 initialBlock = 5;
-        uint32 firstMinBlock = 10;
-        uint32 secondMinBlock = 15;
+        uint64 initialBlock = 5;
+        uint64 firstMinBlock = 10;
+        uint64 secondMinBlock = 15;
 
         (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(initialBlock);
         _enqueueDelayed(bridge);
