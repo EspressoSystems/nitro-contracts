@@ -9,9 +9,8 @@ import {NotOwner, InvalidCasCertificate} from "../../src/libraries/Error.sol";
 import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import {IEspressoNitroTEEVerifier} from "../../src/espresso/IEspressoNitroTEEVerifier.sol";
 import {EspressoTEEVerifierMock} from "../../src/espresso/mocks/EspressoTEEVerifierMock.sol";
-import {
-    EspressoNitroTEEVerifierMock
-} from "../../src/espresso/mocks/EspressoNitroTEEVerifierMock.sol";
+import {EspressoNitroTEEVerifierMock} from
+    "../../src/espresso/mocks/EspressoNitroTEEVerifierMock.sol";
 
 contract EspressoRollupMock {
     address public immutable owner;
@@ -54,10 +53,15 @@ contract SequencerInboxEspressoTest is Test {
     IReader4844 dummyReader4844 = IReader4844(address(137));
 
     ISequencerInbox.MaxTimeVariation maxTimeVariation = ISequencerInbox.MaxTimeVariation({
-        delayBlocks: 10, futureBlocks: 10, delaySeconds: 100, futureSeconds: 100
+        delayBlocks: 10,
+        futureBlocks: 10,
+        delaySeconds: 100,
+        futureSeconds: 100
     });
     BufferConfig bufferConfigDefault = BufferConfig({
-        threshold: type(uint64).max, max: type(uint64).max, replenishRateInBasis: 714
+        threshold: type(uint64).max,
+        max: type(uint64).max,
+        replenishRateInBasis: 714
     });
 
     EspressoNitroTEEVerifierMock nitroMock;

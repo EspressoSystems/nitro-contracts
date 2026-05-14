@@ -33,25 +33,15 @@ interface IEspressoTEEVerifier {
         TeeType teeType
     ) external view returns (bool);
 
-    function isSignerValid(
-        address signer,
-        TeeType teeType
-    ) external view returns (bool);
+    function isSignerValid(address signer, TeeType teeType) external view returns (bool);
 
     function setEspressoNitroTEEVerifier(
         IEspressoNitroTEEVerifier _espressoNitroTEEVerifier
     ) external;
 
-    function setEnclaveHash(
-        bytes32 enclaveHash,
-        bool valid,
-        TeeType teeType
-    ) external;
+    function setEnclaveHash(bytes32 enclaveHash, bool valid, TeeType teeType) external;
 
-    function deleteEnclaveHashes(
-        bytes32[] memory enclaveHashes,
-        TeeType teeType
-    ) external;
+    function deleteEnclaveHashes(bytes32[] memory enclaveHashes, TeeType teeType) external;
 
     function setNitroEnclaveVerifier(
         address nitroVerifier

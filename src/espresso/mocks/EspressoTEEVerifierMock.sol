@@ -75,18 +75,11 @@ contract EspressoTEEVerifierMock is EIP712 {
         espressoNitroTEEVerifier = _espressoNitroTEEVerifier;
     }
 
-    function setEnclaveHash(
-        bytes32,
-        bool,
-        IEspressoTEEVerifier.TeeType
-    ) external pure {
+    function setEnclaveHash(bytes32, bool, IEspressoTEEVerifier.TeeType) external pure {
         revert("not implemented");
     }
 
-    function deleteEnclaveHashes(
-        bytes32[] memory,
-        IEspressoTEEVerifier.TeeType
-    ) external pure {
+    function deleteEnclaveHashes(bytes32[] memory, IEspressoTEEVerifier.TeeType) external pure {
         revert("not implemented");
     }
 
