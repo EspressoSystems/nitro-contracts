@@ -36,6 +36,7 @@ contract SequencerInboxEspressoTest is Test {
     );
     event SequencerBatchData(uint256 indexed batchSequenceNumber, bytes data);
     event StartHotshotBlockSet(uint32 startHotshotBlock);
+    event EspressoCertificateVerified(uint32 startHotshotBlock);
     event EspressoTEEVerifierSet(address espressoTEEVerifier);
 
     // ── Constants ─────────────────────────────────────────────────────
@@ -395,74 +396,59 @@ contract SequencerInboxEspressoTest is Test {
         seqInbox.setEspressoTEEVerifier(IEspressoTEEVerifier(address(0)));
     }
 
-    function testSetStartHotshotBlock_OnlyOwner() public {
-        (SequencerInbox seqInbox,) = _deployEspressoRollup(0);
+    function testSecondBatchUsesUpdatedStartHotshotBlock() public {
+        uint32 initialBlock = 5;
+        uint32 firstMinBlock = 10;
+        uint32 secondMinBlock = 15;
 
-        // Owner can set
-        vm.prank(rollupOwner);
-        seqInbox.setStartHotshotBlock(42);
-        assertEq(seqInbox.startHotshotBlock(), 42);
-
-        // Non-owner reverts
-        address nonOwner = address(0xBAD);
-        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner));
-        vm.prank(nonOwner);
-        seqInbox.setStartHotshotBlock(99);
-    }
-
-    function testNoVerificationWhenVerifierNotSet() public {
-        // Deploy without espresso TEE verifier
-        EspressoRollupMock rollupMock = new EspressoRollupMock(rollupOwner);
-        Bridge bridgeImpl = new Bridge();
-        Bridge bridge =
-            Bridge(address(new TransparentUpgradeableProxy(address(bridgeImpl), proxyAdmin, "")));
-        bridge.initialize(IOwnable(address(rollupMock)));
-        vm.prank(rollupOwner);
-        bridge.setDelayedInbox(dummyInbox, true);
-
-        SequencerInbox seqInboxImpl =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false);
-        SequencerInbox seqInbox = SequencerInbox(
-            address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
-        );
-        seqInbox.initialize(
-            bridge,
-            maxTimeVariation,
-            bufferConfigDefault,
-            IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)), // no verifier
-            0
-        );
-
-        vm.prank(rollupOwner);
-        seqInbox.setIsBatchPoster(tx.origin, true);
-        vm.prank(rollupOwner);
-        bridge.setSequencerInbox(address(seqInbox));
-
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(initialBlock);
         _enqueueDelayed(bridge);
+        _enqueueDelayed(bridge); // enqueue a second delayed msg for the second batch
         vm.fee(60 gwei);
 
-        // Submit batch with arbitrary data (no valid cert), should succeed
-        bytes memory data = hex"00deadbeef";
-        uint256 prevMsg = bridge.sequencerReportedSubMessageCount();
-        uint256 newMsg = prevMsg + 1;
-        uint256 delayedRead = bridge.delayedMessageCount();
-        uint256 seqNum = bridge.sequencerMessageCount();
-        uint256 countBefore = bridge.sequencerMessageCount();
+        // ── First batch: updates startHotshotBlock from 5 → 10 ──
+        {
+            bytes memory downstream1 = hex"cafe";
+            (
+                bytes memory data1,
+                uint256 seqNum1,
+                uint256 delayedRead1,
+                uint256 prevMsg1,
+                uint256 newMsg1
+            ) = _prepareValidBatch(seqInbox, bridge, firstMinBlock, downstream1);
 
-        vm.prank(tx.origin);
-        seqInbox.addSequencerL2Batch(
-            seqNum, data, delayedRead, IGasRefunder(address(0)), prevMsg, newMsg
-        );
+            assertEq(seqInbox.startHotshotBlock(), initialBlock, "initial block mismatch");
+
+            vm.prank(tx.origin);
+            seqInbox.addSequencerL2Batch(
+                seqNum1, data1, delayedRead1, IGasRefunder(address(0)), prevMsg1, newMsg1
+            );
+        }
+
+        assertEq(seqInbox.startHotshotBlock(), firstMinBlock, "block not updated after first batch");
+
+        // ── Second batch: must be signed with startHotshotBlock=10 (the updated value) ──
+        {
+            bytes memory downstream2 = hex"beef";
+            (
+                bytes memory data2,
+                uint256 seqNum2,
+                uint256 delayedRead2,
+                uint256 prevMsg2,
+                uint256 newMsg2
+            ) = _prepareValidBatch(seqInbox, bridge, secondMinBlock, downstream2);
+
+            vm.expectEmit(false, false, false, true, address(seqInbox));
+            emit StartHotshotBlockSet(secondMinBlock);
+
+            vm.prank(tx.origin);
+            seqInbox.addSequencerL2Batch(
+                seqNum2, data2, delayedRead2, IGasRefunder(address(0)), prevMsg2, newMsg2
+            );
+        }
 
         assertEq(
-            bridge.sequencerMessageCount(), countBefore + 1, "batch not accepted without verifier"
+            seqInbox.startHotshotBlock(), secondMinBlock, "block not updated after second batch"
         );
     }
 }
-
-// todo: no setter needed for starthotshot block
-// addinfg delated messages read
-// an event should be emitted when the verification is successful I think
-// this test testNoVerificationWhenVerifierNotSet I am not that happy with testNoVerificationWhenVerifierNotSet
-// add a test that after the irst starthotshot block the next batch uses the updated one

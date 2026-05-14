@@ -422,6 +422,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
         // Verify with the TEE verifier (reverts with InvalidSignature if invalid)
         espressoTEEVerifier.verify(signature, userDataHash, IEspressoTEEVerifier.TeeType.NITRO);
+
+        emit EspressoCertificateVerified(startHotshotBlock);
+
         // Update the startHotshotBlock to ensure that future batches with CAS certs must have a higher min_hotshot_block
         if (minHotshotBlock > startHotshotBlock) {
             startHotshotBlock = minHotshotBlock;
@@ -1006,14 +1009,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external onlyRollupOwner {
         espressoTEEVerifier = espressoTEEVerifier_;
         emit EspressoTEEVerifierSet(address(espressoTEEVerifier_));
-    }
-
-    /// @inheritdoc ISequencerInbox
-    function setStartHotshotBlock(
-        uint32 startHotshotBlock_
-    ) external onlyRollupOwner {
-        startHotshotBlock = startHotshotBlock_;
-        emit StartHotshotBlockSet(startHotshotBlock_);
     }
 
     function isValidKeysetHash(

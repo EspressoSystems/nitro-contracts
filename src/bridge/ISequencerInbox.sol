@@ -79,6 +79,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev Emitted when the start hotshot block is updated
     event StartHotshotBlockSet(uint32 startHotshotBlock);
 
+    /// @dev Emitted when an Espresso CAS certificate is successfully verified
+    event EspressoCertificateVerified(uint32 startHotshotBlock);
+
     function totalDelayedMessagesRead() external view returns (uint256);
 
     function bridge() external view returns (IBridge);
@@ -382,11 +385,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @notice Sets the Espresso TEE verifier contract
     function setEspressoTEEVerifier(
         IEspressoTEEVerifier espressoTEEVerifier_
-    ) external;
-
-    /// @notice Sets the start hotshot block for CAS certificate payload construction
-    function setStartHotshotBlock(
-        uint32 startHotshotBlock_
     ) external;
 }
 
