@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts } from '../deploymentUtils'
+import { deployAllContracts, deployContract } from '../deploymentUtils'
 import { createRollup } from '../rollupCreation'
 import { promises as fs } from 'fs'
 import { BigNumber } from 'ethers'
@@ -107,6 +107,20 @@ async function main() {
     )
   ).wait()
 
+  const espressoNitroTEEVerifierMock = await deployContract(
+    'EspressoNitroTEEVerifierMock',
+    deployerWallet,
+    [],
+    false
+  )
+  const espressoTEEVerifierMock = await deployContract(
+    'EspressoTEEVerifierMock',
+    deployerWallet,
+    [espressoNitroTEEVerifierMock.address],
+    false
+  )
+  process.env.ESPRESSO_TEE_VERIFIER = espressoTEEVerifierMock.address
+
   /// Create rollup
   const chainId = (await deployerWallet.provider.getNetwork()).chainId
   console.log(
@@ -152,6 +166,17 @@ async function main() {
   await fs.writeFile(
     childChainInfo,
     JSON.stringify([chainInfo], null, 2),
+    'utf8'
+  )
+
+  // tee verifier address
+  const teeVerifierInfo =
+    process.env.TEE_VERIFIER_INFO !== undefined
+      ? process.env.TEE_VERIFIER_INFO
+      : 'tee_verifier_address.txt'
+  await fs.writeFile(
+    teeVerifierInfo,
+    espressoTEEVerifierMock.address,
     'utf8'
   )
 }
