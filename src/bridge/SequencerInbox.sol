@@ -420,8 +420,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // Compute the commitment hash
         bytes32 userDataHash = keccak256(payload);
 
-        // Verify with the TEE verifier (reverts with InvalidSignature if invalid)
-        espressoTEEVerifier.verify(signature, userDataHash, IEspressoTEEVerifier.TeeType.NITRO);
+        // Verify with the TEE verifier
+        if (
+            !espressoTEEVerifier.verify(signature, userDataHash, IEspressoTEEVerifier.TeeType.NITRO)
+        ) {
+            revert InvalidCasCertificate();
+        }
 
         emit EspressoCertificateVerified(startHotshotBlock);
 
@@ -539,18 +543,20 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         bool isFromCodelessOrigin
     ) internal {
-        bool hasEspressoTEEVerifier = address(espressoTEEVerifier) != address(0);
+        // CAS certificate is only present when the TEE verifier is configured AND
+        // data is non-empty. The initialization batch posted by RollupAdminLogic
+        // has empty data and must not be subject to CAS verification.
+        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
         uint256 calldataLengthPosted = 0;
 
-        if (hasEspressoTEEVerifier) {
+        if (hasEspressoCert) {
             verifyEspressoCertificate(
                 data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
             );
         }
 
         if (isFromCodelessOrigin) {
-            calldataLengthPosted =
-                hasEspressoTEEVerifier ? data.length - ESPRESSO_CERT_LEN : data.length;
+            calldataLengthPosted = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
         }
 
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
@@ -576,13 +582,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds,
-            (isFromCodelessOrigin && !hasEspressoTEEVerifier)
+            (isFromCodelessOrigin && !hasEspressoCert)
                 ? IBridge.BatchDataLocation.TxInput
                 : IBridge.BatchDataLocation.SeparateBatchEvent
         );
 
-        if (!isFromCodelessOrigin || hasEspressoTEEVerifier) {
-            _emitSequencerBatchData(seqMessageIndex, data, hasEspressoTEEVerifier);
+        if (!isFromCodelessOrigin || hasEspressoCert) {
+            _emitSequencerBatchData(seqMessageIndex, data, hasEspressoCert);
         }
     }
 
@@ -716,8 +722,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes calldata data,
         uint256 afterDelayedMessagesRead
     ) internal view returns (bytes32, IBridge.TimeBounds memory) {
-        bool hasEspressoTEEVerifier = address(espressoTEEVerifier) != address(0);
-        uint256 fullDataLen = hasEspressoTEEVerifier
+        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
+        uint256 fullDataLen = hasEspressoCert
             ? HEADER_LENGTH + data.length - ESPRESSO_CERT_LEN
             : HEADER_LENGTH + data.length;
         if (fullDataLen > maxDataSize) revert DataTooLarge(fullDataLen, maxDataSize);
@@ -744,7 +750,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 }
             }
         }
-        if (hasEspressoTEEVerifier) {
+        if (hasEspressoCert) {
             return (keccak256(bytes.concat(header, data[ESPRESSO_CERT_LEN:])), timeBounds);
         }
 
@@ -1013,6 +1019,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external onlyRollupOwner {
         espressoTEEVerifier = espressoTEEVerifier_;
         emit EspressoTEEVerifierSet(address(espressoTEEVerifier_));
+        emit OwnerFunctionCalled(7);
     }
 
     function isValidKeysetHash(
