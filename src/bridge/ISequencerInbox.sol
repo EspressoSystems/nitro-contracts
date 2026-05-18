@@ -131,11 +131,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
     // solhint-disable-next-line func-name-mixedcase
     function CUSTOM_DA_MESSAGE_HEADER_FLAG() external view returns (bytes1);
 
-    /// @dev If the first data byte after the header has this value,
-    ///      then the batch data contains an Espresso CAS certificate prefix
-    // solhint-disable-next-line func-name-mixedcase
-    function ESPRESSO_CAS_HEADER_FLAG() external view returns (bytes1);
-
     function rollup() external view returns (IOwnable);
 
     function isBatchPoster(

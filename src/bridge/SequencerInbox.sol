@@ -94,9 +94,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant CUSTOM_DA_MESSAGE_HEADER_FLAG = 0x01;
 
-    /// @inheritdoc ISequencerInbox
-    bytes1 public constant ESPRESSO_CAS_HEADER_FLAG = 0x70;
-
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
@@ -547,7 +544,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // data is non-empty. The initialization batch posted by RollupAdminLogic
         // has empty data and must not be subject to CAS verification.
         bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
-        uint256 calldataLengthPosted = 0;
 
         if (hasEspressoCert) {
             verifyEspressoCertificate(
@@ -555,12 +551,21 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             );
         }
 
+        uint256 calldataLengthPosted = 0;
         if (isFromCodelessOrigin) {
             calldataLengthPosted = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
         }
 
-        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
-            formCallDataHash(data, afterDelayedMessagesRead);
+        bytes32 dataHash;
+        IBridge.TimeBounds memory timeBounds;
+
+        if (hasEspressoCert) {
+            (dataHash, timeBounds) =
+                formCallDataHash(data[ESPRESSO_CERT_LEN:], afterDelayedMessagesRead);
+        } else {
+            (dataHash, timeBounds) = formCallDataHash(data, afterDelayedMessagesRead);
+        }
+
         (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
         addSequencerL2BatchImpl(
             dataHash,
@@ -710,7 +715,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         return headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
             || (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG))
             || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG
-            || headerByte == CUSTOM_DA_MESSAGE_HEADER_FLAG || headerByte == ESPRESSO_CAS_HEADER_FLAG;
+            || headerByte == CUSTOM_DA_MESSAGE_HEADER_FLAG;
     }
 
     /// @dev    Form a hash of the data taken from the calldata
@@ -722,10 +727,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes calldata data,
         uint256 afterDelayedMessagesRead
     ) internal view returns (bytes32, IBridge.TimeBounds memory) {
-        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
-        uint256 fullDataLen = hasEspressoCert
-            ? HEADER_LENGTH + data.length - ESPRESSO_CERT_LEN
-            : HEADER_LENGTH + data.length;
+        uint256 fullDataLen = HEADER_LENGTH + data.length;
         if (fullDataLen > maxDataSize) revert DataTooLarge(fullDataLen, maxDataSize);
 
         (bytes memory header, IBridge.TimeBounds memory timeBounds) =
@@ -750,10 +752,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 }
             }
         }
-        if (hasEspressoCert) {
-            return (keccak256(bytes.concat(header, data[ESPRESSO_CERT_LEN:])), timeBounds);
-        }
-
         return (keccak256(bytes.concat(header, data)), timeBounds);
     }
 
