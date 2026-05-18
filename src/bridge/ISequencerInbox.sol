@@ -11,6 +11,7 @@ import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 import "./Messages.sol";
 import "./DelayBufferTypes.sol";
+import {IEspressoTEEVerifier} from "../espresso/IEspressoTEEVerifier.sol";
 
 interface ISequencerInbox is IDelayedMessageProvider {
     /// @notice The maximum amount of time variatin between a message being posted on the L1 and being executed on the L2
@@ -71,6 +72,15 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @dev Owner set the fee token pricer.
     event FeeTokenPricerSet(address feeTokenPricer);
+
+    /// @dev Emitted when the Espresso TEE verifier is updated
+    event EspressoTEEVerifierSet(address espressoTEEVerifier);
+
+    /// @dev Emitted when the start hotshot block is updated
+    event StartHotshotBlockSet(uint64 startHotshotBlock);
+
+    /// @dev Emitted when an Espresso CAS certificate is successfully verified
+    event EspressoCertificateVerified(uint64 startHotshotBlock);
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
@@ -356,7 +366,14 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge bridge_,
         MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig calldata bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        IEspressoTEEVerifier espressoTEEVerifier_,
+        uint64 startHotshotBlock_
+    ) external;
+
+    /// @notice Sets the Espresso TEE verifier contract
+    function setEspressoTEEVerifier(
+        IEspressoTEEVerifier espressoTEEVerifier_
     ) external;
 }
 

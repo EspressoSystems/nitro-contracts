@@ -35,7 +35,8 @@ import {
     DelayProofRequired,
     BadBufferConfig,
     ExtraGasNotUint64,
-    KeysetTooLarge
+    KeysetTooLarge,
+    InvalidCasCertificate
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
 import "./IInboxBase.sol";
@@ -53,6 +54,7 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 import "./DelayBuffer.sol";
+import {IEspressoTEEVerifier} from "../espresso/IEspressoTEEVerifier.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -144,6 +146,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // True if the SequencerInbox is delay bufferable
     bool public immutable isDelayBufferable;
 
+    /// @notice Length of the CAS certificate embedded in the batch data
+    uint256 public constant ESPRESSO_CERT_LEN = 137;
+
+    /// @notice The Espresso TEE verifier used for CAS certificate validation
+    IEspressoTEEVerifier public espressoTEEVerifier;
+
+    uint64 public startHotshotBlock;
+
     constructor(
         uint256 _maxDataSize,
         IReader4844 reader4844_,
@@ -183,7 +193,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         IBridge bridge_,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig memory bufferConfig_,
-        IFeeTokenPricer feeTokenPricer_
+        IFeeTokenPricer feeTokenPricer_,
+        IEspressoTEEVerifier espressoTEEVerifier_,
+        uint64 startHotshotBlock_
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -213,6 +225,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert CannotSetFeeTokenPricer();
         }
         feeTokenPricer = feeTokenPricer_;
+        espressoTEEVerifier = espressoTEEVerifier_;
+        startHotshotBlock = startHotshotBlock_;
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -357,6 +371,68 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
+    /// @notice Verify a CAS (Chain Adjacent Service) certificate embedded in the batch data.
+    /// @dev    The data layout (relative to the `data` parameter, which does NOT include the
+    ///         40-byte sequencer header generated internally by packHeader) is:
+    ///         [0..31]    CAS header (32 bytes, byte 0 = ESPRESSO_CAS_HEADER_FLAG 0x70)
+    ///         [32..39]   start_message_pos (uint64 BE)
+    ///         [40..47]   end_message_pos (uint64 BE)
+    ///         [48..55]   start_hotshot_block (uint64 BE)
+    ///         [56..63]   after_delayed_messages_read (uint64 BE)
+    ///         [64..71]   min_hotshot_block (uint64 BE)
+    ///         [72..136]  CAS ECDSA signature (65 bytes)
+    ///         [137+]     downstream DA certificate
+    ///         The canonical payload signed by CAS is:
+    ///         abi.encodePacked(uint64(prevMessageCount), uint64(newMessageCount),
+    ///                          uint64(startHotshotBlock), uint64(afterDelayedMessagesRead),
+    ///                          minHotshotBlock, downstreamCert)
+    function verifyEspressoCertificate(
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) internal {
+        // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 137 bytes
+        if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
+
+        // Parse min_hotshot_block from data[64:72]
+        uint64 minHotshotBlock = uint64(bytes8(data[64:72]));
+
+        // Extract CAS ECDSA signature from data[72:137]
+        bytes memory signature = data[72:137];
+
+        // Extract downstream DA certificate from data[137:]
+        bytes calldata downstreamCert = data[137:];
+
+        // Build the canonical payload that was signed by CAS
+        bytes memory payload = abi.encodePacked(
+            uint64(prevMessageCount),
+            uint64(newMessageCount),
+            startHotshotBlock,
+            uint64(afterDelayedMessagesRead),
+            minHotshotBlock,
+            downstreamCert
+        );
+
+        // Compute the commitment hash
+        bytes32 userDataHash = keccak256(payload);
+
+        // Verify with the TEE verifier
+        if (
+            !espressoTEEVerifier.verify(signature, userDataHash, IEspressoTEEVerifier.TeeType.NITRO)
+        ) {
+            revert InvalidCasCertificate();
+        }
+
+        emit EspressoCertificateVerified(startHotshotBlock);
+
+        // Update the startHotshotBlock to ensure that future batches with CAS certs must have a higher min_hotshot_block
+        if (minHotshotBlock > startHotshotBlock) {
+            startHotshotBlock = minHotshotBlock;
+            emit StartHotshotBlockSet(startHotshotBlock);
+        }
+    }
+
     /// @inheritdoc ISequencerInbox
     function addSequencerL2BatchFromBlobs(
         uint256 sequenceNumber,
@@ -464,13 +540,37 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount,
         bool isFromCodelessOrigin
     ) internal {
-        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
-            formCallDataHash(data, afterDelayedMessagesRead);
+        // CAS certificate is only present when the TEE verifier is configured AND
+        // data is non-empty. The initialization batch posted by RollupAdminLogic
+        // has empty data and must not be subject to CAS verification.
+        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
+
+        if (hasEspressoCert) {
+            verifyEspressoCertificate(
+                data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
+            );
+        }
+
+        uint256 calldataLengthPosted = 0;
+        if (isFromCodelessOrigin) {
+            calldataLengthPosted = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
+        }
+
+        bytes32 dataHash;
+        IBridge.TimeBounds memory timeBounds;
+
+        if (hasEspressoCert) {
+            (dataHash, timeBounds) =
+                formCallDataHash(data[ESPRESSO_CERT_LEN:], afterDelayedMessagesRead);
+        } else {
+            (dataHash, timeBounds) = formCallDataHash(data, afterDelayedMessagesRead);
+        }
+
         (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
         addSequencerL2BatchImpl(
             dataHash,
             afterDelayedMessagesRead,
-            isFromCodelessOrigin ? data.length : 0,
+            calldataLengthPosted,
             prevMessageCount,
             newMessageCount
         );
@@ -487,12 +587,24 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds,
-            isFromCodelessOrigin
+            (isFromCodelessOrigin && !hasEspressoCert)
                 ? IBridge.BatchDataLocation.TxInput
                 : IBridge.BatchDataLocation.SeparateBatchEvent
         );
 
-        if (!isFromCodelessOrigin) {
+        if (!isFromCodelessOrigin || hasEspressoCert) {
+            _emitSequencerBatchData(seqMessageIndex, data, hasEspressoCert);
+        }
+    }
+
+    function _emitSequencerBatchData(
+        uint256 seqMessageIndex,
+        bytes calldata data,
+        bool hasEspressoTEEVerifier
+    ) internal {
+        if (hasEspressoTEEVerifier) {
+            emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
+        } else {
             emit SequencerBatchData(seqMessageIndex, data);
         }
     }
@@ -897,6 +1009,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external onlyRollupOwner {
         _setBufferConfig(bufferConfig_);
         emit BufferConfigSet(bufferConfig_);
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function setEspressoTEEVerifier(
+        IEspressoTEEVerifier espressoTEEVerifier_
+    ) external onlyRollupOwner {
+        espressoTEEVerifier = espressoTEEVerifier_;
+        emit EspressoTEEVerifierSet(address(espressoTEEVerifier_));
+        emit OwnerFunctionCalled(7);
     }
 
     function isValidKeysetHash(

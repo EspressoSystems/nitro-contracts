@@ -356,7 +356,9 @@ export const setupSequencerInbox = async (
     bridgeProxy.address,
     maxDelay,
     delayConfigDefault,
-    constants.AddressZero
+    constants.AddressZero,
+    constants.AddressZero,
+    0
   )
   await (
     await sequencerInbox

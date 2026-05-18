@@ -9,6 +9,7 @@ import "../../src/rollup/RollupCore.sol";
 import "../../src/rollup/RollupUserLogic.sol";
 import "../../src/rollup/RollupAdminLogic.sol";
 import "../../src/rollup/RollupCreator.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 
 import "../../src/osp/OneStepProver0.sol";
 import "../../src/osp/OneStepProverMemory.sol";
@@ -204,7 +205,9 @@ contract RollupTest is Test {
             batchPosters: new address[](0),
             batchPosterManager: address(0),
             feeTokenPricer: IFeeTokenPricer(address(0)),
-            customOsp: address(0)
+            customOsp: address(0),
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+            startHotshotBlock: 0
         });
 
         address rollupAddr = rollupCreator.createRollup(param);

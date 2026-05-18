@@ -12,6 +12,7 @@ import {
     IFeeTokenPricer,
     BufferConfig
 } from "../../src/bridge/SequencerInbox.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import {INITIALIZATION_MSG_TYPE} from "../../src/libraries/MessageTypes.sol";
 import {ERC20PresetMinterPauser} from
     "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
@@ -235,7 +236,9 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
                 futureSeconds: 100
             }),
             bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         vm.prank(rollup);

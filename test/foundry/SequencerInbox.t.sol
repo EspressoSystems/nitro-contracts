@@ -6,6 +6,7 @@ import "./util/TestUtil.sol";
 import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
 contract RollupMock {
@@ -86,7 +87,14 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0)));
+        seqInbox.initialize(
+            bridge,
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, true);
@@ -124,7 +132,9 @@ contract SequencerInboxTest is Test {
             bridge,
             maxTimeVariation,
             bufferConfigDefault,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         vm.prank(rollupOwner);
@@ -303,7 +313,12 @@ contract SequencerInboxTest is Test {
             address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
@@ -325,7 +340,14 @@ contract SequencerInboxTest is Test {
             address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         IFeeTokenPricer feeTokenPricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, bufferConfig, feeTokenPricer);
+        seqInboxProxy.initialize(
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            feeTokenPricer,
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
         assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
@@ -350,7 +372,12 @@ contract SequencerInboxTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
         seqInboxProxy.initialize(
-            IBridge(_bridge), maxTimeVariation, bufferConfig, IFeeTokenPricer(address(0))
+            IBridge(_bridge),
+            maxTimeVariation,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
     }
 
@@ -372,7 +399,9 @@ contract SequencerInboxTest is Test {
             IBridge(_bridge),
             maxTimeVariation,
             bufferConfig,
-            IFeeTokenPricer(makeAddr("feeTokenPricer"))
+            IFeeTokenPricer(makeAddr("feeTokenPricer")),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
     }
 
@@ -383,7 +412,14 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         IFeeTokenPricer pricer = IFeeTokenPricer(makeAddr("feeTokenPricer"));
         vm.expectRevert(abi.encodeWithSelector(CannotSetFeeTokenPricer.selector));
-        seqInboxProxy.initialize(IBridge(bridge), maxTimeVariation, bufferConfigDefault, pricer);
+        seqInboxProxy.initialize(
+            IBridge(bridge),
+            maxTimeVariation,
+            bufferConfigDefault,
+            pricer,
+            IEspressoTEEVerifier(address(0)),
+            0
+        );
     }
 
     function testAddSequencerL2BatchFromOrigin_ArbitrumHosted(

@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/rollup/BridgeCreator.sol";
 import "../../src/bridge/ISequencerInbox.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
@@ -102,7 +103,14 @@ contract BridgeCreatorTest is Test {
         });
 
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
         (
             IBridge bridge,
@@ -171,7 +179,9 @@ contract BridgeCreatorTest is Test {
             nativeToken,
             timeVars,
             bufferConfig,
-            IFeeTokenPricer(feeTokenPricer)
+            IFeeTokenPricer(feeTokenPricer),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
         (IBridge bridge, IInboxBase inbox, IRollupEventInbox eventInbox, IOutbox outbox) =
             (contracts.bridge, contracts.inbox, contracts.rollupEventInbox, contracts.outbox);
@@ -233,19 +243,40 @@ contract BridgeCreatorTest is Test {
         });
 
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         // can only deploy once from the same address and config
         vm.expectRevert();
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
 
         // can deploy from a different address
         vm.prank(address(101));
         creator.createBridge(
-            proxyAdmin, rollup, nativeToken, timeVars, bufferConfig, IFeeTokenPricer(address(0))
+            proxyAdmin,
+            rollup,
+            nativeToken,
+            timeVars,
+            bufferConfig,
+            IFeeTokenPricer(address(0)),
+            IEspressoTEEVerifier(address(0)),
+            0
         );
     }
 }

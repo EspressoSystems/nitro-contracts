@@ -15,6 +15,7 @@ import "../rollup/ERC20RollupEventInbox.sol";
 import "../bridge/ERC20Outbox.sol";
 
 import "../bridge/IBridge.sol";
+import {IEspressoTEEVerifier} from "../espresso/IEspressoTEEVerifier.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
@@ -107,7 +108,9 @@ contract BridgeCreator {
         address nativeToken,
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
         BufferConfig calldata bufferConfig,
-        IFeeTokenPricer feeTokenPricer
+        IFeeTokenPricer feeTokenPricer,
+        IEspressoTEEVerifier espressoTEEVerifier,
+        uint64 startHotshotBlock
     ) external returns (BridgeContracts memory) {
         // use create2 salt to ensure deterministic addresses
         bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
@@ -129,7 +132,12 @@ contract BridgeCreator {
             IERC20Bridge(address(frame.bridge)).initialize(IOwnable(rollup), nativeToken);
         }
         frame.sequencerInbox.initialize(
-            IBridge(frame.bridge), maxTimeVariation, bufferConfig, feeTokenPricer
+            IBridge(frame.bridge),
+            maxTimeVariation,
+            bufferConfig,
+            feeTokenPricer,
+            espressoTEEVerifier,
+            startHotshotBlock
         );
         frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
         frame.rollupEventInbox.initialize(frame.bridge);

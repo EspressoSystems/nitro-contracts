@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "forge-std/Test.sol";
 import "./util/TestUtil.sol";
 import "../../src/rollup/RollupCreator.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import "../../src/rollup/RollupAdminLogic.sol";
 import "../../src/rollup/RollupUserLogic.sol";
 import "../../src/rollup/ValidatorWalletCreator.sol";
@@ -168,7 +169,9 @@ contract RollupCreatorTest is Test {
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
             batchPosterManager: batchPosterManager,
             feeTokenPricer: IFeeTokenPricer(address(0)),
-            customOsp: customOsp
+            customOsp: customOsp,
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+            startHotshotBlock: 0
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
@@ -330,7 +333,9 @@ contract RollupCreatorTest is Test {
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
             batchPosterManager: batchPosterManager,
             feeTokenPricer: feeTokenPricer,
-            customOsp: customOsp
+            customOsp: customOsp,
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+            startHotshotBlock: 0
         });
 
         vm.mockCall(
@@ -499,7 +504,9 @@ contract RollupCreatorTest is Test {
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
             batchPosterManager: batchPosterManager,
             feeTokenPricer: IFeeTokenPricer(address(0)),
-            customOsp: address(0)
+            customOsp: address(0),
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
+            startHotshotBlock: 0
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
