@@ -152,8 +152,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @notice The Espresso TEE verifier used for CAS certificate validation
     IEspressoTEEVerifier public espressoTEEVerifier;
 
-    uint64 public startHotshotBlock;
-
     constructor(
         uint256 _maxDataSize,
         IReader4844 reader4844_,
@@ -194,8 +192,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation_,
         BufferConfig memory bufferConfig_,
         IFeeTokenPricer feeTokenPricer_,
-        IEspressoTEEVerifier espressoTEEVerifier_,
-        uint64 startHotshotBlock_
+        IEspressoTEEVerifier espressoTEEVerifier_
     ) external onlyDelegated {
         if (bridge != IBridge(address(0))) revert AlreadyInit();
         if (bridge_ == IBridge(address(0))) revert HadZeroInit();
@@ -226,7 +223,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
         feeTokenPricer = feeTokenPricer_;
         espressoTEEVerifier = espressoTEEVerifier_;
-        startHotshotBlock = startHotshotBlock_;
     }
 
     /// @notice Allows the rollup owner to sync the rollup address
@@ -384,7 +380,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ///         [137+]     downstream DA certificate
     ///         The canonical payload signed by CAS is:
     ///         abi.encodePacked(uint64(prevMessageCount), uint64(newMessageCount),
-    ///                          uint64(startHotshotBlock), uint64(afterDelayedMessagesRead),
+    ///                          uint64(hotshotBlock), uint64(afterDelayedMessagesRead),
     ///                          minHotshotBlock, downstreamCert)
     function verifyEspressoCertificate(
         bytes calldata data,
@@ -394,6 +390,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) internal {
         // Minimum size: Espresso cert fixed (ESPRESSO_CERT_LEN) = 137 bytes
         if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
+
+        // Parse start_hotshot_block from data[48:56]
+        uint64 hotshotBlock = uint64(bytes8(data[48:56]));
 
         // Parse min_hotshot_block from data[64:72]
         uint64 minHotshotBlock = uint64(bytes8(data[64:72]));
@@ -408,7 +407,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes memory payload = abi.encodePacked(
             uint64(prevMessageCount),
             uint64(newMessageCount),
-            startHotshotBlock,
+            hotshotBlock,
             uint64(afterDelayedMessagesRead),
             minHotshotBlock,
             downstreamCert
@@ -424,13 +423,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert InvalidCasCertificate();
         }
 
-        emit EspressoCertificateVerified(startHotshotBlock);
-
-        // Update the startHotshotBlock to ensure that future batches with CAS certs must have a higher min_hotshot_block
-        if (minHotshotBlock > startHotshotBlock) {
-            startHotshotBlock = minHotshotBlock;
-            emit StartHotshotBlockSet(startHotshotBlock);
-        }
+        emit EspressoCertificateVerified(hotshotBlock, afterDelayedMessagesRead, newMessageCount);
     }
 
     /// @inheritdoc ISequencerInbox

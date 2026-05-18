@@ -109,8 +109,7 @@ contract BridgeCreator {
         ISequencerInbox.MaxTimeVariation calldata maxTimeVariation,
         BufferConfig calldata bufferConfig,
         IFeeTokenPricer feeTokenPricer,
-        IEspressoTEEVerifier espressoTEEVerifier,
-        uint64 startHotshotBlock
+        IEspressoTEEVerifier espressoTEEVerifier
     ) external returns (BridgeContracts memory) {
         // use create2 salt to ensure deterministic addresses
         bytes32 create2Salt = keccak256(abi.encode(msg.data, msg.sender));
@@ -136,8 +135,7 @@ contract BridgeCreator {
             maxTimeVariation,
             bufferConfig,
             feeTokenPricer,
-            espressoTEEVerifier,
-            startHotshotBlock
+            espressoTEEVerifier
         );
         frame.inbox.initialize(frame.bridge, frame.sequencerInbox);
         frame.rollupEventInbox.initialize(frame.bridge);

@@ -171,9 +171,8 @@ describe('Orbit Chain', () => {
     }
 
     // wait for deposit to be processed
-    const depositRec = await L1TransactionReceipt.monkeyPatchEthDepositWait(
-      depositTx
-    ).wait()
+    const depositRec =
+      await L1TransactionReceipt.monkeyPatchEthDepositWait(depositTx).wait()
     const l2Result = await depositRec.waitForL2(l2Provider)
     expect(l2Result.complete).to.be.true
 
@@ -672,30 +671,30 @@ describe('Orbit Chain', () => {
         fee = BigNumber.from(0)
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.NICK_CREATE2_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.NICK_CREATE2_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC2470_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ERC2470_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ZOLTU_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ZOLTU_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC1820_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ERC1820_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
       } else {
@@ -767,30 +766,30 @@ describe('Orbit Chain', () => {
         fee = BigNumber.from(0)
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.NICK_CREATE2_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.NICK_CREATE2_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC2470_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ERC2470_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ZOLTU_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ZOLTU_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
         fee = fee.add(
           await _scaleFrom18ToNative(
-            (
-              await deployHelper.ERC1820_VALUE()
-            ).add(maxFeePerGas.mul(BigNumber.from(21000)))
+            (await deployHelper.ERC1820_VALUE()).add(
+              maxFeePerGas.mul(BigNumber.from(21000))
+            )
           )
         )
       } else {
@@ -883,7 +882,6 @@ describe('Orbit Chain', () => {
       feeTokenPricer: ethers.constants.AddressZero,
       customOsp: ethers.constants.AddressZero,
       espressoTEEVerifier: ethers.constants.AddressZero,
-      startHotshotBlock: 0,
     }
 
     /// deploy it

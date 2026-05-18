@@ -34,8 +34,7 @@ contract SequencerInboxEspressoTest is Test {
         IBridge.BatchDataLocation dataLocation
     );
     event SequencerBatchData(uint256 indexed batchSequenceNumber, bytes data);
-    event StartHotshotBlockSet(uint64 startHotshotBlock);
-    event EspressoCertificateVerified(uint64 startHotshotBlock);
+    event EspressoCertificateVerified(uint256 hotshotBlock, uint256 delayedMessageRead, uint256 messageCount);
     event EspressoTEEVerifierSet(address espressoTEEVerifier);
 
     // ── Constants ─────────────────────────────────────────────────────
@@ -103,7 +102,7 @@ contract SequencerInboxEspressoTest is Test {
 
     /// @dev Build the full certificate data that SequencerInbox expects.
     ///      Layout: [0..31] CAS header | [32..39] startMessagePos |
-    ///              [40..47] endMessagePos | [48..55] startHotshotBlock |
+    ///              [40..47] endMessagePos | [48..55] hotshotBlock |
     ///              [56..63] afterDelayedMessagesRead | [64..71] minHotshotBlock |
     ///              [72..136] signature | [137+] downstreamCert
     function _buildCertData(
@@ -152,9 +151,7 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     /// @dev Deploy Bridge + SequencerInbox with espresso TEE verifier enabled.
-    function _deployEspressoRollup(
-        uint64 startBlock
-    ) internal returns (SequencerInbox seqInbox, Bridge bridge) {
+    function _deployEspressoRollup() internal returns (SequencerInbox seqInbox, Bridge bridge) {
         EspressoRollupMock rollupMock = new EspressoRollupMock(rollupOwner);
 
         Bridge bridgeImpl = new Bridge();
@@ -175,8 +172,7 @@ contract SequencerInboxEspressoTest is Test {
             maxTimeVariation,
             bufferConfigDefault,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(teeVerifierMock)),
-            startBlock
+            IEspressoTEEVerifier(address(teeVerifierMock))
         );
 
         vm.prank(rollupOwner);
@@ -199,6 +195,7 @@ contract SequencerInboxEspressoTest is Test {
     function _prepareValidBatch(
         SequencerInbox seqInbox,
         Bridge bridge,
+        uint64 hotshotBlock,
         uint64 minHotshotBlock,
         bytes memory downstreamCert
     )
@@ -220,7 +217,7 @@ contract SequencerInboxEspressoTest is Test {
         bytes32 userDataHash = _computeUserDataHash(
             prevMsgCount,
             newMsgCount,
-            seqInbox.startHotshotBlock(),
+            hotshotBlock,
             delayedMessagesRead,
             minHotshotBlock,
             downstreamCert
@@ -230,7 +227,7 @@ contract SequencerInboxEspressoTest is Test {
         data = _buildCertData(
             uint64(prevMsgCount),
             uint64(newMsgCount),
-            seqInbox.startHotshotBlock(),
+            hotshotBlock,
             uint64(delayedMessagesRead),
             minHotshotBlock,
             sig,
@@ -248,13 +245,13 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testAddBatchWithValidEspressoCert() public {
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(1);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"00deadbeef";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
-            _prepareValidBatch(seqInbox, bridge, 1, downstream);
+            _prepareValidBatch(seqInbox, bridge, 0, 1, downstream);
 
         uint256 countBefore = bridge.sequencerMessageCount();
 
@@ -267,13 +264,13 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testAddBatchFromOriginWithValidEspressoCert() public {
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(0);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"00deadbeef";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
-            _prepareValidBatch(seqInbox, bridge, 1, downstream);
+            _prepareValidBatch(seqInbox, bridge, 0, 1, downstream);
 
         uint256 countBefore = bridge.sequencerMessageCount();
 
@@ -286,7 +283,7 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testRevertUnregisteredSigner() public {
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(0);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
@@ -298,7 +295,7 @@ contract SequencerInboxEspressoTest is Test {
         bytes memory downstream = hex"deadbeef";
 
         bytes32 userDataHash = _computeUserDataHash(
-            prevMsg, newMsg, seqInbox.startHotshotBlock(), delayedRead, 1, downstream
+            prevMsg, newMsg, 0, delayedRead, 1, downstream
         );
 
         // Sign with unregistered key
@@ -306,7 +303,7 @@ contract SequencerInboxEspressoTest is Test {
         bytes memory data = _buildCertData(
             uint64(prevMsg),
             uint64(newMsg),
-            seqInbox.startHotshotBlock(),
+            0,
             uint64(delayedRead),
             1,
             sig,
@@ -321,7 +318,7 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testRevertCertTooShort() public {
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(0);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
@@ -341,37 +338,34 @@ contract SequencerInboxEspressoTest is Test {
         );
     }
 
-    function testStartHotshotBlockUpdated() public {
-        uint64 initialBlock = 5;
-        uint64 newMinBlock = 10;
+    function testEspressoCertificateVerifiedEvent() public {
+        uint64 hotshotBlock = 5;
 
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(initialBlock);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"00cafe";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
-            _prepareValidBatch(seqInbox, bridge, newMinBlock, downstream);
+            _prepareValidBatch(seqInbox, bridge, hotshotBlock, 10, downstream);
 
         vm.expectEmit(false, false, false, true, address(seqInbox));
-        emit StartHotshotBlockSet(newMinBlock);
+        emit EspressoCertificateVerified(hotshotBlock, delayedRead, newMsg);
 
         vm.prank(tx.origin);
         seqInbox.addSequencerL2Batch(
             seqNum, data, delayedRead, IGasRefunder(address(0)), prevMsg, newMsg
         );
-
-        assertEq(seqInbox.startHotshotBlock(), newMinBlock, "startHotshotBlock not updated");
     }
 
     function testCertStrippedFromBatchDataEvent() public {
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(0);
+        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup();
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
         bytes memory downstream = hex"00aabbccdd";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
-            _prepareValidBatch(seqInbox, bridge, 1, downstream);
+            _prepareValidBatch(seqInbox, bridge, 0, 1, downstream);
 
         // Expect SequencerBatchData to contain only the downstream cert (data[137:])
         vm.expectEmit(true, false, false, true, address(seqInbox));
@@ -384,7 +378,7 @@ contract SequencerInboxEspressoTest is Test {
     }
 
     function testSetEspressoTEEVerifier_OnlyOwner() public {
-        (SequencerInbox seqInbox,) = _deployEspressoRollup(0);
+        (SequencerInbox seqInbox,) = _deployEspressoRollup();
 
         address newVerifier = address(0xBEEF);
 
@@ -398,61 +392,5 @@ contract SequencerInboxEspressoTest is Test {
         vm.expectRevert(abi.encodeWithSelector(NotOwner.selector, nonOwner, rollupOwner));
         vm.prank(nonOwner);
         seqInbox.setEspressoTEEVerifier(IEspressoTEEVerifier(address(0)));
-    }
-
-    function testSecondBatchUsesUpdatedStartHotshotBlock() public {
-        uint64 initialBlock = 5;
-        uint64 firstMinBlock = 10;
-        uint64 secondMinBlock = 15;
-
-        (SequencerInbox seqInbox, Bridge bridge) = _deployEspressoRollup(initialBlock);
-        _enqueueDelayed(bridge);
-        _enqueueDelayed(bridge); // enqueue a second delayed msg for the second batch
-        vm.fee(60 gwei);
-
-        // ── First batch: updates startHotshotBlock from 5 → 10 ──
-        {
-            bytes memory downstream1 = hex"00cafe";
-            (
-                bytes memory data1,
-                uint256 seqNum1,
-                uint256 delayedRead1,
-                uint256 prevMsg1,
-                uint256 newMsg1
-            ) = _prepareValidBatch(seqInbox, bridge, firstMinBlock, downstream1);
-
-            assertEq(seqInbox.startHotshotBlock(), initialBlock, "initial block mismatch");
-
-            vm.prank(tx.origin);
-            seqInbox.addSequencerL2Batch(
-                seqNum1, data1, delayedRead1, IGasRefunder(address(0)), prevMsg1, newMsg1
-            );
-        }
-
-        assertEq(seqInbox.startHotshotBlock(), firstMinBlock, "block not updated after first batch");
-
-        // ── Second batch: must be signed with startHotshotBlock=10 (the updated value) ──
-        {
-            bytes memory downstream2 = hex"00beef";
-            (
-                bytes memory data2,
-                uint256 seqNum2,
-                uint256 delayedRead2,
-                uint256 prevMsg2,
-                uint256 newMsg2
-            ) = _prepareValidBatch(seqInbox, bridge, secondMinBlock, downstream2);
-
-            vm.expectEmit(false, false, false, true, address(seqInbox));
-            emit StartHotshotBlockSet(secondMinBlock);
-
-            vm.prank(tx.origin);
-            seqInbox.addSequencerL2Batch(
-                seqNum2, data2, delayedRead2, IGasRefunder(address(0)), prevMsg2, newMsg2
-            );
-        }
-
-        assertEq(
-            seqInbox.startHotshotBlock(), secondMinBlock, "block not updated after second batch"
-        );
     }
 }

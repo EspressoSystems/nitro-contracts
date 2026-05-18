@@ -92,8 +92,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         vm.prank(rollupOwner);
@@ -133,8 +132,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfigDefault,
             IFeeTokenPricer(makeAddr("feeTokenPricer")),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         vm.prank(rollupOwner);
@@ -317,8 +315,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
@@ -345,8 +342,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfig,
             feeTokenPricer,
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         assertEq(seqInboxProxy.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
@@ -376,8 +372,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
     }
 
@@ -400,8 +395,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfig,
             IFeeTokenPricer(makeAddr("feeTokenPricer")),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
     }
 
@@ -417,8 +411,7 @@ contract SequencerInboxTest is Test {
             maxTimeVariation,
             bufferConfigDefault,
             pricer,
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
     }
 
