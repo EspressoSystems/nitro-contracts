@@ -252,7 +252,7 @@ contract SequencerInboxEspressoTest is Test {
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
-        bytes memory downstream = hex"deadbeef";
+        bytes memory downstream = hex"00deadbeef";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
             _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
@@ -271,7 +271,7 @@ contract SequencerInboxEspressoTest is Test {
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
-        bytes memory downstream = hex"deadbeef";
+        bytes memory downstream = hex"00deadbeef";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
             _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
@@ -349,7 +349,7 @@ contract SequencerInboxEspressoTest is Test {
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
-        bytes memory downstream = hex"cafe";
+        bytes memory downstream = hex"00cafe";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
             _prepareValidBatch(seqInbox, bridge, newMinBlock, downstream);
 
@@ -369,7 +369,7 @@ contract SequencerInboxEspressoTest is Test {
         _enqueueDelayed(bridge);
         vm.fee(60 gwei);
 
-        bytes memory downstream = hex"aabbccdd";
+        bytes memory downstream = hex"00aabbccdd";
         (bytes memory data, uint256 seqNum, uint256 delayedRead, uint256 prevMsg, uint256 newMsg) =
             _prepareValidBatch(seqInbox, bridge, 1, downstream);
 
@@ -412,7 +412,7 @@ contract SequencerInboxEspressoTest is Test {
 
         // ── First batch: updates startHotshotBlock from 5 → 10 ──
         {
-            bytes memory downstream1 = hex"cafe";
+            bytes memory downstream1 = hex"00cafe";
             (
                 bytes memory data1,
                 uint256 seqNum1,
@@ -433,7 +433,7 @@ contract SequencerInboxEspressoTest is Test {
 
         // ── Second batch: must be signed with startHotshotBlock=10 (the updated value) ──
         {
-            bytes memory downstream2 = hex"beef";
+            bytes memory downstream2 = hex"00beef";
             (
                 bytes memory data2,
                 uint256 seqNum2,
