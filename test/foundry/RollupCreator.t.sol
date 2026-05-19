@@ -170,8 +170,7 @@ contract RollupCreatorTest is Test {
             batchPosterManager: batchPosterManager,
             feeTokenPricer: IFeeTokenPricer(address(0)),
             customOsp: customOsp,
-            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
-            startHotshotBlock: 0
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0))
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
@@ -334,8 +333,7 @@ contract RollupCreatorTest is Test {
             batchPosterManager: batchPosterManager,
             feeTokenPricer: feeTokenPricer,
             customOsp: customOsp,
-            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
-            startHotshotBlock: 0
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0))
         });
 
         vm.mockCall(
@@ -505,8 +503,7 @@ contract RollupCreatorTest is Test {
             batchPosterManager: batchPosterManager,
             feeTokenPricer: IFeeTokenPricer(address(0)),
             customOsp: address(0),
-            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
-            startHotshotBlock: 0
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0))
         });
         address rollupAddress =
             rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);

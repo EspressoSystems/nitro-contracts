@@ -883,7 +883,6 @@ describe('Orbit Chain', () => {
       feeTokenPricer: ethers.constants.AddressZero,
       customOsp: ethers.constants.AddressZero,
       espressoTEEVerifier: ethers.constants.AddressZero,
-      startHotshotBlock: 0,
     }
 
     /// deploy it

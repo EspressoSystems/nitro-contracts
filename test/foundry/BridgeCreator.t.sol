@@ -109,8 +109,7 @@ contract BridgeCreatorTest is Test {
             timeVars,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
         (
             IBridge bridge,
@@ -180,8 +179,7 @@ contract BridgeCreatorTest is Test {
             timeVars,
             bufferConfig,
             IFeeTokenPricer(feeTokenPricer),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
         (IBridge bridge, IInboxBase inbox, IRollupEventInbox eventInbox, IOutbox outbox) =
             (contracts.bridge, contracts.inbox, contracts.rollupEventInbox, contracts.outbox);
@@ -249,8 +247,7 @@ contract BridgeCreatorTest is Test {
             timeVars,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         // can only deploy once from the same address and config
@@ -262,8 +259,7 @@ contract BridgeCreatorTest is Test {
             timeVars,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
 
         // can deploy from a different address
@@ -275,8 +271,7 @@ contract BridgeCreatorTest is Test {
             timeVars,
             bufferConfig,
             IFeeTokenPricer(address(0)),
-            IEspressoTEEVerifier(address(0)),
-            0
+            IEspressoTEEVerifier(address(0))
         );
     }
 }

@@ -291,7 +291,6 @@ describe('SequencerInbox', async () => {
         },
         constants.AddressZero,
         constants.AddressZero,
-        0
       )
     ).wait()
 

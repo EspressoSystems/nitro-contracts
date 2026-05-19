@@ -206,8 +206,7 @@ contract RollupTest is Test {
             batchPosterManager: address(0),
             feeTokenPricer: IFeeTokenPricer(address(0)),
             customOsp: address(0),
-            espressoTEEVerifier: IEspressoTEEVerifier(address(0)),
-            startHotshotBlock: 0
+            espressoTEEVerifier: IEspressoTEEVerifier(address(0))
         });
 
         address rollupAddr = rollupCreator.createRollup(param);
