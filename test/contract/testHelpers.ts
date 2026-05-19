@@ -358,7 +358,6 @@ export const setupSequencerInbox = async (
     delayConfigDefault,
     constants.AddressZero,
     constants.AddressZero,
-    0
   )
   await (
     await sequencerInbox
