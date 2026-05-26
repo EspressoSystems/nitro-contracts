@@ -152,10 +152,27 @@ jobs:
             echo "$var=${!var}" >> $GITHUB_ENV
           done
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - name: Checkout nitro-testnode
+        uses: actions/checkout@v4
         with:
-          args: --pos
-          no-token-bridge: true
+          repository: EspressoSystems/nitro-testnode
+          submodules: true
+          path: nitro-testnode
+          ref: integrate-cas
+
+      - name: Start nitro test node
+        shell: bash
+        run: |
+          cd nitro-testnode
+          export NITRO_CONTRACTS_BRANCH="${{ github.event.pull_request.head.sha || github.sha }}"
+          ./test-node.bash --init --pos --no-tokenbridge &
+
+      - name: Wait for nitro startup
+        shell: bash
+        run: |
+          while ! curl -s -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":45678,"method":"eth_chainId","params":[]}' \
+            "http://localhost:8547"; do sleep 10; done
 
       - name: Setup nodejs
         uses: actions/setup-node@v3
