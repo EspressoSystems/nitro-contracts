@@ -482,20 +482,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, reader4844) {
-        revert Deprecated();
-    }
-
-    function addSequencerL2BatchFromBlobs(
-        uint256 sequenceNumber,
-        uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory espressoMetadata
-    ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-
-        bytes32[] memory dataHashes = reader4844.getDataHashes();
 
         (
             bytes32 dataHash,
@@ -893,6 +880,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     function setEspressoTEEVerifier(address _espressoTEEVerifier) external onlyRollupOwner {
         espressoTEEVerifier = IEspressoTEEVerifier(_espressoTEEVerifier);
+        emit EspressoTEEVerifierSet(_espressoTEEVerifier);
         emit OwnerFunctionCalled(6);
     }
 

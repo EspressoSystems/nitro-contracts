@@ -23,6 +23,7 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoNitroTEEVerifierMock__factory,
   EspressoTEEVerifierMock__factory,
   GasRefunder__factory,
   Inbox,
@@ -228,10 +229,16 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
+    const espressoNitroTEEVerifierFac =
+      new EspressoNitroTEEVerifierMock__factory(deployer)
+    const espressoNitroTEEVerifier = await espressoNitroTEEVerifierFac.deploy()
+    await espressoNitroTEEVerifier.deployed()
     const espressoTEEVerifierFac = new EspressoTEEVerifierMock__factory(
       deployer
     )
-    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy(
+      espressoNitroTEEVerifier.address
+    )
     await espressoTEEVerifier.deployed()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
@@ -378,28 +385,12 @@ describe('SequencerInbox', async () => {
 
     const subMessageCount = await bridge.sequencerReportedSubMessageCount()
     const balBefore = await batchPoster.getBalance()
-    const hotshotHeight = 42
-    const signature = '0x'
-
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
     await (
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-        ](
-          await bridge.sequencerMessageCount(),
-          '0x0042',
-          await bridge.delayedMessageCount(),
-          gasRefunder.address,
-          subMessageCount,
-          subMessageCount.add(1),
-          espressoMetadata
-        )
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
+        ](await bridge.sequencerMessageCount(), '0x0042', await bridge.delayedMessageCount(), gasRefunder.address, subMessageCount, subMessageCount.add(1))
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
   })
@@ -437,27 +428,19 @@ describe('SequencerInbox', async () => {
     const sequenceNumber = await bridge.sequencerMessageCount()
 
     const balBefore = await batchPoster.getBalance()
-    const hotshotHeight = 42
-    const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,
       ['0x0142', '0x0143'],
       sequencerInbox.interface.encodeFunctionData(
-        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)',
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256)',
         [
           sequenceNumber,
           afterDelayedMessagesRead,
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          espressoMetadata
         ]
       )
     )

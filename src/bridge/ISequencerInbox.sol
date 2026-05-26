@@ -228,6 +228,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
      */
     function setBatchPosterManager(address newBatchPosterManager) external;
 
+    /**
+     * @notice Updates the Espresso TEE verifier contract address
+     * @param _espressoTEEVerifier The new Espresso TEE verifier address
+     */
+    function setEspressoTEEVerifier(address _espressoTEEVerifier) external;
+
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
 
