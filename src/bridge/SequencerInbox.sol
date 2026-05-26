@@ -31,7 +31,6 @@ import {
     NativeTokenMismatch,
     BadMaxTimeVariation,
     Deprecated,
-    TEEVerificationFailed,
     InvalidCasCertificate
 } from "../libraries/Error.sol";
 import "./IBridge.sol";
@@ -131,8 +130,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool public immutable isUsingFeeToken;
 
     IEspressoTEEVerifier public espressoTEEVerifier;
-
-    uint256 public constant ESPRESSO_CERT_LEN = 137;
 
     constructor(uint256 _maxDataSize, IReader4844 reader4844_, bool _isUsingFeeToken) {
         maxDataSize = _maxDataSize;
@@ -352,6 +349,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert Deprecated();
     }
 
+    /**
+        Deprecated because we added a new method with TEE attestation quote
+        to verify that the batch is posted by the batch poster running in TEE.
+     */
     function addSequencerL2BatchFromOrigin(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -363,14 +364,66 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        addSequencerL2BatchFromCalldata(
-            sequenceNumber,
-            data,
-            afterDelayedMessagesRead,
-            prevMessageCount,
-            newMessageCount,
-            true
+        uint256 ESPRESSO_CERT_LEN = 137;
+        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
+
+        bytes32 dataHash;
+        IBridge.TimeBounds memory timeBounds;
+        
+        if (hasEspressoCert) {
+            verifyEspressoCertificate(
+                data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
+            );
+            (dataHash, timeBounds) =
+                formCallDataHash(data[ESPRESSO_CERT_LEN:], afterDelayedMessagesRead);
+        } else {
+            (dataHash, timeBounds) = formCallDataHash(data, afterDelayedMessagesRead);
+        }
+
+        // Reformat the stack to prevent "Stack too deep"
+        uint256 sequenceNumber_ = sequenceNumber;
+        IBridge.TimeBounds memory timeBounds_ = timeBounds;
+        bytes32 dataHash_ = dataHash;
+        uint256 dataLength = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
+        uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
+        uint256 prevMessageCount_ = prevMessageCount;
+        uint256 newMessageCount_ = newMessageCount;
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash_,
+                afterDelayedMessagesRead_,
+                dataLength,
+                prevMessageCount_,
+                newMessageCount_
+            );
+
+        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
+        if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
+        }
+
+        emit SequencerBatchDelivered(
+            seqMessageIndex,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds_,
+            (hasEspressoCert)
+                ? IBridge.BatchDataLocation.SeparateBatchEvent
+                : IBridge.BatchDataLocation.TxInput
         );
+
+        if (hasEspressoCert) {
+            // if the batch is posted with an espresso cert
+            //  then the data is expected to be included in a separate event 
+            // instead of tx input
+            emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
+        }
     }
 
     /// @notice Verify a CAS (Chain Adjacent Service) certificate embedded in the batch data.
@@ -394,6 +447,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) internal {
+        uint256 ESPRESSO_CERT_LEN = 137;
         if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
 
         uint64 hotshotBlock = uint64(bytes8(data[48:56]));
@@ -428,7 +482,20 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, reader4844) {
+        revert Deprecated();
+    }
+
+    function addSequencerL2BatchFromBlobs(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes memory espressoMetadata
+    ) external refundsGas(gasRefunder, reader4844) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        bytes32[] memory dataHashes = reader4844.getDataHashes();
 
         (
             bytes32 dataHash,
@@ -488,6 +555,16 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    /*
+     * addSequencerL2Batch is called by either the rollup admin or batch poster
+     * running in TEE to add a new batch
+     * @param sequenceNumber - the sequence number of the batch
+     * @param data - the data of the batch
+     * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
+     * @param gasRefunder - the gas refunder contract
+     * @param prevMessageCount - the number of messages in the previous batch
+     * @param newMessageCount - the number of messages in the new batch
+     */
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -497,80 +574,63 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
-
-        addSequencerL2BatchFromCalldata(
-            sequenceNumber,
-            data,
-            afterDelayedMessagesRead,
-            prevMessageCount,
-            newMessageCount,
-            false
-        );
-    }
-
-    function addSequencerL2BatchFromCalldata(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
-        uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bool isFromCodelessOrigin
-    ) internal {
+        uint256 ESPRESSO_CERT_LEN = 137;
         bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
 
+        bytes32 dataHash;
+        IBridge.TimeBounds memory timeBounds;
+        
         if (hasEspressoCert) {
             verifyEspressoCertificate(
                 data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
             );
-        }
-
-        uint256 calldataLengthPosted = 0;
-        if (isFromCodelessOrigin) {
-            calldataLengthPosted = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
-        }
-
-        bytes32 dataHash;
-        IBridge.TimeBounds memory timeBounds;
-
-        if (hasEspressoCert) {
             (dataHash, timeBounds) =
                 formCallDataHash(data[ESPRESSO_CERT_LEN:], afterDelayedMessagesRead);
         } else {
             (dataHash, timeBounds) = formCallDataHash(data, afterDelayedMessagesRead);
         }
+        
+        uint256 seqMessageIndex;
+        {
+            // Reformat the stack to prevent "Stack too deep"
+            uint256 sequenceNumber_ = sequenceNumber;
+            IBridge.TimeBounds memory timeBounds_ = timeBounds;
+            bytes32 dataHash_ = dataHash;
+            uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
+            uint256 prevMessageCount_ = prevMessageCount;
+            uint256 newMessageCount_ = newMessageCount;
+            // we set the calldata length posted to 0 here since the caller isn't the origin
+            // of the tx, so they might have not paid tx input cost for the calldata
+            bytes32 beforeAcc;
+            bytes32 delayedAcc;
+            bytes32 afterAcc;
+            (seqMessageIndex, beforeAcc, delayedAcc, afterAcc) = addSequencerL2BatchImpl(
+                dataHash_,
+                afterDelayedMessagesRead_,
+                0,
+                prevMessageCount_,
+                newMessageCount_
+            );
 
-        (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
-        addSequencerL2BatchImpl(
-            dataHash,
-            afterDelayedMessagesRead,
-            calldataLengthPosted,
-            prevMessageCount,
-            newMessageCount
-        );
-
-        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
-        if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
-            revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
-        }
-
-        emit SequencerBatchDelivered(
-            seqMessageIndex,
-            beforeAcc,
-            afterAcc,
-            delayedAcc,
-            totalDelayedMessagesRead,
-            timeBounds,
-            (isFromCodelessOrigin && !hasEspressoCert)
-                ? IBridge.BatchDataLocation.TxInput
-                : IBridge.BatchDataLocation.SeparateBatchEvent
-        );
-
-        if (!isFromCodelessOrigin || hasEspressoCert) {
-            if (hasEspressoCert) {
-                emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
-            } else {
-                emit SequencerBatchData(seqMessageIndex, data);
+            // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
+            if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
+                revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
             }
+
+            emit SequencerBatchDelivered(
+                seqMessageIndex,
+                beforeAcc,
+                afterAcc,
+                delayedAcc,
+                totalDelayedMessagesRead,
+                timeBounds_,
+                IBridge.BatchDataLocation.SeparateBatchEvent
+            );
+        }
+        if (hasEspressoCert) {
+            emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
+        } else {
+            emit SequencerBatchData(seqMessageIndex, data);
         }
     }
 

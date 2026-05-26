@@ -200,8 +200,5 @@ error Deprecated();
 /// @dev Thrown when any component of maxTimeVariation is over uint64
 error BadMaxTimeVariation();
 
-/// @dev Thrown when TEE signature verification fails
-error TEEVerificationFailed();
-
 /// @dev Thrown when the CAS certificate in batch data is invalid or too short
 error InvalidCasCertificate();
