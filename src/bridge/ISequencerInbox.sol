@@ -39,8 +39,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev a keyset was invalidated
     event InvalidateKeyset(bytes32 indexed keysetHash);
 
-    /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
-    event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
+    /// @dev Emitted when the Espresso TEE verifier is updated
+    event EspressoTEEVerifierSet(address espressoTEEVerifier);
+
+    /// @dev Emitted when an Espresso CAS certificate is successfully verified
+    event EspressoCertificateVerified(
+        uint256 hotshotBlock, uint256 delayedMessageRead, uint256 messageCount
+    );
 
     function totalDelayedMessagesRead() external view returns (uint256);
 
@@ -165,37 +170,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
-    function addSequencerL2BatchFromOrigin(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory espressoMetadata
-    ) external;
-
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
-        uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
-    ) external;
-
-    function addSequencerL2Batch(
-        uint256 sequenceNumber,
-        bytes calldata data,
-        uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
-        uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory espressoMetadata
-    ) external;
-
-    function addSequencerL2BatchFromBlobs(
-        uint256 sequenceNumber,
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
@@ -207,8 +184,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount,
-        bytes memory espressoMetadata
+        uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------

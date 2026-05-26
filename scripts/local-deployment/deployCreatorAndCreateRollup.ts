@@ -26,7 +26,6 @@ async function main() {
     throw new Error('PARENT_CHAIN_ID not set')
   }
 
-
   const deployerWallet = new ethers.Wallet(
     deployerPrivKey,
     new ethers.providers.JsonRpcProvider(parentChainRpc)
@@ -47,13 +46,22 @@ async function main() {
   console.log('Deploy RollupCreator')
   const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
 
-  //  for local deployment, we use a mock address
-  const espressoTEEVerifierMock = await deployContract(
-    'EspressoTEEVerifierMock',
+  const enableCas = process.env.ENABLE_ESPRESSO_CAS === '1'
+  const espressoNitroTEEVerifierMock = await deployContract(
+    'EspressoNitroTEEVerifierMock',
     deployerWallet,
     [],
     false
   )
+  const espressoTEEVerifierMock = await deployContract(
+    'EspressoTEEVerifierMock',
+    deployerWallet,
+    [espressoNitroTEEVerifierMock.address],
+    false
+  )
+  if (enableCas) {
+    process.env.ESPRESSO_TEE_VERIFIER = espressoTEEVerifierMock.address
+  }
 
   console.log('Set templates on the Rollup Creator')
   await (
@@ -117,6 +125,15 @@ async function main() {
     JSON.stringify([chainInfo], null, 2),
     'utf8'
   )
+
+  // tee verifier address
+  if (enableCas) {
+    const teeVerifierInfo =
+      process.env.TEE_VERIFIER_INFO !== undefined
+        ? process.env.TEE_VERIFIER_INFO
+        : 'tee_verifier_address.txt'
+    await fs.writeFile(teeVerifierInfo, espressoTEEVerifierMock.address, 'utf8')
+  }
 }
 
 main()

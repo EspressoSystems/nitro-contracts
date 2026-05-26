@@ -12,3 +12,4 @@ out/
 .env
 lcov.info
 output_directory
+.zed/

@@ -15,6 +15,7 @@ import "../rollup/ERC20RollupEventInbox.sol";
 import "../bridge/ERC20Outbox.sol";
 
 import "../bridge/IBridge.sol";
+import {Deprecated} from "../libraries/Error.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
