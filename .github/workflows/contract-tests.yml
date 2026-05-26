@@ -152,7 +152,7 @@ jobs:
             echo "$var=${!var}" >> $GITHUB_ENV
           done
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@test-node-args
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           args: --pos
           no-token-bridge: true
