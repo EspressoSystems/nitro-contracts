@@ -7,7 +7,6 @@ import "../../src/bridge/Bridge.sol";
 import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
-import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
 import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -56,25 +55,9 @@ contract SequencerInboxTest is Test {
         });
     address dummyInbox = address(139);
     address proxyAdmin = address(140);
-    bytes32 mrEnclave = bytes32(0x51dfe95acffa8a4075b716257c836895af9202a5fd56c8c2208dacb79c659ff0);
-    bytes32 mrSigner = bytes32(0x0c8242bba090f54b10de0c2d1ca4b633b9c08b7178451c71d737c214b72fc836);
     IReader4844 dummyReader4844 = IReader4844(address(137));
 
     uint256 public constant MAX_DATA_SIZE = 117964;
-    address adminTEE = address(141);
-    address fakeAddress = address(145);
-    address batchPosterEphemeralAddress = address(0xe2148eE53c0755215Df69b2616E552154EdC584f);
-
-    EspressoTEEVerifierMock espressoTEEVerifier;
-    bytes sampleQuote;
-
-    function setUp() public {
-        vm.startPrank(adminTEE);
-
-        espressoTEEVerifier = new EspressoTEEVerifierMock();
-
-        vm.stopPrank();
-    }
 
     function deployRollup(bool isArbHosted) internal returns (SequencerInbox, Bridge) {
         RollupMock rollupMock = new RollupMock(rollupOwner);
@@ -95,7 +78,7 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation, address(espressoTEEVerifier));
+        seqInbox.initialize(bridge, maxTimeVariation, address(0));
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, true);
@@ -133,7 +116,7 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
         );
-        seqInbox.initialize(bridge, maxTimeVariation, address(espressoTEEVerifier));
+        seqInbox.initialize(bridge, maxTimeVariation, address(0));
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, true);
@@ -258,23 +241,13 @@ contract SequencerInboxTest is Test {
         expectEvents(bridge, seqInbox, data, false, false);
 
         vm.prank(tx.origin);
-        string memory quotePath = "/test/foundry/configs/attestation.bin";
-        string memory inputFile = string.concat(vm.projectRoot(), quotePath);
-        sampleQuote = vm.readFileBinary(inputFile);
-
-        // The mock contract doesnt really care about the signature and hotshotheight
-        uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
-
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             data,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
     }
 
@@ -311,7 +284,7 @@ contract SequencerInboxTest is Test {
 
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
+        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(0));
 
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
         assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
@@ -327,7 +300,7 @@ contract SequencerInboxTest is Test {
 
         address seqInboxLogic = address(new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true));
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
+        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(0));
 
         assertEq(seqInboxProxy.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
         assertEq(address(seqInboxProxy.bridge()), address(_bridge), "Invalid bridge");
@@ -343,7 +316,7 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
         vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
+        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(0));
     }
 
     function testInitialize_revert_NativeTokenMismatch_FeeTokenEth() public {
@@ -356,7 +329,7 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
         vm.expectRevert(abi.encodeWithSelector(NativeTokenMismatch.selector));
-        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(espressoTEEVerifier));
+        seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation, address(0));
     }
 
     function testAddSequencerL2BatchFromOrigin_ArbitrumHosted() public {
@@ -383,19 +356,13 @@ contract SequencerInboxTest is Test {
         expectEvents(bridge, seqInbox, data, true, false);
 
         vm.prank(tx.origin);
-
-        uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
-
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             data,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
     }
 
@@ -420,19 +387,13 @@ contract SequencerInboxTest is Test {
         expectEvents(IBridge(address(bridge)), seqInbox, data, true, true);
 
         vm.prank(tx.origin);
-
-        uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
-
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             data,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
     }
 
@@ -451,24 +412,6 @@ contract SequencerInboxTest is Test {
         uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
         vm.expectRevert(abi.encodeWithSelector(NotCodelessOrigin.selector));
-
-        uint256 hotshotHeight = 123;
-        bytes memory signature;
-        bytes memory espressoMetadata = abi.encode(hotshotHeight, signature, IEspressoTEEVerifier.TeeType.SGX);
-
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
-        );
-        assertEq(rollupOwner.code.length, 0, "rollupOwner is codeless");
-        vm.etch(rollupOwner, bytes("some code"));
-        vm.prank(rollupOwner, rollupOwner);
-        vm.expectRevert(abi.encodeWithSelector(Deprecated.selector));
         seqInbox.addSequencerL2BatchFromOrigin(
             sequenceNumber,
             data,
@@ -477,7 +420,6 @@ contract SequencerInboxTest is Test {
             subMessageCount,
             subMessageCount + 1
         );
-        vm.etch(rollupOwner, bytes(""));
 
         vm.prank(rollupOwner);
         seqInbox.setIsBatchPoster(tx.origin, false);
@@ -490,8 +432,7 @@ contract SequencerInboxTest is Test {
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
 
         vm.prank(rollupOwner);
@@ -515,8 +456,7 @@ contract SequencerInboxTest is Test {
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
 
         bytes memory authenticatedData = bytes.concat(seqInbox.DATA_BLOB_HEADER_FLAG(), data);
@@ -528,8 +468,7 @@ contract SequencerInboxTest is Test {
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
 
         vm.expectRevert(
@@ -542,8 +481,7 @@ contract SequencerInboxTest is Test {
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            espressoMetadata
+            subMessageCount + 1
         );
     }
 
