@@ -92,7 +92,7 @@ async function main() {
     deployerWallet,
     true,
     contracts.rollupCreator.address,
-    espressoTEEVerifierMock.address,
+    enableCas ? espressoTEEVerifierMock.address : ethers.constants.AddressZero,
     feeToken
   )
 
