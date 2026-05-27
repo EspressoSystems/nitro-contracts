@@ -25,6 +25,7 @@ import {
   Bridge__factory,
   EspressoNitroTEEVerifierMock__factory,
   EspressoTEEVerifierMock__factory,
+  EspressoTEEVerifierSimpleMock__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -302,7 +303,7 @@ describe('SequencerInbox', async () => {
             futureBlocks: 10,
             futureSeconds: 3000,
           },
-          espressoTEEVerifier.address,
+          constants.AddressZero,
           { gasLimit: 10000000 }
         )
     ).wait()
@@ -344,6 +345,7 @@ describe('SequencerInbox', async () => {
       messageTester,
       batchPoster,
       gasRefunder,
+      rollupOwner,
     }
 
     // comment this in to print the addresses that can then be re-used to avoid redeployment
@@ -409,7 +411,21 @@ describe('SequencerInbox', async () => {
       sequencerInbox,
       batchPoster,
       gasRefunder,
+      rollupOwner,
     } = await setupSequencerInbox(wallet)
+
+    // Deploy an always-true TEE verifier mock and set it on the sequencer inbox.
+    // The real EspressoTEEVerifierMock does EIP-712 recovery which requires
+    // pre-computing blob hashes for the signature — impractical in this test.
+    const simpleMock = await new EspressoTEEVerifierSimpleMock__factory(
+      rollupOwner
+    ).deploy()
+    await simpleMock.deployed()
+    await (
+      await sequencerInbox
+        .connect(rollupOwner)
+        .setEspressoTEEVerifier(simpleMock.address)
+    ).wait()
 
     await sendDelayedTx(
       user,
@@ -429,18 +445,26 @@ describe('SequencerInbox', async () => {
 
     const balBefore = await batchPoster.getBalance()
 
+    // Dummy espressoMetadata: abi.encode(hotshotHeight, signature, teeType)
+    // The simple mock ignores these values and always returns true.
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [1, '0x', 0]
+    )
+
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,
       ['0x0142', '0x0143'],
       sequencerInbox.interface.encodeFunctionData(
-        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256)',
+        'addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256,bytes)',
         [
           sequenceNumber,
           afterDelayedMessagesRead,
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
+          espressoMetadata,
         ]
       )
     )
