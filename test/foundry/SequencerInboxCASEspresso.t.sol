@@ -22,7 +22,7 @@ contract EspressoRollupMock {
     }
 }
 
-contract SequencerInboxEspressoTest is Test {
+contract SequencerInboxCASEspressoTest is Test {
     event SequencerBatchDelivered(
         uint256 indexed batchSequenceNumber,
         bytes32 indexed beforeAcc,
