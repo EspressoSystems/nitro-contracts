@@ -42,6 +42,14 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @dev Signature from a registered ephemeral key generated inside TEE was verified over the batch data hash
     event TEESignatureVerified(uint256 indexed sequenceNumber, uint256 indexed hotshotHeight);
 
+    /// @dev Emitted when the Espresso TEE verifier is updated
+    event EspressoTEEVerifierSet(address espressoTEEVerifier);
+
+    /// @dev Emitted when an Espresso CAS certificate is successfully verified
+    event EspressoCertificateVerified(
+        uint256 hotshotBlock, uint256 delayedMessageRead, uint256 messageCount
+    );
+
     function totalDelayedMessagesRead() external view returns (uint256);
 
     function bridge() external view returns (IBridge);

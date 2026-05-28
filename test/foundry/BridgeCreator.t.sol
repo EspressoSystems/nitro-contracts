@@ -8,7 +8,7 @@ import "../../src/bridge/ISequencerInbox.sol";
 import "../../src/bridge/AbsInbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
+
 
 contract BridgeCreatorTest is Test {
     BridgeCreator public creator;
@@ -124,14 +124,12 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks;
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
-
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
             nativeToken,
             timeVars,
-            address(espressoTEEVerifier)
+            address(0)
         );
         (
             IBridge bridge,
@@ -198,14 +196,12 @@ contract BridgeCreatorTest is Test {
         );
         timeVars.delayBlocks; // TODO: what is this?
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
-
         BridgeCreator.BridgeContracts memory contracts = creator.createBridge(
             proxyAdmin,
             rollup,
             nativeToken,
             timeVars,
-            address(espressoTEEVerifier)
+            address(0)
         );
         (
             IBridge bridge,

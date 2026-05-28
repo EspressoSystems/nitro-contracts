@@ -23,7 +23,9 @@ import { expect } from 'chai'
 import {
   Bridge,
   Bridge__factory,
+  EspressoNitroTEEVerifierMock__factory,
   EspressoTEEVerifierMock__factory,
+  EspressoTEEVerifierSimpleMock__factory,
   GasRefunder__factory,
   Inbox,
   Inbox__factory,
@@ -228,10 +230,16 @@ describe('SequencerInbox', async () => {
     )
 
     const reader4844 = await Toolkit4844.deployReader4844(fundingWallet)
+    const espressoNitroTEEVerifierFac =
+      new EspressoNitroTEEVerifierMock__factory(deployer)
+    const espressoNitroTEEVerifier = await espressoNitroTEEVerifierFac.deploy()
+    await espressoNitroTEEVerifier.deployed()
     const espressoTEEVerifierFac = new EspressoTEEVerifierMock__factory(
       deployer
     )
-    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy()
+    const espressoTEEVerifier = await espressoTEEVerifierFac.deploy(
+      espressoNitroTEEVerifier.address
+    )
     await espressoTEEVerifier.deployed()
     const sequencerInboxFac = new SequencerInbox__factory(deployer)
     const seqInboxTemplate = await sequencerInboxFac.deploy(
@@ -295,7 +303,7 @@ describe('SequencerInbox', async () => {
             futureBlocks: 10,
             futureSeconds: 3000,
           },
-          espressoTEEVerifier.address,
+          constants.AddressZero,
           { gasLimit: 10000000 }
         )
     ).wait()
@@ -337,6 +345,7 @@ describe('SequencerInbox', async () => {
       messageTester,
       batchPoster,
       gasRefunder,
+      rollupOwner,
     }
 
     // comment this in to print the addresses that can then be re-used to avoid redeployment
@@ -378,28 +387,12 @@ describe('SequencerInbox', async () => {
 
     const subMessageCount = await bridge.sequencerReportedSubMessageCount()
     const balBefore = await batchPoster.getBalance()
-    const hotshotHeight = 42
-    const signature = '0x'
-
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
     await (
       await sequencerInbox
         .connect(batchPoster)
         .functions[
-          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256,bytes)'
-        ](
-          await bridge.sequencerMessageCount(),
-          '0x0042',
-          await bridge.delayedMessageCount(),
-          gasRefunder.address,
-          subMessageCount,
-          subMessageCount.add(1),
-          espressoMetadata
-        )
+          'addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)'
+        ](await bridge.sequencerMessageCount(), '0x0042', await bridge.delayedMessageCount(), gasRefunder.address, subMessageCount, subMessageCount.add(1))
     ).wait()
     expect((await batchPoster.getBalance()).gt(balBefore), 'Refund not enough')
   })
@@ -418,7 +411,21 @@ describe('SequencerInbox', async () => {
       sequencerInbox,
       batchPoster,
       gasRefunder,
+      rollupOwner,
     } = await setupSequencerInbox(wallet)
+
+    // Deploy an always-true TEE verifier mock and set it on the sequencer inbox.
+    // The real EspressoTEEVerifierMock does EIP-712 recovery which requires
+    // pre-computing blob hashes for the signature — impractical in this test.
+    const simpleMock = await new EspressoTEEVerifierSimpleMock__factory(
+      rollupOwner
+    ).deploy()
+    await simpleMock.deployed()
+    await (
+      await sequencerInbox
+        .connect(rollupOwner)
+        .setEspressoTEEVerifier(simpleMock.address)
+    ).wait()
 
     await sendDelayedTx(
       user,
@@ -437,14 +444,14 @@ describe('SequencerInbox', async () => {
     const sequenceNumber = await bridge.sequencerMessageCount()
 
     const balBefore = await batchPoster.getBalance()
-    const hotshotHeight = 42
-    const signature = '0x'
 
-    const espressoMetadata =
-      ethers.utils.defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'uint8'],
-        [hotshotHeight, signature, 0]
-      )
+    // Dummy espressoMetadata: abi.encode(hotshotHeight, signature, teeType)
+    // The simple mock ignores these values and always returns true.
+    const espressoMetadata = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'bytes', 'uint8'],
+      [1, '0x', 0]
+    )
+
     const txHash = await Toolkit4844.sendBlobTx(
       batchPoster.privateKey.substring(2),
       sequencerInbox.address,
@@ -457,7 +464,7 @@ describe('SequencerInbox', async () => {
           gasRefunder.address,
           subMessageCount,
           subMessageCount.add(1),
-          espressoMetadata
+          espressoMetadata,
         ]
       )
     )

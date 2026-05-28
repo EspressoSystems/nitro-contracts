@@ -42,8 +42,7 @@ contract RollupAdminLogic is RollupCore, IRollupAdmin, DoubleLogicUUPSUpgradeabl
             1,
             IGasRefunder(address(0)),
             0,
-            1,
-            ""
+            1
         );
 
         validatorUtils = connectedContracts.validatorUtils;

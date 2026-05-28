@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
-import {IEspressoNitroTEEVerifier} from "../../src/bridge/EspressoNitroTEEVerifier.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
+import {IEspressoNitroTEEVerifier} from "../../src/espresso/IEspressoNitroTEEVerifier.sol";
 
 /**
  * @title EspressoTEEVerifierMock - Always returns true

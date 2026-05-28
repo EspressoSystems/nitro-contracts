@@ -19,7 +19,6 @@ import "../../src/rollup/DeployHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
-import {EspressoTEEVerifierMock} from "./EspressoTEEVerifierMock.t.sol";
 
 contract RollupCreatorTest is Test {
     RollupCreator public rollupCreator;
@@ -100,7 +99,7 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        // Use address(0) for no TEE verifier in tests
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -114,7 +113,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            espressoTEEVerifier: address(0)
         });
 
         // prepare funds
@@ -260,7 +259,7 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        // Use address(0) for no TEE verifier in tests
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -274,7 +273,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            espressoTEEVerifier: address(0)
         });
 
         // approve fee token to pay for deployment of L2 factories
@@ -418,7 +417,7 @@ contract RollupCreatorTest is Test {
             60 * 60
         );
 
-        EspressoTEEVerifierMock espressoTEEVerifier = new EspressoTEEVerifierMock();
+        // Use address(0) for no TEE verifier in tests
 
         Config memory config = Config({
             confirmPeriodBlocks: 20,
@@ -432,7 +431,7 @@ contract RollupCreatorTest is Test {
             chainConfig: "abc",
             genesisBlockNum: 15_000_000,
             sequencerInboxMaxTimeVariation: timeVars,
-            espressoTEEVerifier: address(espressoTEEVerifier)
+            espressoTEEVerifier: address(0)
         });
 
         // prepare funds

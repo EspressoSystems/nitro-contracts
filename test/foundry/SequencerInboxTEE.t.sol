@@ -11,7 +11,7 @@ import {
     EspressoTEEVerifierMockFalse,
     EspressoTEEVerifierMockRevert
 } from "./EspressoTEEVerifierMock.t.sol";
-import {IEspressoTEEVerifier} from "../../src/bridge/EspressoTEE.sol";
+import {IEspressoTEEVerifier} from "../../src/espresso/IEspressoTEEVerifier.sol";
 import {TEEVerificationFailed} from "../../src/libraries/Error.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
