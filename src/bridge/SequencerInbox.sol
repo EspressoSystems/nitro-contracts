@@ -88,6 +88,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
+    /// @notice Length of the Espresso CAS certificate prefix in batch data (in bytes).
+    uint256 public constant ESPRESSO_CERT_LEN = 137;
+
     IOwnable public rollup;
 
     mapping(address => bool) public isBatchPoster;
@@ -350,10 +353,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         revert Deprecated();
     }
 
-    /**
-        Deprecated because we added a new method with TEE attestation quote
-        to verify that the batch is posted by the batch poster running in TEE.
-     */
     function addSequencerL2BatchFromOrigin(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -365,13 +364,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
-        uint256 ESPRESSO_CERT_LEN = 137;
-        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
+        // When espressoTEEVerifier is set, all batches must include a CAS certificate.
+        bool shouldVerifyEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
 
         bytes32 dataHash;
         IBridge.TimeBounds memory timeBounds;
 
-        if (hasEspressoCert) {
+        if (shouldVerifyEspressoCert) {
             verifyEspressoCertificate(
                 data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
             );
@@ -385,7 +384,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 sequenceNumber_ = sequenceNumber;
         IBridge.TimeBounds memory timeBounds_ = timeBounds;
         bytes32 dataHash_ = dataHash;
-        uint256 dataLength = hasEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
+        uint256 dataLength = shouldVerifyEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
         uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
         uint256 prevMessageCount_ = prevMessageCount;
         uint256 newMessageCount_ = newMessageCount;
@@ -414,12 +413,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds_,
-            (hasEspressoCert)
+            (shouldVerifyEspressoCert)
                 ? IBridge.BatchDataLocation.SeparateBatchEvent
                 : IBridge.BatchDataLocation.TxInput
         );
 
-        if (hasEspressoCert) {
+        if (shouldVerifyEspressoCert) {
             // if the batch is posted with an espresso cert
             //  then the data is expected to be included in a separate event
             // instead of tx input
@@ -512,7 +511,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) internal {
-        uint256 ESPRESSO_CERT_LEN = 137;
         if (data.length < ESPRESSO_CERT_LEN) revert InvalidCasCertificate();
 
         uint64 hotshotBlock = uint64(bytes8(data[48:56]));
@@ -700,9 +698,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit TEESignatureVerified(sequenceNumber, hotshotHeight);
     }
 
-    /*
-     * addSequencerL2Batch is called by either the rollup admin or batch poster
-     * running in TEE to add a new batch
+    /**
+     * @notice Submit a batch from the rollup admin or batch poster with optional
+     *         Espresso CAS certificate. When espressoTEEVerifier is configured the
+     *         batch data is expected to carry a CAS certificate prefix.
      * @param sequenceNumber - the sequence number of the batch
      * @param data - the data of the batch
      * @param afterDelayedMessagesRead - the number of delayed messages read by the sequencer
@@ -719,13 +718,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 newMessageCount
     ) external override refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender] && msg.sender != address(rollup)) revert NotBatchPoster();
-        uint256 ESPRESSO_CERT_LEN = 137;
-        bool hasEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
+
+        // When espressoTEEVerifier is set, all batches must include a CAS certificate.
+        bool shouldVerifyEspressoCert = address(espressoTEEVerifier) != address(0) && data.length > 0;
 
         bytes32 dataHash;
         IBridge.TimeBounds memory timeBounds;
 
-        if (hasEspressoCert) {
+        if (shouldVerifyEspressoCert) {
             verifyEspressoCertificate(
                 data, afterDelayedMessagesRead, prevMessageCount, newMessageCount
             );
@@ -772,7 +772,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 IBridge.BatchDataLocation.SeparateBatchEvent
             );
         }
-        if (hasEspressoCert) {
+        if (shouldVerifyEspressoCert) {
             emit SequencerBatchData(seqMessageIndex, data[ESPRESSO_CERT_LEN:]);
         } else {
             emit SequencerBatchData(seqMessageIndex, data);
