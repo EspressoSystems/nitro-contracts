@@ -34,7 +34,7 @@ contract EspressoTEEVerifierMock is IEspressoTEEVerifier {
     }
 
     function isSignerValid(address, TeeType) external view returns (bool) {
-        return false;
+        return true;
     }
 
     function setEspressoNitroTEEVerifier(IEspressoNitroTEEVerifier) external {}
