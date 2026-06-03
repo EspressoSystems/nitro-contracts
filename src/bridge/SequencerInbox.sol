@@ -380,30 +380,45 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             (dataHash, timeBounds) = formCallDataHash(data, afterDelayedMessagesRead);
         }
 
-        // Reformat the stack to prevent "Stack too deep"
-        uint256 sequenceNumber_ = sequenceNumber;
-        IBridge.TimeBounds memory timeBounds_ = timeBounds;
-        bytes32 dataHash_ = dataHash;
+        _submitSequencerBatchFromOrigin(
+            sequenceNumber,
+            data,
+            afterDelayedMessagesRead,
+            prevMessageCount,
+            newMessageCount,
+            dataHash,
+            timeBounds,
+            shouldVerifyEspressoCert
+        );
+    }
+
+    function _submitSequencerBatchFromOrigin(
+        uint256 sequenceNumber,
+        bytes calldata data,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        bytes32 dataHash,
+        IBridge.TimeBounds memory timeBounds,
+        bool shouldVerifyEspressoCert
+    ) internal {
         uint256 dataLength = shouldVerifyEspressoCert ? data.length - ESPRESSO_CERT_LEN : data.length;
-        uint256 afterDelayedMessagesRead_ = afterDelayedMessagesRead;
-        uint256 prevMessageCount_ = prevMessageCount;
-        uint256 newMessageCount_ = newMessageCount;
         (
             uint256 seqMessageIndex,
             bytes32 beforeAcc,
             bytes32 delayedAcc,
             bytes32 afterAcc
         ) = addSequencerL2BatchImpl(
-                dataHash_,
-                afterDelayedMessagesRead_,
+                dataHash,
+                afterDelayedMessagesRead,
                 dataLength,
-                prevMessageCount_,
-                newMessageCount_
+                prevMessageCount,
+                newMessageCount
             );
 
         // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
-        if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
-            revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
+        if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
         }
 
         emit SequencerBatchDelivered(
@@ -412,7 +427,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             afterAcc,
             delayedAcc,
             totalDelayedMessagesRead,
-            timeBounds_,
+            timeBounds,
             (shouldVerifyEspressoCert)
                 ? IBridge.BatchDataLocation.SeparateBatchEvent
                 : IBridge.BatchDataLocation.TxInput
